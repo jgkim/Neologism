@@ -1,0 +1,116 @@
+<?php
+// $Id: devel.install,v 1.8.4.6 2007/07/26 19:27:48 thehunmonkgroup Exp $
+/**
+ * Implementation of hook_install()
+ */
+function devel_install() {
+  // New module weights in core: put devel as the very last in the chain.
+  db_query("UPDATE {system} SET weight = 88 WHERE name = 'devel'");
+
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {devel_queries} (
+        qid int(10) NOT NULL auto_increment,
+        function varchar(255) NOT NULL default '',
+        query text NOT NULL,
+        hash varchar(255) NOT NULL default '',
+        PRIMARY KEY (`hash`),
+        KEY qid (qid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */;";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {devel_times} (
+        tid int(10) NOT NULL auto_increment,
+        qid int(10) NOT NULL default 0,
+        time float default NULL,
+        PRIMARY KEY (tid),
+        KEY qid (qid)
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;";
+      db_query($sql);
+      break;
+    case 'mssql':
+      $sql = "CREATE TABLE {devel_queries} (
+        qid INT IDENTITY(1,1),
+        \"function\" varchar(255) NOT NULL default '',
+        query text NOT NULL,
+        hash varchar(255) NOT NULL default '',
+        PRIMARY KEY (qid));";
+      db_query($sql);
+
+      $sql = "CREATE TABLE {devel_times} (
+        tid INT IDENTITY(1,1),
+        qid INT NOT NULL default 0,
+        time FLOAT default NULL,
+        PRIMARY KEY (tid)
+      );";
+      db_query($sql);
+
+  }
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function devel_disable() {
+  // Query logging should probably not be set if devel.module is disabled.
+  if (variable_get('dev_query', 0)) {
+    variable_set('dev_query',0);
+    drupal_set_message(t('Disabled query logging since devel module is disabled.'));
+  }
+}
+
+/**
+ * Do update 1 again as the hook_install() was missing and new
+ * installations are not having the weight set.
+ */
+function devel_update_2() {
+  // New module weights in core: put devel as the very last in the chain.
+  $ret[] = update_sql("UPDATE {system} SET weight = 10 WHERE name = 'devel'");
+  return $ret;
+}
+
+function devel_update_3() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $sql = "CREATE TABLE {devel_queries} (
+        qid int(10) NOT NULL auto_increment,
+        query varchar(255) NOT NULL default '',
+        hash varchar(255) NOT NULL default '',
+        PRIMARY KEY (`hash`),
+        KEY qid (qid)
+        ) /*!40100 DEFAULT CHARACTER SET utf8 */;";
+      $ret[] = update_sql($sql);
+
+      $sql = "CREATE TABLE {devel_times} (
+        tid int(10) NOT NULL auto_increment,
+        qid int(10) NOT NULL default 0,
+        time float default NULL,
+        PRIMARY KEY (tid),
+        KEY qid (qid)
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;";
+      $ret[] = update_sql($sql);
+      return $ret;
+  }
+}
+
+function devel_update_4() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $ret[] = update_sql("ALTER TABLE {devel_queries} ADD `function` varchar(255) NOT NULL default ''");
+  }
+  return $ret;
+}
+
+function devel_update_5() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $ret[] = update_sql("ALTER TABLE {devel_queries} CHANGE query query text NOT NULL");
+  }
+  return $ret;
+}

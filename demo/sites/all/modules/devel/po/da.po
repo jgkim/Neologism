@@ -1,0 +1,875 @@
+# Danish translation of Drupal (devel.module)
+# Copyright 2006-2007 Morten Wulff <wulff@ratatosk.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: Danish translation of Drupal (devel.module) $Id: da.po,v 1.1.6.2 2007/09/08 14:06:11 wulff Exp $\n"
+"POT-Creation-Date: 2005-07-25 17:54+0200\n"
+"PO-Revision-Date: 2007-09-08 16:05+0100\n"
+"Last-Translator: Morten Wulff <wulff@ratatosk.net>\n"
+"Language-Team: Danish <l10n@drupaldanmark.dk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Danish\n"
+"X-Poedit-Country: DENMARK\n"
+
+#: devel_generate.inc:20
+msgid "Users deleted."
+msgstr "Brugere slettet"
+
+#: devel_generate.inc:31
+msgid "!num_users created."
+msgstr "!num_users oprettet."
+
+#: devel_generate.inc:60
+msgid "Content deleted."
+msgstr "Indhold slettet."
+
+#: devel_generate.inc:85
+msgid "%num nodes created."
+msgstr "%num indholdselementer oprettet."
+
+#: devel_generate.inc:94
+msgid "%num comments created."
+msgstr "%num kommentarer oprettet."
+
+#: devel_generate.inc:272
+msgid "Deleted taxonomy."
+msgstr "Taksonomi slettet."
+
+#: devel_generate.inc:277
+msgid "Created the following new vocabularies: !vocs"
+msgstr "Følgende ordforråd oprettet: !vocs"
+
+#: devel_generate.inc:282
+msgid "Created the following new terms: !terms"
+msgstr "Følgende nye ord oprettet: !terms"
+
+#: devel_generate.inc:31
+msgid "1 user"
+msgid_plural "@count users"
+msgstr[0] "1 user"
+msgstr[1] "@count brugere"
+
+#: devel.module:30
+msgid "Helper functions, pages, and blocks to assist Drupal developers. The devel blocks can be managed via the !block page."
+msgstr "Hjælpefunktioner, sider og blokke der støtter Drupal-udvikling. Blokken kan styres via !block-siden."
+
+#: devel.module:30
+msgid "block administration"
+msgstr "indstil blok"
+
+#: devel.module:32
+msgid "This is a list of defined user functions that generated this current request lifecycle. Click on a function name to view its documention."
+msgstr "En liste af de funktioner, der startede denne forespørgsels livscyklus. Klik på en funktions navn for at se den tilhørende dokumentation."
+
+#: devel.module:34
+msgid "Clicking a module's reinstall button will simulate uninstalling/installing a module. <code>hook_uninstall()</code> and <code>hook_install()</code> will be executed and the schema version number will be set to the most recent update number. You may have to manually clear out any existing tables first if the module doesn't implement <code>hook_uninstall()</code>."
+msgstr "Klik på knappen geninstallér for at simulere en afinstallation/installation af et modul. <code>hook_uninstall()</code> og <code>hook_install()</code> kaldes og schema versionsnummeret sættes til det seneste opdateringsnummer. Du skal selv fjerne evt. eksisterende tabeller hvis modulet ikke implementerer <code>hook_uninstall()</code>."
+
+#: devel.module:36
+msgid "Here are the contents of your <code>$_SESSION</code> variable."
+msgstr "Indholdet af din <code>$_SESSION</code> variabel."
+
+#: devel.module:38
+msgid "This is a list of the variables and their values currently stored in variables table and the <code>$conf</code> array of your settings.php file. These variables are usually accessed with <a href=\"@variable-get-doc\">variable_get()</a> and <a href=\"@variable-set-doc\">variable_set()</a>. Variables that are too long can slow down your pages."
+msgstr "En liste af variable og deres værdier gemt i variables-tabellen og <code>$conf</code>-tabellen i settings.php. Disse variable tilgås oftest med <a href=\"@variable-get-doc\">variable_get()</a> og <a href=\"@variable-set-doc\">variable_set()</a>. Lange variable kan gøre dine sider langsommere."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:30
+#: devel.module:50
+msgid "Empty cache"
+msgstr "Tøm mellemlager"
+
+#: devel.module:56
+#: ;363
+msgid "Rebuild node_comment_statistics table"
+msgstr "Tabellen node_comment_statistics genopbygget"
+
+#: devel.module:62
+msgid "Database queries"
+msgstr "Databaseforespørgsler"
+
+#: devel.module:66
+msgid "Empty database queries"
+msgstr "Tøm databaseforespørgsler"
+
+#: devel.module:71
+msgid "function reference"
+msgstr "funktionsreference"
+
+#: devel.module:77
+msgid "Reinstall modules"
+msgstr "Geninstallér moduler"
+
+#: devel.module:84
+msgid "Reset menus"
+msgstr "Nulstil menuer"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:33
+#: devel.module:92
+#: ;98;105
+msgid "Variable editor"
+msgstr "Variabel-redigering"
+
+#: devel.module:112
+msgid "Session viewer"
+msgstr "Vis sessioner"
+
+#: devel.module:118
+#: ;306;314
+msgid "Switch user"
+msgstr "Skift bruger"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:0
+#: devel.module:125
+#: ;307 devel.info:0
+msgid "Devel"
+msgstr "Udvikling"
+
+#: devel.module:136
+#: ;172
+msgid "Dev load"
+msgstr "Devel load"
+
+#: devel.module:143
+msgid "Dev render"
+msgstr "Devel render"
+
+#: devel.module:152
+msgid "Devel load"
+msgstr "Devel load"
+
+#: devel.module:180
+msgid "Dev queries"
+msgstr "Databaseforespørgsler"
+
+#: devel.module:188
+msgid "Dev items"
+msgstr "Dev elementer"
+
+#: devel.module:290
+msgid "%message in %file on line %line."
+msgstr "%message i %file på linje %line."
+
+#: devel.module:308
+msgid "Execute PHP"
+msgstr "Udfør PHP"
+
+#: devel.module:335
+msgid "This user can switch back."
+msgstr "Denne bruger kan skifte tilbage."
+
+#: devel.module:342
+msgid "Caution: this user will be unable to switch back."
+msgstr "Bemærk: Denne bruger kan skifte tilbage."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:0
+#: devel.module:353
+#: ;1203;0
+msgid "devel"
+msgstr "udvikling"
+
+#: devel.module:355
+msgid "Adjust module settings for devel module"
+msgstr "Tilpas indstillingerne for devel-modulet."
+
+#: devel.module:356
+msgid "Clear the database cache tables which store page, menu, node, and variable caches."
+msgstr "Ryd mellemlageret i databasen."
+
+#: devel.module:358
+msgid "View a list of currently defined user functions with documentation links"
+msgstr "Vis en liste af brugerfunktioner med links til dokumentationen"
+
+#: devel.module:359
+msgid "Re-run hook_install() for a given module"
+msgstr "Kør hook_install() igen for et givet modul"
+
+#: devel.module:360
+msgid "Resets all menu items to their default settings"
+msgstr "Gendanner standardindstillingerne for alle menupunkter"
+
+#: devel.module:361
+msgid "Edit and delete site variables"
+msgstr "Rediger og slet site-variable"
+
+#: devel.module:362
+msgid "List the contents of $_SESSION"
+msgstr "Vis indholdet af $_SESSION"
+
+#: devel.module:375
+msgid "Execute php"
+msgstr "Udfør php"
+
+#: devel.module:388
+msgid "Enter username"
+msgstr "Indtast brugernavn"
+
+#: devel.module:394
+msgid "Switch"
+msgstr "Skift bruger"
+
+#: devel.module:402
+msgid "Username not found"
+msgstr "Brugernavn ikke fundet"
+
+#: devel.module:445
+msgid "<p>The user is being redirected to <a href=\"@destination\">@destination</a>.</p>"
+msgstr "<p>Brugeren omdirigeres til <a href=\"@destination\">@destination</a>.</p>"
+
+#: devel.module:497
+msgid " Queries taking longer than %threshold ms and queries executed more than once, are <span class=\"marker\">highlighted</span>."
+msgstr "Forespørgsler, der tager længere end %threshold ms og forespørgsler, der udføres mere end én gang er <span class=\"marker\">fremhævet</span>."
+
+#: devel.module:516
+msgid "Memory used at %type: %value MB"
+msgstr "Hukommelse brugt ved %type: %value MB"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:200
+#: devel.module:606
+msgid "Query log"
+msgstr "Forespørgselslog"
+
+#: devel.module:608
+msgid "Collect query info"
+msgstr "Indsaml information om forespørgsler"
+
+#: devel.module:610
+msgid "Collect query info. If disabled, no query log functionality will work."
+msgstr "Forespørgselsloggen virker ikke hvis denne funktion slås fra."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:200
+#: devel.module:612
+msgid "Display query log"
+msgstr "Vis forespørgselslog"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:200
+#: devel.module:614
+msgid "Display a log of the database queries needed to generate the current page, and the execution time for each. Also, queries which are repeated during a single page view are summed in the # column, and printed in red since they are candidates for caching."
+msgstr "Vis en log over de databaseforespørgsler der blev foretaget for at bygge den aktuelle side samt deres afviklingstider. Desuden bliver alle gentagne forespørgsler markeret i '#'-kolonnen, da de er kandidater til mellemlagring."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:200
+#: devel.module:616
+msgid "Sort query log"
+msgstr "Sorter forespørgselslog"
+
+#: devel.module:618
+msgid "by source"
+msgstr "efter kilde"
+
+#: devel.module:618
+msgid "by duration"
+msgstr "efter varighed"
+
+#: devel.module:619
+msgid "The query table can be sorted in the order that the queries were executed or by descending duration."
+msgstr "Tabellen kan sorteres efter den rækkefølge forespørgslerne blev udført eller efter faldende varighed."
+
+#: devel.module:622
+msgid "Slow query highlighting"
+msgstr "Fremhæv langsomme forespørgsler"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:201
+#: devel.module:626
+msgid "Enter an integer in milliseconds. Any query which takes longer than this many milliseconds will be highlighted in the query log. This indicates a possibly inefficient query, or a candidate for caching."
+msgstr "Indtast et antal millisekunder. Enhver forespørgsel der tager længere end det angivne antal millisekunder bliver fremhævet i forespørgselsloggen. Det indikerer en muligvis ineffektiv forespørgsel eller en kandidat til mellemlagring."
+
+#: devel.module:629
+msgid "Store executed queries"
+msgstr "Gem udførte forespørgsler"
+
+#: devel.module:631
+msgid "Store statistics about executed queries. See the devel_x tables. This feature is currently only available for the MySQL database backend."
+msgstr "Gem statistik om udførte forespørgsler. Se devel_x-tabellerne. Denne funktion findes i øjeblikket kun til MySQL."
+
+#: devel.module:633
+msgid "Sampling interval"
+msgstr "Opdateringsinterval"
+
+#: devel.module:636
+msgid "If storing query statistics, only store every nth page view. 1 means every page view, 2 every second, and so on."
+msgstr "Gem kun hver n'te sidevisning. 1 betyder alle sidevisninger, 2 betyder hver anden, osv."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:199
+#: devel.module:639
+msgid "Display page timer"
+msgstr "Vis tidsforbrug"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:199
+#: devel.module:641
+msgid "Display page execution time in the query log box."
+msgstr "Vis sidens afviklingstid i feltet med forespørgselsloggen."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:200
+#: devel.module:644
+msgid "Display memory usage"
+msgstr "Vis hukommelsesforbrug"
+
+#: devel.module:646
+msgid "Display how much memory is used to generate the current page. This will show memory usage when devel_init() is called and when devel_exit() is called. PHP must have been compiled with the <em>--enable-memory-limit</em> configuration option for this feature to work."
+msgstr "Vis hvor meget hukommelse der bruges til at vise den aktuelle side. Vise hukommelsesforbrug når devel_init() kaldes og når devel_exit() kaldes. PHP skal være kompileret med <em>--enable-memory-limit</em> for at denne funktionalitet virker."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:202
+#: devel.module:649
+msgid "Display redirection page"
+msgstr "Vis omdirigeringsside"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:202
+#: devel.module:651
+msgid "When a module executes drupal_goto(), the query log and other developer information is lost. Enabling this setting presents an intermediate page to developers so that the log can be examined before continuing to the destination page."
+msgstr "Når et modul kalder drupal_goto() mistes forespørgselsloggen og anden udviklingsinformation. Aktiver denne indstilling for at se en mellemliggende side, der viser loggen før der fortsættes til næste side."
+
+#: devel.module:654
+msgid "Display form element keys and weights"
+msgstr "Vis nøgler og vægte af formular-elementer"
+
+#: devel.module:656
+msgid "Form element names are needed for performing themeing or altering a form. Their weights determine the position of the element. Enabling this setting will show these keys and weights beside each form item."
+msgstr "Navne på formular-elementer er nødvendige når man skal lave temaer eller ændre en formular. Vægtene bestemmer rækkefølgen af elementerne."
+
+#: devel.module:659
+msgid "Error handler"
+msgstr "Fejlhåndtering"
+
+#: devel.module:661
+msgid "None"
+msgstr "Ingen"
+
+#: devel.module:661
+msgid "Standard drupal"
+msgstr "Standard Drupal"
+
+#: devel.module:661
+msgid "Backtrace"
+msgstr "Sporing"
+
+#: devel.module:662
+msgid "Choose an error handler for your site. <em>Backtrace</em> prints nice debug information when an error is noticed, and you !choose. <em>None</em> is a good option when stepping through the site in your debugger."
+msgstr "Vælg hvordan fejl håndteres af dit site. <em>Sporing</em> udskriver debug information når der opstår en fejl og du !choose. <em>Ingen</em> er et godt valg når du gennemgår kode i din debugger."
+
+#: devel.module:662
+msgid "to show errors on screen"
+msgstr "for at vise fejl på skærmen"
+
+#: devel.module:670
+msgid "Default"
+msgstr "Standard"
+
+#: devel.module:671
+msgid "Log only"
+msgstr "Kun log"
+
+#: devel.module:674
+msgid "Other (!library)"
+msgstr "Andet (!library)"
+
+#: devel.module:678
+msgid "SMTP library"
+msgstr "SMTP bibliotek"
+
+#: devel.module:709
+msgid "PHP code to execute"
+msgstr "Udfør PHP kode"
+
+#: devel.module:710
+msgid "Enter some code. Do not use <code>&lt;?php ?&gt;</code> tags."
+msgstr "Indtast noget kode. Du skal ikke bruge <code>&lt;?php ?&gt;</code>-tags."
+
+#: devel.module:712
+msgid "Execute"
+msgstr "Udfør"
+
+#: devel.module:732
+msgid "Are you sure you want to reset all menu items to their default settings?"
+msgstr "Ønsker du at gendanne standardindstillinger for alle menupunkter?"
+
+#: devel.module:734
+msgid "Any custom additions or changes to the menu will be lost."
+msgstr "Alle tilføjelser til og ændringer af menuen går tabt."
+
+#: devel.module:735
+msgid "Reset all"
+msgstr "Gendan alle"
+
+#: devel.module:736
+msgid "Cancel"
+msgstr "Annuller"
+
+#: devel.module:745
+msgid "Primary links"
+msgstr "Primære henvisninger"
+
+#: devel.module:749
+msgid "The menu items have been reset to their default settings."
+msgstr "Menupunkternes standardindstillinger gendannet."
+
+#: devel.module:774
+msgid "Reinstall @name module"
+msgstr "Geninstallér modulet @name."
+
+#: devel.module:790
+msgid "Warning - will delete your module tables and variables."
+msgstr "Advarsel: Sletter alle modul-tabeller og variable."
+
+#: devel.module:805
+msgid "Reinstalled the %name module."
+msgstr "%name geninstalleret."
+
+#: devel.module:820
+#: ;862
+msgid "Name"
+msgstr "Navn"
+
+#: devel.module:821
+#: ;863
+msgid "Value"
+msgstr "Værdi"
+
+#: devel.module:822
+#: ;864
+msgid "Length"
+msgstr "Længde"
+
+#: devel.module:823
+#: ;865
+msgid "Operations"
+msgstr "Handlinger"
+
+#: devel.module:839
+msgid "edit"
+msgstr "rediger"
+
+#: devel.module:844
+msgid "Delete"
+msgstr "Slet"
+
+#: devel.module:887
+msgid "Old value"
+msgstr "Gammel værdi"
+
+#: devel.module:893
+#: ;904
+msgid "New value"
+msgstr "Ny værdi"
+
+#: devel.module:898
+msgid "Submit"
+msgstr "Indsend"
+
+#: devel.module:905
+msgid "Sorry, complex variable types may not be edited yet. Use the <em>Execute PHP</em> block and the <a href=\"@variable-set-doc\">variable_set()</a> function."
+msgstr "Det er ikke muligt at redigere komplekse variabeltyper. Brug blokken <em>Udfør PHP</em> og <a href=\"@variable-set-doc\">variable_set()</a>-funktionen."
+
+#: devel.module:914
+msgid "Saved new value for %name"
+msgstr "Ny værdi for %name gemt"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:199
+#: devel.module:1076
+msgid " Page execution time was %time ms."
+msgstr "Sidens blev udført på %time ms."
+
+#: devel.module:1203
+msgid "Mail sent:<br />Key: %mailkey<br />To: %to<br />From: %from<br />Subject: %subject<br />Body: %body<br /><br />Additional headers: !header"
+msgstr "Mail sendt:<br />Nøgle: %mailkey<br />Til: %to<br />Fra: %from<br />Emne: %subject<br />Indhold: %body<br /><br />Yderligere brevhoveder: !header"
+
+#: devel.module:1217
+msgid "Total (ms)"
+msgstr "Samlet tid (ms)"
+
+#: devel.module:1218
+msgid "Average (ms)"
+msgstr "Gennemsnit (ms)"
+
+#: devel.module:1219
+msgid "Std deviation (ms)"
+msgstr "Standardafvigelse (ms)"
+
+#: devel.module:1220
+msgid "Count"
+msgstr "Tæl"
+
+#: devel.module:1221
+msgid "Function"
+msgstr "Funktion"
+
+#: devel.module:1222
+msgid "Query"
+msgstr "Forespørgsel"
+
+#: devel.module:1240
+msgid "Delete collected query statistics"
+msgstr "Slet indsamlet forespørgselsstatistik"
+
+#: devel.module:1248
+msgid "Stored query statistics deleted."
+msgstr "Indsamlet forespørgselsstatistik slettet."
+
+#: devel.module:290
+msgid "php"
+msgstr "php"
+
+#: devel.module:876
+msgid "one variable deleted"
+msgid_plural "@count variables deleted"
+msgstr[0] "en variabel slettet"
+msgstr[1] "@count variable slettet"
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:210
+#: devel.module:298
+msgid "access devel information"
+msgstr "tilgå udviklingsinformation"
+
+#: devel.module:298
+msgid "execute php code"
+msgstr "udfør PHP-kode"
+
+#: devel.module:298
+msgid "switch users"
+msgstr "skift bruger"
+
+#: devel_generate.module:13
+msgid "Generate users"
+msgstr "Opret brugere"
+
+#: devel_generate.module:15
+msgid "Generate a given number of users. Optionally delete current users."
+msgstr "Opret et bestemt antal brugere. Slet eventuelt eksisterende brugere."
+
+#: devel_generate.module:22
+msgid "Generate content"
+msgstr "Opret indhold"
+
+#: devel_generate.module:23
+msgid "Generate a given number of nodes and comments. Optionally delete current items."
+msgstr "Opret et bestemt antal indholdselementer og kommentarer. Slet eventuelt eksisterende elementer."
+
+#: devel_generate.module:31
+msgid "Generate categories"
+msgstr "Opret kategorier"
+
+#: devel_generate.module:32
+msgid "Generate a given number of vocabularies and terms. Optionally delete current categories."
+msgstr "Opret et bestemt antal ordforråd og ord. Slet eventuelt eksisterende ordforråd."
+
+#: devel_generate.module:60
+msgid "How many users would you like to generate?"
+msgstr "Hvor mange brugere ønsker du at oprette?"
+
+#: devel_generate.module:66
+msgid "Delete all users but user 1 before generating new users."
+msgstr "Slet alle brugere undtagen bruger 1 før der nye brugere oprettes."
+
+#: devel_generate.module:71
+#: ;107;143
+msgid "Do it!"
+msgstr "Gør det!"
+
+#: devel_generate.module:84
+msgid "How many nodes would you like to generate?"
+msgstr "Hvor mange indholdselementer ønsker du at oprette?"
+
+#: devel_generate.module:90
+msgid "How many comments would you like to generate?"
+msgstr "Hvor mange kommentarer ønsker du at oprette?"
+
+#: devel_generate.module:96
+msgid "Max word length of titles"
+msgstr "Maksimal længde af titler"
+
+#: devel_generate.module:102
+msgid "Delete existing content before generating new content."
+msgstr "Slet eksisterende indhold før nyt indhold oprettes."
+
+#: devel_generate.module:120
+msgid "How many vocabularies would you like to generate?"
+msgstr "Hvor mange ordforråd ønsker du at oprette?"
+
+#: devel_generate.module:126
+msgid "How many terms would you like to generate?"
+msgstr "Hvor mange ord ønsker du at oprette?"
+
+#: devel_generate.module:132
+msgid "Max word length of term/vocab names"
+msgstr "Maksimal længde af navne på ord/ordforråd"
+
+#: devel_generate.module:138
+msgid "Delete existing terms and vocabularies before generating new content."
+msgstr "Slet eksisterende ordforråd før nyt indhold oprettes."
+
+#: devel_generate.module:0
+msgid "devel_generate"
+msgstr "devel_generate"
+
+#: devel_node_access.module:24
+msgid "Development helper for node_access table"
+msgstr "Hjælp til udvikling med node_access-tabellen."
+
+#: devel_node_access.module:27
+msgid "This module helps in site development.  Specifically, when an access control module is used to limit access to some or all nodes, this module provides some feedback showing the node_access table in the database."
+msgstr "Modulet hjælper ved udvikling af sites. Modulet giver adgang til oplysningerne i node_access-tabellen."
+
+#: devel_node_access.module:28
+msgid "The node_access table is one method Drupal provides to hide content from some users while displaying it to others.  By default, Drupal shows all nodes to all users.  There are a number of optional modules which may be installed to hide content from some users."
+msgstr "Drupal bruger node_access-tabellen til at skjule indhold for visse brugere og vise det til andre. Som standard viser Drupal alt indhold til alle brugere. En række moduler kan installeres for at skjule indhold for visse brugere."
+
+#: devel_node_access.module:29
+msgid "If you have not installed one of these modules, you really have no need for the devel_node_access module.  This module is intended for use during development, so that developers and admins can confirm that node_access table is working as expected.  You probably do not want this module enabled on a production site."
+msgstr "Hvis du ikke har installeret et af disse moduler, har du sikkert ikke brug for devel_node_access module. Modulet kan bruges under udvikling for at sikre at node_access-tabellen opfører sig som forventet. Modulet bør ikke være aktivt på et offentligt tilgængeligt site."
+
+#: devel_node_access.module:30
+msgid "This module provides a %summary_page which shows show general information about your node_access table.  If you have installed the Views module, you may %browse_link.  This module also provides a block showing the rows of the node_access table relevant to whatever node(s) are shown on a given page.  Because the table shown is wide, it is recommended to enable the block in the page footer rather than a sidebar."
+msgstr "Modulet laver en %summary_page, som viser generel information om node_access-tabellen. Hvis modulet Views er installeret kan du %browse_link. Modulet laver desuden en blok, som viser de rækker fra node_access, der er relevante for de indholdselementer, der vises på en given side. Tabellen i blokken er bred, så det kan anbefales at placere blokken i sidefoden."
+
+#: devel_node_access.module:31
+msgid "summary page"
+msgstr "oversigt"
+
+#: devel_node_access.module:32
+msgid "browse node_access by realm"
+msgstr "gennemse node_access efter område"
+
+#: devel_node_access.module:44
+msgid "node_access summary"
+msgstr "node_access oversigt"
+
+#: devel_node_access.module:57
+msgid "Access Granted to All Nodes (All Users)"
+msgstr "Adgang tilladt til alle indholdselementer (alle brugere)"
+
+#: devel_node_access.module:58
+msgid "Your node_access table contains entries that may be granting all users access to all nodes.  Depending on which access control module(s) you use, you may want to delete these entries.  If you are not using an access control module, you should probably leave these entries as is."
+msgstr "Din node_access-tabel indeholder elementer, der muligvis giver alle brugere adgang til alt indhold. Afhængigt af hvilke adgangskontrolmoduler du bruger, bør du overveje at slette disse elementer. Hvis du ikke bruger et adgangskontrolmodul, bør du ikke ændre på elementerne."
+
+#: devel_node_access.module:59
+#: ;88;104;122;170
+msgid "realm"
+msgstr "område"
+
+#: devel_node_access.module:70
+msgid "Legacy Nodes"
+msgstr "Gamle indholdselementer"
+
+#: devel_node_access.module:72
+msgid "You have !num nodes in your node table which are not represented in your node_access table.  If you have an access control module installed, these nodes may be hidden from all users.  This could be caused by publishing nodes before enabling the access control module.  If this is the case, manually updating each node should add it to the node_access table and fix the problem."
+msgstr "Der er !num indholdselementer i node-tabellen, som ikke oprtræder i node_access-tabellen. Hvis du har et adgangskontrolmodul installeret, er disse indholdselementer muligvis skjult for alle brugere. Det kan skyldes at nogle indholdselementer er blevet udgivet før adgangskontrollen blev aktiveret. Hvis det er tilfældet kan du manuelt opdatere hvert indholdselement for at løse problemet."
+
+#: devel_node_access.module:76
+msgid "All Nodes Represented"
+msgstr "Alle indholdselementer findes"
+
+#: devel_node_access.module:78
+msgid "All nodes are represented in the node_access table."
+msgstr "Alle indholdselementer findes i node_access-tabellen."
+
+#: devel_node_access.module:86
+msgid "Access Granted to All Nodes (Some Users)"
+msgstr "Adgang givet til alle indholdselementer (visse brugere)"
+
+#: devel_node_access.module:87
+msgid "Your node_access table contains entries that may be granting some users access to all nodes.  This may be perfectly normal, depending on which access control module(s) you use."
+msgstr "Din node_access-tabel indholder elementer, der muligvis giver nogle brugere adgang til alt indhold. Det kan være helt normalt, afhængigt af hvilke adgangskontrolmoduler du har installeret."
+
+#: devel_node_access.module:100
+msgid "Access Granted to Some Nodes"
+msgstr "Adgang givet til visse indholdselementer"
+
+#: devel_node_access.module:102
+msgid "The following realms appear to grant all users access to some specific nodes.  This may be perfectly normal, if some of your content is available to the public."
+msgstr "Følgende områder ser ud til at give alle brugere adgang til bestemte indholdselementer. Det kan være helt normalt, hvis dele af dit indhold er offentligt tilgængeligt."
+
+#: devel_node_access.module:104
+msgid "public nodes"
+msgstr "offentlige indholdselementer"
+
+#: devel_node_access.module:111
+msgid "Public Nodes"
+msgstr "Offentlige indholdselementer"
+
+#: devel_node_access.module:118
+msgid "Summary by Realm"
+msgstr "Oversigt efter område"
+
+#: devel_node_access.module:120
+msgid "The following realms grant limited access to some specific nodes."
+msgstr "Følgende områder giver begrænset adgang til bestemte indholdselementer."
+
+#: devel_node_access.module:122
+msgid "private nodes"
+msgstr "private indholdselementer"
+
+#: devel_node_access.module:129
+msgid "Protected Nodes"
+msgstr "Beskyttede indholdselementer"
+
+#: devel_node_access.module:155
+#: devel_node_access.info:0
+msgid "Devel Node Access"
+msgstr "Devel Node Access"
+
+#: devel_node_access.module:170
+msgid "node"
+msgstr "indholdselement"
+
+#: devel_node_access.module:170
+msgid "gid"
+msgstr "gid"
+
+#: devel_node_access.module:170
+msgid "view"
+msgstr "vis"
+
+#: devel_node_access.module:170
+msgid "update"
+msgstr "opdater"
+
+#: devel_node_access.module:170
+msgid "delete"
+msgstr "slet"
+
+#: devel_node_access.module:181
+msgid "node_access entries for nodes shown on this page"
+msgstr "node_access-regler for indholdselementer på denne side"
+
+#: devel_node_access.module:196
+msgid "Node Access: realm"
+msgstr "Adgang: område"
+
+#: devel_node_access.module:202
+msgid "Node Access Realm"
+msgstr "Område"
+
+#: devel_node_access.module:214
+msgid "Node Access: Realm"
+msgstr "Adgang: område"
+
+#: devel_node_access.module:0
+msgid "devel_node_access"
+msgstr "devel_node_access"
+
+#: macro.module:15
+msgid "Todo: Add help text."
+msgstr "Todo: Tilføj hjælpetekst."
+
+#: macro.module:17
+msgid "This output can be saved to the profile`s .macro file, to be automatically played back upon completed install or used on an import on another site."
+msgstr "Uddata kan gemmes til profilens .macro-fil, som automatisk afspilles ved afslutningen af en installation eller en import på et andet site."
+
+#: macro.module:19
+msgid "Insert recorded macro here to be played into your site. All referenced modules needs to be enabled."
+msgstr "Indsæt makro for at afspille den på dit site. Alle relaterede moduler skal være aktiveret på forhånd."
+
+#: macro.module:21
+msgid "Configuration settings for the drupal macro engine."
+msgstr "Indstillinger for Drupal's makro motor."
+
+#: macro.module:33
+msgid "Macro engine"
+msgstr "Macro motor"
+
+#: macro.module:34
+#: ;60
+msgid "Configure the Drupal macro engine. Export recorded macros or import previously recorded macros."
+msgstr "Indstil Drupal's makro motor. Eksporter optagne makroer eller importer makroer."
+
+#: macro.module:41
+msgid "Export"
+msgstr "Eksport"
+
+#: macro.module:45
+msgid "macro_export_macro"
+msgstr "macro_export_macro"
+
+#: macro.module:50
+msgid "Import"
+msgstr "Import"
+
+#: macro.module:54
+msgid "macro_import_macro"
+msgstr "macro_import_macro"
+
+#: macro.module:59
+msgid "Configure"
+msgstr "Indstil"
+
+#: macro.module:155
+msgid "play macro"
+msgstr "afspil makro"
+
+#: macro.module:179
+msgid "Macro settings"
+msgstr "Makro indstillinger"
+
+#: macro.module:184
+msgid "Enable macro recording"
+msgstr "Aktiver makro optagelse"
+
+#: macro.module:186
+msgid "Set whether the macro engine will record form submissions."
+msgstr "Angiv om makro motoren skal optage indsendelse af formularer."
+
+#: macro.module:190
+msgid "Delete recorded macro"
+msgstr "Slet optaget makro"
+
+#: macro.module:192
+msgid "Set whether to clear previously recorded macro."
+msgstr "Angiv om den senest optagne makro skal slettes."
+
+#: macro.module:209
+msgid "An error has occured with macro #%macro_number , form_id %form_id. Please check the errors displayed for more details."
+msgstr "Der opstod en fejl i makro #%macro_number, form_id %form_id. Se venligst fejlmeddelelserne for yderligere oplysninger."
+
+#: macro.module:77
+msgid "macro access"
+msgstr "makro adgang"
+
+#: macro.module:0
+msgid "macro"
+msgstr "makro"
+
+#: devel.install:59
+msgid "Disabled query logging since devel module is disabled."
+msgstr "Forespørgselslog deaktiveret, dat devel-modulet er deaktiveret."
+
+#: devel.info:0
+msgid "Various blocks, pages, and functions for developers."
+msgstr "Diverse blokke, sider og funktioner for udviklere."
+
+# d:\Drupal-contributions-CVS\modules\devel\devel.module:0
+#: devel.info:0
+#: devel_generate.info:0
+#: devel_node_access.info:0
+#: macro.info:0
+msgid "Development"
+msgstr "Udvikling"
+
+#: devel_generate.info:0
+msgid "Generator"
+msgstr "Generator"
+
+#: devel_generate.info:0
+msgid "Generate dummy users, nodes, and taxonomy terms."
+msgstr "Opret brugere, indholdselementer og ordforråd."
+
+#: devel_node_access.info:0
+msgid "Developer block and page illustrating relevant node_access records."
+msgstr "Blok og side for udviklere der viser relevante rækker fra node_access."
+
+#: macro.info:0
+msgid "Macro"
+msgstr "Makro"
+
+#: macro.info:0
+msgid "Allows administrators to record and playback form submissions."
+msgstr "Administratorer kan optage og afpille indsendelse af formularer."
+
+#: generate/generate-og-users.php:48
+msgid "Assigned %n users to group %t."
+msgstr "%n brugere tilføjet til gruppen %t."
+
+#: generate/generate-og2list-mail.php:38
+msgid "Y/m/d - G:i"
+msgstr "Y/m/d - G:i"
+

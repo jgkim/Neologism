@@ -1,0 +1,267 @@
+// $Id: CHANGELOG.txt,v 1.1.4.25 2007/08/15 19:13:22 yched Exp $
+
+5--1.6-1
+========
+
+Hotfix release for CCK 1.6.
+
+Bugfix
+------
+
+General
+- #167607  Fix '&nbsp' (missing ';') on field display.
+
+Field / widget modules
+- #167468  Nodereference : Fixed autocomplete widget w/ 'advanced (Views) mode' and Views 1.6 :
+           the first set of matches is repeated for subsequent edits (Views query cache)
+
+5--1.6
+======
+
+IMPORTANT : this release fixes two cross-site scripting (XSS) vulnerabilities 
+in nodereference.module :
+- when a nodereference field is displayed using the 'plain' formatter
+- when a nodereference field is edited using the 'autocomplete text field' widget 
+  (only when _not_ using the 'advanced options - Views.module' for the field) 
+  
+All sites using CCK / nodereference.module should consider upgrading to this release
+as soon as possible.
+
+Features 
+--------
+
+General
+- #154827  Let modules know the 'dummy' node form built on the 'manage fields' tab
+           is requested by CCK admin UI (problem with userreviewmodule).
+- #153101  Provide better explanation on the 'default value - php code' expected format.
+- #151347  Refactor content_field('load') to make it more legible.
+- #136697  Make field form_alter easier, if fieldgroups are used.
+
+Field / widget modules
+- #152892  Optionwidgets : Better help text for 'single on/off checkbox' widget label.   
+- #65133 / #152016  Nodereference : Added 'full node' and 'teaser' formatters.
+- #126926  Nodereference : Skip node_load in 'title'-based formatters.
+
+Bugfix
+------
+
+General
+- #162603  Fix 4.7 -> 5.0 upgrade path (create cache_content table before any update is run).
+- #155416  Limit non standard CSS (transparency) to the field overview page.
+- #160130  Content_copy - fix drupal_goto in form submit handler.
+- #157786  Fix capitalization on fieldgroup edit form.
+- #136229  Fieldgroup weights not correctly imported when using content_copy.module.
+- #149832  Use 'plain' format for views argument handler ($op = 'title').
+- #137900  Added whitespace after field labels on node display
+
+Field / widget modules
+-          Nodereference : Fixed XSS vulnerabilities (missing check_plain's around node titles).
+- #147205  Nodereference : Fixed 'advanced settings - view arguments' not working.
+- #155327  Nodereference : Added missing "n." table aliases in 'referenceable nodes' query.
+- #153284  Nodereference : Fix unneeded and repeating {view_view} queries when 
+           'advanced (Views) node selection' is *not* used.
+- #150297  Nodereference : Fix encoded raw htmlentities appearing in select widgets when using 
+           'advanced (Views) node selection' is used.
+- #129016  Nodereference : Prevent possible errors if formatter is called with non numeric 'nid'.
+   
+5--1.5
+======
+
+Features 
+--------
+- #126333  Update to Views 1.6 API 
+           (no need to update cached queries on field setup changes anymore)
+- #115848  Optimization : use dedicated cache table
+- #126776  Enhance 'default value php code' help text and error message.
+-          minor - collapse 'default value php code' if empty
+           
+Bugfix
+------
+
+General
+-          Curly quotes fixes in German translation
+- #130545  Core translation destroyed by German translation
+-          Fieldgroup_data cache was fetched every time from the database -> fixed static caching
+- #128994  Fix for 'ungroup multiple values' views handler populating every 'column'
+           of the values with the first column (revert http://drupal.org/cvs?commit=58000) 
+- #116775  Stupid conflict on field form when field_name == 'name'
+- #122991  Fixes further display page issues with no fields / groups           
+- #127010  (followup to #125661) - proper escaping in update_sql
+-          Forgot some t() labels in fieldgroups
+- #125661  escape group description in update_sql (fieldgroup update)
+- #125536  fixed descriptions on node forms and node display
+- #125185 fix minor error in update_1004.
+
+Field / widget modules
+- #130230  Optionwidgets : allow setting back to 'no value' for non required fields
+- #123970  Text : 'trimmed' formatter : trim first, then check_markup
+
+5--1.4
+======
+
+Features
+--------
+
+General
+- #117621  Allow field modules to provide their own views integration data
+- #120172  String update - make field name / label workflow clearer on 'add new field' form
+- #115425  Allow field descriptions to be translated
+- #85679   Fieldgroups : group fields on node display
+
+Field / widget modules
+- #114145  Noderef : Add 'view arguments' setting for view-defined referenceable nodes
+
+Bugfix
+------
+
+General
+- #108226  (minor) ungroup field handler : no need to rebuild the field queryname
+- #122118  Prevent possible memory overflow in content_update_1003
+- #116058  (PgSQL) Wrong use of db_add_column in content_update_1002
+- #115332  MySQL5 : fix errors when adding new or existing field
+- #119103  Translate field label in node display (as in node form)
+- #122991  Fix 'invalid argument in foreach' on field display tab when no fieldgroups
+
+Field / widget modules
+- #108094  Text : fix MySQL5 error on text field creation.
+- #117813  Noderef / Userref : Fix select list widget filling 'delta' column with the nid / uid
+- #117031  Userref : Fix broken "roles that can be referenced"
+- #123667  Number : Fix incorrect code for prefix / suffix
+
+5--1.3
+======
+
+Features
+--------
+
+General
+- #59451   Added management of default values for fields
+- #107128  Added teasers / full nodes support in an overview form for display settings
+-          Reworked theming example and instructions accordingly
+-          Removed hook_field('view') for core field modules
+           (default 'view' op is now handled in content.module)
+- #108755  Add group name in the 'class' attributes of groups fieldsets
+- #112225  Moved content_types_rebuild to hook_enable
+
+Field / widget modules
+- #108302  Number : Added formatters for numbers (+ be sure non-numeric data is not stored)
+- #110570  Number : Added prefix and suffix option
+- #111129  Optionwidgets : Added widget to handle single on/off checkbox
+- #112464  Standardize validation in field rather than widget, 
+           Standardize use of $items rather than $node_field
+
+Bugfix
+------
+
+General
+- #105787  (critical) move data tables from 'node_*' to 'content_*'
+           to avoid possible clashes with core 'node_*' tables
+- #104229  Fixed occasional 'wrong datatype' error on field overview
+- #108914  Fixed error when several fieldgroups have the same name
+- #111276  Fixed link to module page in warning message when no field module is enabled
+-          Remove deprecated help text in fieldgroup.module
+- #109863  Fixed table name error in content.install (4.7 upgrade path)
+- #108094  (incomplete) fix for "text columns are not allowed defaults values with MySQL(5)" ?
+- #100546  Postgres compatibility, change integer unsigned to int_unsigned
+- #108226  make cck view field handler play nicely with Views Fusion module ('ungroup' handler)
+- #114936  make sure default value form element is not required
+
+Field / widget modules
+- #107667  Added missing '#size' for mutliple select widgets (display issues with Opera)
+- #108037  Optionwidgets : (update function) Added missing curly braces around table name
+- #114346  fix error on empty noderef fields
+
+5--1.2
+======
+
+Bugfix
+------
+- #107752  Changed JOIN USING to INNER JOIN in fieldgroup for MYSQL 3 compatibility
+- #84634   Added error handling for some PHP5 array_merge errors
+-         Fixed some invalid t()'ed strings for .pot extractor
+
+5--1.1
+======
+
+This version has database changes in it and requires update.php.
+
+Files added
+  fieldgroup.module
+  fieldgroup.info
+  fieldgroup.install
+  content_copy.module
+  content_copy.info
+  content.css
+  UPGRADE.txt
+
+Files removed
+  date.module
+  date.info
+  date.install
+
+Features
+--------
+
+General
+- #99446   Added content_copy module for import/export for type, group, and field definitions.
+- #57483   Added fieldgroup module to core CCK.
+- #99672   Improved UI for setting weights and groups on field overview page
+- #99672   Added body field (if present) to the fields overview
+- #79887   Default field theming does not display label on empty fields.
+- #88135   Views handling of multiple fields : allow option to group multiple fields together.
+- #105787  Refactor generation of data table names
+- #107208  Make db tables storage-agnostic (remove MyISAM enforcement)
+-          Optimized .inc files inclusion
+-          Removed hook_simpletest for now
+-          Misc code cleanup
+
+
+Field / widget modules
+-          Removed original date.module. Use http://drupal.org/project/date instead.
+- #89172   Improved handling for optionwidgets, adding ability to create options as an array
+          in php or as a list of values. Also fixes View handling, making sure the right value
+          is swapped in for the option in Views tables and lists.
+
+Bugfix
+------
+
+General
+- #105270  Adapt field and group admin forms to work better with programmatic submissions.
+-          Add field type and module as hidden fields to content_admin_field form to make
+           programmatic form submission easier
+- #104259  Add code to create node_content tables and function content_types_rebuild()
+           to fix database if content types are added when CCK is not enabled.
+- #89351   Make sure node_content table row gets deleted when no fields are in it.
+-          Fix url in fields tab table.
+- #101599  Fixed node not being passed to formatters in view field handler
+-          When changing storage from 'per field' to 'per content type',NULL values were
+           copied as 0 or string 'NULL'
+- #98895   Always include content_admin.inc file in admin area.
+- #100535  Fix occasional fatal error on node view when $node->content comes empty.
+- #101946  Make sure no default value is provided for MySQL text and blob columns.
+- #81688   Ensure multiple fields have a label to mark "required" asterisk
+- #105603  Make goup names consistent with field names ('group-*' => 'group_*')
+
+Field / widget modules
+- #104598  Text : core now treats maxlength = '' as maxlength = 0
+-          Text : store one '' (empty string) for empty multiple fields (stored nothing previously)
+- #103585  Userreference : force transposed node_field['uid'] to array when empty.
+- #98910   Userreference : Fixed storage issues for empty userreference fields
+- #106150  Userreference : make user list sorting consistent
+- #82439   Number : Fixed storage issues for empty number fields
+
+5.0 port
+- #106932  Fixed migration path from outdated 4.7 versions
+- #100744  Fixed migration path from outdated 4.7 versions
+- #99713   Fixed field weights not playing correctly with 'non-cck' fields on node display
+- #99096   Fixed content_form being called twice on form generation
+- #100535  Fixed occasional fatal error on node view when $node->content comes empty
+-          Field instances were not removed on a content type deletion
+-          "enctype : multipart" was added to node forms for every content type
+-          Removed hook_help when deprecated by .info files
+
+
+5--1.0-beta
+===========
+
+- initial 5.x release

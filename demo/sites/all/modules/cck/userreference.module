@@ -1,0 +1,285 @@
+<?php
+// $Id: userreference.module,v 1.30.2.16 2007/03/05 21:58:47 yched Exp $
+
+/**
+ * @file
+ * Defines a field type for referencing a user from a node.
+ */
+
+/**
+ * Implementation of hook_field_info().
+ */
+function userreference_field_info() {
+  return array(
+    'userreference' => array('label' => 'User Reference'),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function userreference_field_settings($op, $field) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      $form['referenceable_roles'] = array(
+        '#type' => 'checkboxes',
+        '#title' => t('User roles that can be referenced'),
+        '#default_value' => isset($field['referenceable_roles']) ? $field['referenceable_roles'] : array(),
+        '#options' => user_roles(1),
+      );
+      return $form;
+
+    case 'save':
+      return array('referenceable_roles');
+
+    case 'database columns':
+      $columns = array(
+        'uid' => array('type' => 'int', 'not null' => FALSE, 'default' => NULL),
+      );
+      return $columns;
+
+    case 'filters':
+      return array(
+        'default' => array(
+          'list' => '_userreference_filter_handler',
+          'list-type' => 'list',
+          'operator' => 'views_handler_operator_or',
+          'value-type' => 'array',
+          'extra' => array('field' => $field),
+        ),
+      );
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function userreference_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    case 'validate':
+      foreach ($items as $delta => $item) {
+        $error_field = isset($item['error_field']) ? $item['error_field'] : '';
+        unset($item['error_field']);
+        if (!empty($item['uid']) && !in_array($item['uid'], array_keys(_userreference_potential_references($field)))) {
+          form_set_error($error_field, t('%name : Invalid user.', array('%name' => t($field['widget']['label']))));
+        }
+      }
+      return;
+  }
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function userreference_field_formatter_info() {
+  return array(
+    'default' => array(
+      'label' => 'Default',
+      'field types' => array('userreference'),
+    ),
+    'plain' => array(
+      'label' => 'Plain text',
+      'field types' => array('userreference'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter().
+ */
+function userreference_field_formatter($field, $item, $formatter, $node) {
+  $text = '';
+  if (isset($item['uid'])) {
+    $referenced_user = user_load(array('uid' => $item['uid']));
+    if ($referenced_user) {
+      $text = theme('username', $referenced_user);
+    }
+  }
+
+  switch ($formatter) {
+    case 'plain':
+      return strip_tags($text);
+
+    default:
+      return $text;
+  }
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function userreference_widget_info() {
+  return array(
+    'userreference_select' => array(
+      'label' => 'Select List',
+      'field types' => array('userreference'),
+    ),
+    'userreference_autocomplete' => array(
+      'label' => 'Autocomplete Text Field',
+      'field types' => array('userreference'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function userreference_widget($op, &$node, $field, &$items) {
+  if ($field['widget']['type'] == 'userreference_select') {
+    switch ($op) {
+      case 'prepare form values':
+        $items_transposed = content_transpose_array_rows_cols($items);
+        // get rid of null values
+        $items['default uids'] = array_filter((array) $items_transposed['uid']);
+        break;
+
+      case 'form':
+        $form = array();
+
+        $options = _userreference_potential_references($field);
+        if (!$field['required']) {
+          $options = array('none' => t('<none>')) + $options;
+        }
+        if (empty($items['default uids'])) {
+          $items['default uids'][] = 'none';
+        }
+        $form[$field['field_name']] = array('#tree' => TRUE);
+        $form[$field['field_name']]['uids'] = array(
+          '#type' => 'select',
+          '#title' => t($field['widget']['label']),
+          '#default_value' => $items['default uids'],
+          '#multiple' => $field['multiple'],
+          '#size' => $field['multiple'] ? min(count($options), 6) : 0,
+          '#options' => $options,
+          '#required' => $field['required'],
+          '#description' => t($field['widget']['description']),
+        );
+
+        return $form;
+
+      case 'process form values':
+        if ($field['multiple']) {
+          // drop the 'none' option
+          unset($items['uids']['none']);
+          if (!empty($items['uids'])) {
+            $items = array_values(content_transpose_array_rows_cols(array('uid' => $items['uids'])));
+          }
+          else {
+            $items[0]['uid'] = '';
+          }
+        }
+        else {
+          $items[0]['uid'] = ($items['uids'] != 'none') ? $items['uids'] : '';
+        }
+        // Remove the widget's data representation so it isn't saved.
+        unset($items['uids']);
+        foreach ($items as $delta => $item) {
+          $items[$delta]['error_field'] =  $field['field_name'] .'][uids';
+        }
+    }
+  }
+  else {
+    switch ($op) {
+      case 'prepare form values':
+        foreach ($items as $delta => $item) {
+          if (!empty($items[$delta]['uid'])) {
+            $items[$delta]['default user_name'] = db_result(db_query("SELECT name FROM {users} WHERE uid = '%d'", $items[$delta]['uid']));
+          }
+        }
+        break;
+
+      case 'form':
+        $form = array();
+        $form[$field['field_name']] = array('#tree' => TRUE);
+
+        if ($field['multiple']) {
+          $form[$field['field_name']]['#type'] = 'fieldset';
+          $form[$field['field_name']]['#description'] = t($field['widget']['description']);
+          $delta = 0;
+          foreach ($items as $item) {
+            if ($item['uid']) {
+              $form[$field['field_name']][$delta]['user_name'] = array(
+                '#type' => 'textfield',
+                '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+                '#autocomplete_path' => 'user/autocomplete',
+                '#default_value' => $item['default user_name'],
+                '#required' => ($delta == 0) ? $field['required'] : FALSE,
+              );
+              $delta++;
+            }
+          }
+          foreach (range($delta, $delta + 2) as $delta) {
+            $form[$field['field_name']][$delta]['user_name'] = array(
+              '#type' => 'textfield',
+              '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+              '#autocomplete_path' => 'user/autocomplete',
+              '#default_value' => '',
+              '#required' => ($delta == 0) ? $field['required'] : FALSE,
+            );
+          }
+        }
+        else {
+          $form[$field['field_name']][0]['user_name'] = array(
+            '#type' => 'textfield',
+            '#title' => t($field['widget']['label']),
+            '#autocomplete_path' => 'user/autocomplete',
+            '#default_value' => $items[0]['default user_name'],
+            '#required' => $field['required'],
+            '#description' => t($field['widget']['description']),
+          );
+        }
+        return $form;
+
+      case 'process form values':
+        foreach ($items as $delta => $item) {
+          $uid = '';
+          if (!empty($items[$delta]['user_name'])) {
+            $uid = db_result(db_query("SELECT uid FROM {users} WHERE name = '%s'", $items[$delta]['user_name']));
+          }
+          // Remove the widget's data representation so it isn't saved.
+          unset($items[$delta]['user_name']);
+          $items[$delta]['uid'] = $uid;
+          $items[$delta]['error_field'] = $field['field_name'] .']['. $delta .'][user_name';
+          // Don't save empty fields except the first value
+          if (empty($uid) && $delta > 0) {
+            unset($items[$delta]);
+          }
+        }
+    }
+  }
+}
+
+/**
+ * Fetch an array of all candidate referenced users, for use in presenting the selection form to the user.
+ */
+function _userreference_potential_references($field) {
+  $roles = array();
+  if (is_array($field['referenceable_roles'])) {
+    // keep only selected checkboxes
+    $roles = array_filter($field['referenceable_roles']);
+    // filter invalid values that seems to get through sometimes ??
+    $roles = array_intersect(array_keys(user_roles(1)), $roles);
+  }
+  if (empty($roles) || in_array(DRUPAL_AUTHENTICATED_RID, $roles)) {
+    $result = db_query('SELECT u.name, u.uid FROM {users} u WHERE uid > 0 ORDER BY u.name ASC');
+  }
+  else {
+    $result = db_query('SELECT u.name, u.uid FROM {users} u LEFT JOIN {users_roles} r ON u.uid = r.uid WHERE u.uid > 0 AND r.rid IN ('. implode($roles, ',') .') ORDER BY u.name ASC');
+  }
+
+  $users = array();
+  while ($user = db_fetch_object($result)) {
+    $users[$user->uid] = $user->name;
+  }
+  return $users;
+}
+
+/**
+ * Provide a list of users to filter on.
+ */
+function _userreference_filter_handler($op, $filterinfo) {
+  $options = views_handler_filter_usercurrent();
+  $options = $options + _userreference_potential_references($filterinfo['extra']['field']);
+  return $options;
+}

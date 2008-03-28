@@ -1,0 +1,146 @@
+<?php
+// $Id: fieldgroup.install,v 1.1.4.14 2007/04/22 13:20:12 fago Exp $
+
+function fieldgroup_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {node_group} (
+                `type_name` varchar(32) NOT NULL default '',
+                `group_name` varchar(32) NOT NULL default '',
+                `label` varchar(255) NOT NULL default '',
+                `settings` mediumtext NOT NULL,
+                `weight` tinyint(4) NOT NULL,
+                 PRIMARY KEY(`type_name`, `group_name`)
+              ) /*!40100 DEFAULT CHARACTER SET utf8 */");
+      db_query("CREATE TABLE {node_group_fields} (
+                `type_name` varchar(32) NOT NULL default '',
+                `group_name` varchar(32) NOT NULL default '',
+                `field_name` varchar(32) NOT NULL default '',
+                 PRIMARY KEY(`type_name`, `group_name`, `field_name`)
+              ) /*!40100 DEFAULT CHARACTER SET utf8 */");
+      break;
+    case 'pgsql':
+      db_query("CREATE TABLE {node_group} (
+                type_name varchar(32) NOT NULL default '',
+                group_name varchar(32) NOT NULL default '',
+                label varchar(255) NOT NULL default '',
+                settings text NOT NULL,
+                weight smallint NOT NULL,
+                PRIMARY KEY(type_name, group_name)
+      )");
+      db_query("CREATE TABLE {node_group_fields} (
+                type_name varchar(32) NOT NULL default '',
+                group_name varchar(32) NOT NULL default '',
+                field_name varchar(32) NOT NULL default '',
+                PRIMARY KEY(type_name, group_name, field_name)
+      )");
+    break;
+  }
+  db_query("UPDATE {system} SET weight = 9 WHERE name = 'fieldgroup'");
+}
+
+/**
+ *  rename groups form "group-*" to "group_*"
+ */
+function fieldgroup_update_1() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      $ret[] = update_sql("UPDATE {node_group} SET group_name = 'group_'||SUBSTRING(group_name FROM 7)");
+      $ret[] = update_sql("UPDATE {node_group_fields} SET group_name = 'group_'||SUBSTRING(group_name FROM 7)");
+      break;
+
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("UPDATE {node_group} SET group_name = CONCAT('group_', SUBSTRING(group_name FROM 7))");
+      $ret[] = update_sql("UPDATE {node_group_fields} SET group_name = CONCAT('group_', SUBSTRING(group_name FROM 7))");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * add display settings for the group
+ */
+function fieldgroup_update_2() {
+  $ret = array();
+
+  // set settings column to accept larger values
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql('ALTER TABLE {node_group} CHANGE settings settings mediumtext NOT NULL');
+      break;
+
+    case 'pgsql':
+      db_change_column($ret, 'node_group', 'settings', 'settings', 'text', array('not null' => TRUE));
+      break;
+  }
+
+  // move description into the settings array, and add new settings
+  $result = db_query("SELECT * FROM {node_group}");
+  while ($group = db_fetch_array($result)) {
+    $settings = array();
+    $settings['form'] = unserialize($group['settings']);
+    $settings['form']['description'] = $group['description'];
+    $settings['display'] = array('collapsible' => 0, 'collapsed' => 0, 'description' => '');
+    $ret[] = update_sql("UPDATE {node_group} SET settings = '". db_escape_string(serialize($settings)) ."', description = '' WHERE group_name = '". $group['group_name'] ."'");
+  }
+
+  // drop description column
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql('ALTER TABLE {node_group} DROP description');
+      break;
+
+    case 'pgsql':
+      // Postgres only supports dropping of columns since 7.4
+      break;
+  }
+
+  return $ret;
+}
+
+
+/**
+ * converts group settings collapsible/collapsed => style
+ */
+function fieldgroup_update_3() {
+  $ret = array();
+  $result = db_query("SELECT * FROM {node_group}");
+  while ($group = db_fetch_array($result)) {
+    $group['settings'] = unserialize($group['settings']);
+
+    if (!isset($group['settings']['form']['style'])) {
+      foreach (array('form', 'display') as $context) {
+        if (isset($group['settings'][$context]['collapsible']) && $group['settings'][$context]['collapsible']) {
+          if (isset($group['settings'][$context]['collapsed']) && $group['settings'][$context]['collapsed']) {
+            $group['settings'][$context]['style'] = 'fieldset_collapsed';
+          }
+          else {
+            $group['settings'][$context]['style'] = 'fieldset_collapsible';
+          }
+        }
+        else {
+          $group['settings'][$context]['style'] = 'fieldset';
+        }
+      }
+
+      $ret[] = update_sql("UPDATE {node_group} SET settings = '". db_escape_string(serialize($group['settings'])) ."' WHERE group_name = '". $group['group_name'] ."'");
+    }
+  }
+
+  return $ret;
+}
+
+/*
+ * Increases module weight, so that other modules can form_alter() cck forms before the fields
+ * are moved in groups
+ */
+function fieldgroup_update_4() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = 9 WHERE name = 'fieldgroup'");
+  return $ret;
+}

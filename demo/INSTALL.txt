@@ -1,0 +1,222 @@
+// $Id: INSTALL.txt,v 1.39.2.3 2008/01/10 22:14:24 drumm Exp $
+
+CONTENTS OF THIS FILE
+---------------------
+
+ * Changes
+ * Requirements
+ * Optional requirements
+ * Installation
+ * Drupal administration
+ * Customizing your theme(s)
+ * Multisite Configuration
+ * More Information
+
+CHANGES
+-------
+
+As of Drupal 5.0 installation has been automated by an install script. It is no
+longer necessary to manually edit the "settings.php" file, and database tables
+are created automatically.
+
+REQUIREMENTS
+------------
+
+Drupal requires a web server, PHP4 (4.3.5 or greater) or PHP5
+(http://www.php.net/) and either MySQL (http://www.mysql.com/) or PostgreSQL
+(http://www.postgresql.org/). The Apache web server and MySQL database are
+recommended; other web server and database combinations such as IIS and
+PostgreSQL have been tested to a lesser extent. When using MySQL, version 4.1
+or greater is recommended to assure you can safely transfer the database.
+
+For more detailed information about Drupal requirements, see "Requirements"
+(http://drupal.org/requirements) in the Drupal Handbook.
+
+Guidelines for setting up a server environment with a variety of operating
+systems and in special cases are available in the Drupal handbook
+(http://drupal.org/node/260)
+
+OPTIONAL REQUIREMENTS
+---------------------
+
+- To use XML-based services such as the Blogger API, Jabber, and RSS
+syndication, you will need PHP's XML extension. This extension is enabled by
+default.
+
+- If you want support for clean URLs, you'll need mod_rewrite and the ability
+to use local .htaccess files.
+
+INSTALLATION
+------------
+
+1. DOWNLOAD DRUPAL
+
+   You can obtain the latest Drupal release from http://drupal.org/. The files
+   are in .tar.gz format and can be extracted using most compression tools. On a
+   typical Unix command line, use:
+
+     wget http://drupal.org/files/projects/drupal-x.x.tar.gz
+     tar -zxvf drupal-x.x.tar.gz
+
+   This will create a new directory drupal-x.x/ containing all Drupal files
+   and directories. Move the contents of that directory into a directory within
+   your web server's document root or your public HTML directory:
+
+     mv drupal-x.x/* drupal-x.x/.htaccess /var/www/html
+
+2. CREATE THE DRUPAL DATABASE
+
+   Drupal requires access to a database in order to be installed. Your database
+   user will need sufficient privileges to run Drupal. Additional information
+   about privileges, and instructions to create a database using the command
+   line are available in INSTALL.mysql.txt (for MySQL) or INSTALL.pgsql.txt
+   (for PostgreSQL).
+
+   To create a database using PHPMyAdmin or a web-based control panel consult
+   the documentation or ask your webhost service provider.
+
+   Take note of the username, password, database name and hostname as you
+   create the database. You will enter these items in the install script.
+
+3. RUN THE INSTALL SCRIPT
+
+   The install script will set the base URL, connect Drupal to the database, and
+   create tables in the database.
+
+   To run the install script point your browser to the base url of your website
+   (i.e. http://www.example.com). You will be presented with the "Database
+   Configuration" page.
+
+   The install script will attempt to write-protect the settings.php after
+   updating it with the information you provide in the installation routine.
+   If you make manual changes to that file later, be sure to protect it again
+   after making your modifications. Failure to remove write permissions to
+   that file is a security risk. The default location for the settings.php
+   file is at sites/default/settings.php, but it may be in another location
+   if you use the multi-site setup, as explained below.
+
+4. CONFIGURE DRUPAL
+
+   When the install script succeeds, you will be directed to the "Welcome" page.
+   In "step one" click "create the first account" which will become the main
+   administrator account with total control. Login as the administrator and
+   complete the initial configuration steps on the "Welcome" page.
+
+   Consider creating a "files" subdirectory in your Drupal installation
+   directory. This subdirectory stores files such as custom logos, user avatars,
+   and other media associated with your new site. The sub-directory requires
+   "read and write" permission by the Drupal server process. You can change
+   the name of this subdirectory at "administer > site configuration > file
+   system".
+
+5. CRON TASKS
+
+   Many Drupal modules (such as the search functionality) have periodic tasks
+   that must be triggered by a cron job. To activate these tasks, call the cron
+   page by visiting http://www.example.com/cron.php --this will pass control to
+   the modules and the modules will decide if and what they must do.
+
+   Most systems support the crontab utility for scheduling tasks like this. The
+   following example crontab line will activate the cron tasks automatically on
+   the hour:
+
+   0   *   *   *   *   wget -O - -q -t 1 http://www.example.com/cron.php
+
+   More information about the cron scripts are available in the admin help pages
+   and in the Drupal handbook at drupal.org. Example scripts can be found in the
+   scripts/ directory.
+
+DRUPAL ADMINISTRATION
+---------------------
+
+A new installation of Drupal defaults to a very basic configuration with only a
+few active modules and minimal user access rights.
+
+Use your administration panel to enable and configure services. For example:
+
+General Settings       Administer > Site configuration > Site information
+Enable Modules         Administer > Site building > Modules
+Set User Permissions   Administer > User management > Access control
+Configure Themes       Administer > Site building > Themes
+
+For more information on configuration options, read the instructions which
+accompany the different configuration settings and consult the various help
+pages available in the administration panel.
+
+Community-contributed modules and themes are available at http://drupal.org/.
+
+CUSTOMIZING YOUR THEME(S)
+-------------------------
+
+Now that your installation is running, you will want to customize the look of
+your site. Several sample themes are included and more can be downloaded from
+drupal.org.
+
+Simple customization of your theme can be done using only CSS. Further changes
+require understanding the phptemplate engine that is now part of Drupal. See
+http://drupal.org/handbook/customization to find out more.
+
+MULTISITE CONFIGURATION
+-----------------------
+
+A single Drupal installation can host several Drupal-powered sites, each with
+its own individual configuration.
+
+Additional site configurations are created in subdirectories within the 'sites'
+directory. Each subdirectory must have a 'settings.php' file which specifies the
+configuration settings. The easiest way to create additional sites is to copy
+the 'default' directory and modify the 'settings.php' file as appropriate. The
+new directory name is constructed from the site's URL. The configuration for
+www.example.com could be in 'sites/example.com/settings.php' (note that 'www.'
+should be omitted if users can access your site at http://example.com/).
+
+Sites do not have to have a different domain. You can also use subdomains and
+subdirectories for Drupal sites. For example, example.com, sub.example.com,
+and sub.example.com/site3 can all be defined as independent Drupal sites. The
+setup for a configuration such as this would look like the following:
+
+  sites/default/settings.php
+  sites/example.com/settings.php
+  sites/sub.example.com/settings.php
+  sites/sub.example.com.site3/settings.php
+
+When searching for a site configuration (for example www.sub.example.com/site3),
+Drupal will search for configuration files in the following order, using the
+first configuration it finds:
+
+  sites/www.sub.example.com.site3/settings.php
+  sites/sub.example.com.site3/settings.php
+  sites/example.com.site3/settings.php
+  sites/www.sub.example.com/settings.php
+  sites/sub.example.com/settings.php
+  sites/example.com/settings.php
+  sites/default/settings.php
+
+If you are installing on a non-standard port, the port number is treated as the
+deepest subdomain. For example: http://www.example.com:8080/ could be loaded
+from sites/8080.www.example.com/. The port number will be removed according to
+the pattern above if no port-specific configuration is found, just like a real
+subdomain.
+
+Each site configuration can have its own site-specific modules and themes in
+addition to those installed in the standard 'modules'and 'themes' directories.
+To use site-specific modules or themes, simply create a 'modules' or 'themes'
+directory within the site configuration directory. For example, if
+sub.example.com has a custom theme and a custom module that should not be
+accessible to other sites, the setup would look like this:
+
+  sites/sub.example.com/:
+  settings.php
+  themes/custom_theme
+  modules/custom_module
+
+NOTE: for more information about multiple virtual hosts or the configuration
+settings, consult the Drupal handbook at drupal.org.
+
+MORE INFORMATION
+----------------
+
+For platform specific configuration issues and other installation and
+administration assistance, please consult the Drupal handbook at
+http://drupal.org/handbook. You can view the wide range of other support options
+available at http://drupal.org/support.

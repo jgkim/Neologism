@@ -1,0 +1,546 @@
+<?php
+// $Id: fieldgroup.module,v 1.1.4.33 2007/08/09 18:42:55 yched Exp $
+
+/**
+ * @file
+ * Create field groups for CCK fields.
+ */
+
+function fieldgroup_menu($may_cache) {
+  if (!$may_cache) {
+    if (arg(0) == 'admin' && arg(1) == 'content' && arg(2) == 'types' && arg(3)) {
+
+      $content_type = content_types(arg(3));
+
+      if (!empty($content_type) && arg(3) && arg(3) == $content_type['url_str']) {
+        $items[] = array(
+          'path' => 'admin/content/types/'. arg(3) .'/add_group',
+          'title' => t('Add group'),
+          'callback' => 'fieldgroup_edit_group',
+          'access' => user_access('administer content types'),
+          'callback arguments' => array($content_type, '', 'add'),
+          'type' => MENU_LOCAL_TASK,
+          'weight' => 3,
+          );
+        if (arg(4) == 'groups' && arg(5)) {
+          $items[] = array(
+            'path' => 'admin/content/types/'. arg(3) .'/groups/'. arg(5) .'/edit',
+            'title' => t('Edit group'),
+            'callback' => 'fieldgroup_edit_group',
+            'access' => user_access('administer content types'),
+            'callback arguments' => array($content_type, arg(5), 'edit'),
+            'type' => MENU_CALLBACK_ITEM,
+            );
+          $items[] = array(
+            'path' => 'admin/content/types/'. arg(3) .'/groups/'. arg(5) .'/remove',
+            'title' => t('Edit group'),
+            'callback' => 'drupal_get_form',
+            'callback arguments' => array('fieldgroup_remove_group', $content_type, arg(5)),
+            'access' => user_access('administer content types'),
+            'type' => MENU_CALLBACK_ITEM,
+            );
+        }
+      }
+    }
+
+    drupal_add_css(drupal_get_path('module', 'fieldgroup') .'/fieldgroup.css');
+  }
+  return $items;
+
+}
+
+function fieldgroup_edit_group($content_type, $group_name, $action) {
+  return drupal_get_form('fieldgroup_edit_group_form', $content_type, $group_name, $action);
+}
+
+function fieldgroup_edit_group_form($content_type, $group_name, $action) {
+  $groups = fieldgroup_groups($content_type['type']);
+  $group = $groups[$group_name];
+
+  if ($action == 'add') {
+    //adding a new one
+    $group = array();
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Add'),
+      '#weight' => 10,
+    );
+  }
+  else if ($group) {
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save'),
+      '#weight' => 10,
+    );
+  }
+  else {
+    drupal_not_found();
+    exit;
+  }
+
+  $form['label'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Label'),
+    '#default_value' => $group['label'],
+    '#required' => TRUE,
+  );
+  $form['settings']['#tree'] = TRUE;
+  $form['settings']['form'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Form settings',
+    '#description' => t('These settings apply to the group in the node editing form'),
+  );
+  $form['settings']['form']['style'] = array(
+    '#type' => 'radios',
+    '#title' => t('Style'),
+    '#default_value' => $group['settings']['form']['style'] ? $group['settings']['form']['style'] : 'fieldset',
+    '#options' => array(
+      'fieldset' => t('always open'),
+      'fieldset_collapsible' => t('collapsible'),
+      'fieldset_collapsed' => t('collapsed'),
+    )
+  );
+  $form['settings']['form']['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Help text'),
+    '#default_value' => $group['settings']['form']['description'],
+    '#rows' => 5,
+    '#description' => t('Instructions to present to the user on the editing form.'),
+    '#required' => FALSE,
+  );
+  $form['settings']['display'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Display settings',
+    '#description' => t('These settings apply to the group on node display.'),
+  );
+  $form['settings']['display']['description'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Description'),
+    '#default_value' => $group['settings']['display']['description'],
+    '#rows' => 5,
+    '#description' => t('A description of the group.'),
+    '#required' => FALSE,
+  );
+  foreach (array_merge(array_keys(_content_admin_display_contexts()), array('label')) as $key) {
+    $form['settings']['display'][$key] = array('#type' => 'value', '#value' => $group['settings']['display'][$key]);
+  }
+  $form['weight'] = array('#type' => 'hidden', '#default_value' => $group['weight']);
+  $form['group_name'] = array('#type' => 'hidden', '#default_value' => $group_name);
+  $form['#submit'] = array('fieldgroup_edit_group_submit' => array($content_type, $action));
+  return $form;
+}
+
+/**
+ *  Group name validation for programmatic group addition.
+ */
+function fieldgroup_edit_group_validate($form_id, $form_values, $content_type, $action) {
+  if (!empty($form_values['group_name']) && $action == 'add') {
+
+    $groups = fieldgroup_groups($content_type['type']);
+    $group = $groups[$form_values['group_name']];
+
+    if (isset($group[$form_values['group_name']])) {
+      form_set_error('group_name', t('The group name %name already exists.', array(
+        '%group_name' => $form_values['group_name'])));
+    }
+    if (!preg_match('!^[a-z0-9_]+$!', $form_values['group_name'])) {
+      form_set_error('group_name', t('The group name %name is invalid.', array(
+        '%group_name' => $form_values['group_name'])));
+    }
+  }
+}
+
+function fieldgroup_edit_group_submit($form_id, &$form_values, $content_type, $action) {
+  $groups = fieldgroup_groups($content_type['type']);
+  $group = $groups[$form_values['group_name']];
+  fieldgroup_save_group($content_type['type'], $form_values);
+  cache_clear_all('fieldgroup_data', 'cache_content');
+  return 'admin/content/types/'. $content_type['url_str'] .'/fields';
+}
+
+/*
+ * Saves the given group for this content-type
+ */
+function fieldgroup_save_group($type_name, $group) {
+  $groups = fieldgroup_groups($type_name);
+  $old_group = $groups[$group['group_name']];
+
+  if (!$old_group) {
+    // Accept group name from programmed submissions if valid.
+    if (!empty($group['group_name'])) {
+      $group_name = $group['group_name'];
+    }
+    else {
+      // Otherwise, find a valid, computer-friendly name.
+      $group_name = trim($group['label']);
+      $group_name = drupal_strtolower($group_name);
+      $group_name = str_replace(array(' ', '-'), '_', $group_name);
+      $group_name = preg_replace('/[^a-z0-9_]/', '', $group_name);
+      $group_name = 'group_'. $group_name;
+      $group_name = substr($group_name, 0, 30);
+      if (isset($groups[$group_name])) {
+        $group_name_base = $group_name;
+        $counter = 0;
+        while (isset($groups[$group_name])) {
+          $group_name = $group_name_base .'_'. $counter++;
+        }
+      }
+    }
+    db_query("INSERT INTO {node_group} (type_name, group_name, label, settings, weight)
+             VALUES ('%s', '%s', '%s', '%s', %d)", $type_name, $group_name, $group['label'], serialize($group['settings']), $group['weight']);
+    return SAVED_NEW;
+  }
+  else {
+    db_query("UPDATE {node_group} SET label = '%s', settings = '%s', weight = %d ".
+             "WHERE type_name = '%s' AND group_name = '%s'",
+             $group['label'], serialize($group['settings']), $group['weight'], $type_name, $group['group_name']);
+    return SAVED_UPDATED;
+  }
+}
+
+function fieldgroup_remove_group($content_type, $group_name) {
+  $groups = fieldgroup_groups($content_type['type']);
+  $group = $groups[$group_name];
+
+  if (!$group) {
+    drupal_not_found();
+    exit;
+  }
+
+  $form['#submit'] = array(fieldgroup_remove_group_submit => array($content_type, $group_name));
+  return confirm_form($form,
+                  t('Are you sure you want to remove the group %label?',
+                  array('%label' => t($group['label']))),
+                  'admin/content/types/'. $content_type['url_str'] .'/fields', t('This action cannot be undone.'),
+                  t('Remove'), t('Cancel'));
+}
+
+function fieldgroup_remove_group_submit($form_id, &$form_values, $content_type, $group_name) {
+  db_query("DELETE FROM {node_group} WHERE  type_name = '%s' AND group_name = '%s'", $content_type['type'], $group_name);
+  db_query("DELETE FROM {node_group_fields} WHERE  type_name = '%s' AND group_name = '%s'", $content_type['type'], $group_name);
+  cache_clear_all('fieldgroup_data', 'cache_content');
+
+  drupal_set_message('The group has been removed.');
+  return 'admin/content/types/'. $content_type['url_str'] .'/fields';
+}
+
+
+
+/*
+ * Returns all groups for a content type
+ */
+function fieldgroup_groups($content_type = '', $sorted = FALSE, $reset = FALSE) {
+  static $groups, $groups_sorted;
+
+  if (!isset($groups) || $reset) {
+    if ($cached = cache_get('fieldgroup_data', 'cache_content')) {
+      $data = unserialize($cached->data);
+      $groups = $data['groups'];
+      $groups_sorted = $data['groups_sorted'];
+    }
+    else {
+      $result = db_query("SELECT * FROM {node_group} ORDER BY weight, group_name");
+      $groups = array();
+      $groups_sorted = array();
+      while ($group = db_fetch_array($result)) {
+        $group['settings'] = unserialize($group['settings']);
+        $group['fields'] = array();
+        $groups[$group['type_name']][$group['group_name']] = $group;
+        $groups_sorted[$group['type_name']][] = &$groups[$group['type_name']][$group['group_name']];
+      }
+      //load fields
+      $result = db_query("SELECT nfi.*, ng.group_name FROM {node_group} ng ".
+                         "INNER JOIN {node_group_fields} ngf ON ngf.type_name = ng.type_name AND ngf.group_name = ng.group_name ".
+                         "INNER JOIN {node_field_instance} nfi ON nfi.field_name = ngf.field_name AND nfi.type_name = ngf.type_name ".
+                         "ORDER BY nfi.weight");
+      while ($field = db_fetch_array($result)) {
+        $groups[$field['type_name']][$field['group_name']]['fields'][$field['field_name']] = $field;
+      }
+      cache_set('fieldgroup_data', 'cache_content', serialize(array('groups' => $groups, 'groups_sorted' => $groups_sorted)));
+    }
+  }
+
+  if (empty($content_type)) {
+    return $groups;
+  }
+  elseif (!$groups[$content_type]) {
+    return array();
+  }
+  return $sorted ? $groups_sorted[$content_type] : $groups[$content_type];
+}
+
+
+function _fieldgroup_groups_label($content_type) {
+  $groups = fieldgroup_groups($content_type);
+
+  $labels[0] = t('No group');
+  foreach ($groups as $group_name => $group) {
+    $labels[$group_name] = t($group['label']);
+  }
+  return $labels;
+}
+
+function _fieldgroup_field_get_group($content_type, $field_name) {
+  return db_result(db_query("SELECT group_name FROM {node_group_fields} WHERE type_name = '%s' AND field_name = '%s'", $content_type, $field_name));
+}
+
+/*
+ * Implementation of hook_form_alter()
+ */
+function fieldgroup_form_alter($form_id, &$form) {
+  if (isset($form['type']) && $form['type']['#value'] .'_node_form' == $form_id) {
+    foreach (fieldgroup_groups($form['type']['#value']) as $group_name => $group) {
+      $form[$group_name] = array(
+        '#type' => 'fieldset',
+        '#title' => t($group['label']),
+        '#collapsed' => $group['settings']['form']['style'] == 'fieldset_collapsed',
+        '#collapsible' => in_array($group['settings']['form']['style'], array('fieldset_collapsed', 'fieldset_collapsible')),
+        '#weight' => $group['weight'],
+        '#description' => t($group['settings']['form']['description']),
+        '#attributes' => array('class' => strtr($group['group_name'], '_', '-')),
+      );
+      foreach ($group['fields'] as $field_name => $field) {
+        if (isset($form[$field_name])) {
+          $form[$group_name][$field_name] = $form[$field_name];
+          unset($form[$field_name]);
+        }
+      }
+      if (!empty($group['fields']) && !element_children($form[$group_name])) {
+        //hide the fieldgroup, because the fields are hidden too
+        unset($form[$group_name]);
+      }
+    }
+
+  }
+  else if ($form_id == '_content_admin_field') {
+    $content_type = content_types($form['type_name']['#value']);
+    $form['widget']['group'] = array(
+      '#type' => 'select',
+      '#title' => t('Display in group'),
+      '#options' => _fieldgroup_groups_label($content_type['type']),
+      '#default_value' => _fieldgroup_field_get_group($content_type['type'], $form['field_name']['#value']),
+      '#description' => t('Select a group, in which the field will be displayed on the editing form.'),
+      '#weight' => 5,
+    );
+    $form['widget']['weight']['#weight'] = 5;
+    $form['widget']['description']['#weight'] = 7;
+    $form['#submit']['fieldgroup_content_admin_form_submit'] = array($form['widget']['group']['#default_value']);
+  }
+  else if ($form_id == 'content_admin_display_overview_form') {
+    $form['groups'] = fieldgroup_display_overview_form($form['type_name']['#value']);
+    $form['groups']['#theme'] = 'fieldgroup_display_overview_form';
+    $form['#submit']['fieldgroup_display_overview_form_submit'] = array();
+    if (!is_array($form['submit']) && count(fieldgroup_groups($form['type_name']['#value']))) {
+      $form['submit'] = array('#type' => 'submit', '#value' => t('Submit'), '#weight' => 10);
+    }
+  }
+  else if ($form_id == '_content_admin_field_remove') {
+    $form['#submit']['fieldgroup_content_admin_field_remove_submit'] = array();
+  }
+}
+
+function fieldgroup_content_admin_form_submit($form_id, &$form_values, $default) {
+  if ($default != $form_values['group']) {
+    if ($form_values['group'] && !$default) {
+      db_query("INSERT INTO {node_group_fields} (type_name, group_name, field_name) VALUES ('%s', '%s', '%s')",
+                $form_values['type_name'], $form_values['group'], $form_values['field_name']);
+    }
+    else if ($form_values['group']) {
+      db_query("UPDATE {node_group_fields} SET group_name = '%s' WHERE type_name = '%s' AND field_name = '%s'",
+                $form_values['group'], $form_values['type_name'], $form_values['field_name']);
+    }
+    else {
+      db_query("DELETE FROM {node_group_fields} WHERE type_name = '%s' AND field_name = '%s'", $form_values['type_name'], $form_values['field_name']);
+    }
+    cache_clear_all('fieldgroup_data', 'cache_content');
+  }
+}
+
+function fieldgroup_content_admin_field_remove_submit($form_id, &$form_values) {
+  db_query("DELETE FROM {node_group_fields} WHERE type_name = '%s' AND field_name = '%s'", $form_values['type_name'], $form_values['field_name']);
+}
+
+function fieldgroup_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'view':
+      $context = $teaser ? 'teaser' : 'full';
+      foreach (fieldgroup_groups($node->type) as $group_name => $group) {
+        $label = $group['settings']['display']['label'] == 'above';
+        $element = array(
+          '#title' => $label ? t($group['label']) : '',
+          '#description' => $label ? t($group['settings']['display']['description']) : '',
+          '#weight' => $group['weight'],
+          '#attributes' => array('class' => 'fieldgroup '. strtr($group['group_name'], '_', '-')),
+        );
+        switch ($group['settings']['display'][$context]) {
+          case 'simple':
+            $element['#type'] = 'fieldgroup_simple';
+            break;
+          case 'hidden':
+            $element['#access'] = FALSE;
+            break;
+
+          case 'fieldset_collapsed':
+            $element['#collapsed'] = TRUE;
+          case 'fieldset_collapsible':
+            $element['#collapsible'] = TRUE;
+          case 'fieldset':
+            $element['#type'] = 'fieldset';
+            break;
+        }
+        $node->content[$group_name] = $element;
+
+        $visible = FALSE;
+        foreach ($group['fields'] as $field_name => $field) {
+          if (isset($node->content[$field_name])) {
+            $node->content[$group_name][$field_name] = $node->content[$field_name];
+            if ($node->content[$field_name]['#access'] && !empty($node->content[$field_name]['#value'])) {
+              $visible = TRUE;
+            }
+            unset($node->content[$field_name]);
+          }
+        }
+        if (!$visible) {
+          // Hide the group, because the fields are empty or not accessible.
+          unset($node->content[$group_name]);
+        }
+      }
+      break;
+  }
+}
+
+/*
+ * Themes a simple fieldgroup on node view
+ */
+function theme_fieldgroup_simple($element) {
+  $output = '<div'. drupal_attributes($element['#attributes']) .'>';
+  if ($element['#title']) {
+    $output .= '<h2>'. $element['#title'] .'</h2>';
+    $output .= ($element['#description'] ? '<div class="description">'. $element['#description'] .'</div>' : '');
+  }
+  $output .= '<div class="content">'. $element['#children'] .'</div>';
+  $output .= '</div>';
+
+  return $output;
+}
+
+/*
+ * Gets the group name for a field
+ * If the field isn't in a group, FALSE will be returned.
+ * @return The name of the group, or FALSE.
+ */
+function fieldgroup_get_group($content_type, $field_name) {
+  foreach (fieldgroup_groups($content_type) as $group_name => $group) {
+    if (in_array($field_name, array_keys($group['fields']))) {
+      return $group_name;
+    }
+  }
+  return FALSE;
+}
+
+/**
+ *  Implementation of hook_node_type()
+ *  React to change in node types
+ */
+function fieldgroup_node_type($op, $info) {
+  if ($op == 'update' && $info->type != $info->old_type) {
+    // update the tables
+    db_query("UPDATE {node_group} SET type_name='%s' WHERE type_name='%s'", array($info->type, $info->old_type));
+    db_query("UPDATE {node_group_fields} SET type_name='%s' WHERE type_name='%s'", array($info->type, $info->old_type));
+    cache_clear_all('fieldgroup_data', 'cache_content');
+  }
+  else if ($op == 'delete') {
+    db_query("DELETE FROM {node_group_fields} WHERE type_name = '%s'", $info->type);
+    db_query("DELETE FROM {node_group} WHERE type_name = '%s'", $info->type);
+  }
+}
+
+
+/*
+ * Adds a own table to the "display fields" tab
+ */
+function fieldgroup_display_overview_form($content_type) {
+  $groups = fieldgroup_groups($content_type);
+  $form = array();
+  $form['#tree'] = TRUE;
+  foreach ($groups as $group_name => $group) {
+    $form[$group_name] = fieldgroup_display_overview_form_row($group);
+  }
+
+  return $form;
+}
+
+function fieldgroup_display_overview_form_row($group) {
+
+  $defaults = &$group['settings']['display']; //shortcut
+  $label_options = array(
+    'above' => t('Above'),
+    'hidden' => t('<Hidden>'),
+  );
+  $options = array(
+    'no_style' => t('no styling'),
+    'simple' => t('simple'),
+    'fieldset' => t('fieldset'),
+    'fieldset_collapsible' => t('fieldset - collapsible'),
+    'fieldset_collapsed' => t('fieldset - collapsed'),
+    'hidden' => t('<Hidden>'),
+  );
+
+  $row = array();
+  $row['group_label']  = array('#value' => $group['label']);
+  $row['label'] = array(
+    '#type' => 'select',
+    '#options' => $label_options,
+    '#default_value' => isset($defaults['label']) ? $defaults['label'] : 'above',
+  );
+
+  foreach (_content_admin_display_contexts() as $key => $title) {
+    $row[$key] = array(
+      '#type' => 'select',
+      '#options' => $options,
+      '#default_value' => isset($defaults[$key]) ? $defaults[$key] : 'fieldset',
+    );
+  }
+  return $row;
+}
+
+/*
+ * Themes the group part of the form as table
+ */
+function theme_fieldgroup_display_overview_form($form) {
+  $header = array(t('Group'), t('Label'));
+  foreach (_content_admin_display_contexts() as $key => $title) {
+    $header[] = $title;
+  }
+
+  $rows = array();
+  foreach (element_children($form) as $group) {
+    $row = array();
+    foreach (element_children($form[$group]) as $key) {
+      $row[] = drupal_render($form[$group][$key]);
+    }
+    $rows[] = $row;
+  }
+  $output = '';
+  if (!empty($rows)) {
+    $output  = theme('table', $header, $rows, array('class' => 'content-group-display-overview'));
+  }
+  $output .= drupal_render($form);
+  return $output;
+}
+
+function fieldgroup_display_overview_form_submit($form_id, $form_values) {
+  $type = $form_values['type_name'];
+  $groups = fieldgroup_groups($type);
+
+  if (isset($form_values['groups'])) {
+    foreach ($form_values['groups'] as $group_name => $groupvalues) {
+      $group = &$groups[$group_name];
+      foreach ($groupvalues as $key => $value) {
+        $group['settings']['display'][$key] = $value;
+      }
+      fieldgroup_save_group($type, $group);
+    }
+    cache_clear_all('fieldgroup_data', 'cache_content');
+  }
+}

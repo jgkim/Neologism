@@ -1,0 +1,16 @@
+/* $Id: content_admin.css,v 1.1.2.1 2007/08/09 18:58:52 yched Exp $ */
+
+table.content-field-overview, table.content-field-overview fieldset table {
+  width:100%;
+}
+table.content-field-overview td {
+  width:14%;
+}
+.content-field-overview .content-field-overview-disabled {
+  filter:alpha(opacity=50);
+  -moz-opacity: .50;
+  opacity: .50;
+}
+.content-field-overview-empty {
+  text-align:center;
+}

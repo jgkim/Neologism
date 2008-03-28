@@ -1,0 +1,13 @@
+; $Id: content_copy.info,v 1.1.2.5 2007/06/18 23:06:32 dww Exp $
+name = Content Copy
+description = Enables ability to import/export field definitions.
+dependencies = content
+package = CCK
+
+
+
+; Information added by drupal.org packaging script on 2007-08-16
+version = "5.x-1.6-1"
+project = "cck"
+datestamp = "1187278804"
+

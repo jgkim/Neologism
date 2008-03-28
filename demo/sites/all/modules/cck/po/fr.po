@@ -1,0 +1,472 @@
+# $Id: fr.po,v 1.1.4.1 2007/01/05 23:33:23 yched Exp $
+# LANGUAGE translation of Drupal (general)
+# Copyright 2006 NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  field.php,v 1.3 2006/04/16 13:47:13 JonBob
+#  text.module,v 1.34 2006/06/12 19:59:53 JonBob
+#  number.module,v 1.28 2006/05/02 13:52:16 JonBob
+#  content_admin.inc,v 1.16 2006/06/12 19:36:54 JonBob
+#  content.module,v 1.64 2006/06/12 19:36:54 JonBob
+#  nodereference.module,v 1.28 2006/06/12 19:36:54 JonBob
+#  optionwidgets.module,v 1.8 2006/05/01 15:45:29 JonBob
+#  userreference.module,v 1.24 2006/05/05 14:10:44 JonBob
+#  weburl.module,v 1.8 2006/06/12 19:36:54 JonBob
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2006-07-27 08:09-0400\n"
+"PO-Revision-Date: 2006-07-27 08:18-0400\n"
+"Last-Translator: Vassili Tchersky <vt@phear.org>\n"
+"Language-Team: French <traduc@traduc.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: content.module:18
+msgid "Allows administrators to define new content types."
+msgstr ""
+"Permettre aux administrateurs de définir des nouveaux types de contenu."
+
+#: content.module:73
+msgid "add content type"
+msgstr "Ajouter un type de contenu"
+
+#: content.module:80
+msgid "fields"
+msgstr "champs"
+
+#: content.module:119 content_admin.inc:25
+msgid "duplicate"
+msgstr "doublon"
+
+#: content.module:135
+msgid "manage fields"
+msgstr "gérer les champs"
+
+#: content.module:164
+msgid "remove field"
+msgstr "enlever un champ"
+
+#: content_admin.inc:42
+msgid "Content types"
+msgstr "Types de contenu"
+
+#: content_admin.inc:90
+msgid "The human-readable name of this content type."
+msgstr "Le nom de ce type de contenu, lisible par un humain."
+
+#: content_admin.inc:98
+msgid "A brief description of the content type."
+msgstr "Une description brève de ce type de contenu."
+
+#: content_admin.inc:106
+msgid ""
+"Instructions to present to the user when adding new content of this type."
+msgstr ""
+"Les instructions à présenter à l'utilisateur ajoutant du nouveau contenu de "
+"ce type."
+
+#: content_admin.inc:110
+msgid "Title field label"
+msgstr "Étiquette du champ titre"
+
+#: content_admin.inc:113
+msgid "The label for the title field."
+msgstr "L'étiquette pour ce champ titre."
+
+#: content_admin.inc:118
+msgid "Save content type"
+msgstr "Enregistrer le type de contenu"
+
+#: content_admin.inc:182
+msgid "Saved content type %type."
+msgstr "Le type de contenu %type est enregistré."
+
+#: content_admin.inc:198
+msgid "Are you sure you want to delete the content type %type?"
+msgstr "Êtes-vous certain de vouloir détruire le type de contenu %type?"
+
+#: content_admin.inc:198
+msgid ""
+"If you have any content left in this content type, it will be permanently "
+"deleted. This action cannot be undone."
+msgstr ""
+"Si vous avez encore du contenu de ce type, il sera effacé de façon "
+"permanente. Cette action est irréversible."
+
+#: content_admin.inc:218
+msgid "Deleted content type %type."
+msgstr "Le type de contenu %type a été effacé."
+
+#: content_admin.inc:248
+msgid "remove"
+msgstr "enlever"
+
+#: content_admin.inc:277
+msgid "Add existing field"
+msgstr "Ajouter un champ existant"
+
+#: content_admin.inc:286
+msgid "Add field"
+msgstr "Ajouter un champ"
+
+#: content_admin.inc:307
+msgid "Create new field"
+msgstr "Créer un nouveau champ"
+
+#: content_admin.inc:313
+msgid "The human-readable name of this field."
+msgstr "Le nom de ce champ, lisible par un humain."
+
+#: content_admin.inc:318
+msgid "Field type"
+msgstr "Type de champ"
+
+#: content_admin.inc:326
+msgid "Create field"
+msgstr "Créer un champ"
+
+#: content_admin.inc:335
+msgid ""
+"No field modules are enabled. You need to <a href=\"%modules_url\">enable "
+"one</a>, such as text.module, before you can add new fields."
+msgstr ""
+"Aucun module de champ n'est activé. Vous devez aller <a href=\"%modules_url"
+"\">en activer un</a>, tel que text.module, avant de pouvoir ajouter des "
+"nouveaux champs."
+
+#: content_admin.inc:389
+msgid "Added field %label."
+msgstr "Le champ %label a été ajouté."
+
+#: content_admin.inc:432
+msgid "Created field %label."
+msgstr "Le champ %label a été créé."
+
+#: content_admin.inc:452
+msgid "Are you sure you want to remove the field %field?"
+msgstr "Êtes-vous certain de vouloir enlever le champ %field?"
+
+#: content_admin.inc:452
+msgid ""
+"If you have any content left in this field, it will be lost. This action "
+"cannot be undone."
+msgstr ""
+"Si vous avez encore du contenu dans ce champ, il sera perdu. Cette action "
+"est irréversible."
+
+#: content_admin.inc:452
+msgid "Remove"
+msgstr "Enlever"
+
+#: content_admin.inc:468
+msgid "Removed field %field from %type."
+msgstr "Le champ %field de \"%type\" a été enlevé."
+
+#: content_admin.inc:487
+msgid ""
+"The field %field no longer exists in any content type, so it was deleted."
+msgstr ""
+"Le champ %field n'existe plus dans aucun type de contenu, il a donc été "
+"effacé."
+
+#: content_admin.inc:511
+msgid "Widget settings"
+msgstr "Paramètres des contrôles"
+
+# tel qu'il ou puisqu'il?
+#: content_admin.inc:512
+#, fuzzy
+msgid ""
+"These settings apply only to the %field field as it appears in the %type "
+"content type."
+msgstr ""
+"Ces paramètres ne s'applique qu'au champ %field tel qu'il apparaît dans le "
+"type contenu %type."
+
+# granddictionnaire.com dit "gadget logiciel" ou "métachose" (???), ce que je trouve innacceptable.
+#: content_admin.inc:526
+msgid "Widget"
+msgstr "Contrôle"
+
+#: content_admin.inc:541
+msgid ""
+"In the node editing form, the heavier fields will sink and the lighter "
+"fields will be positioned nearer the top."
+msgstr ""
+"Dans le formulaire d'édition des noeuds, les champs les plus lourd vont "
+"\"couler\" et les plus légers vont être positionnés plus haut."
+
+#: content_admin.inc:552
+msgid ""
+"Instructions to present to the user below this field on the editing form."
+msgstr ""
+"Instructions à présenter à l'usager en dessous du champ dans le formulaire "
+"d'édition."
+
+#: content_admin.inc:558
+msgid "Data settings"
+msgstr "Paramètres des données"
+
+#: content_admin.inc:559
+msgid ""
+"These settings apply to the %field field in every content type in which it "
+"appears."
+msgstr ""
+"Ces paramètres s'appliquent au champ %field dans tous les types de contenu "
+"où il apparaît."
+
+#: content_admin.inc:568
+msgid "Multiple values"
+msgstr "Valeurs multiples"
+
+#: content_admin.inc:579
+msgid "Save field settings"
+msgstr "Enregistrer les paramètres du champ"
+
+#: content_admin.inc:652
+msgid "Saved field %field."
+msgstr "Champ %field enregistré."
+
+#: content_admin.inc:16;87;232;310;533
+msgid "Label"
+msgstr "Étiquette"
+
+#: content_admin.inc:882;971
+msgid "No PostgreSQL mapping found for %type data type."
+msgstr "Aucune correspondance PostgreSQL trouvée pour le type %type."
+
+#: content_admin.inc:882;971
+msgid "database"
+msgstr "base de données"
+
+#: date.module:15
+msgid "Defines a date/time field type. <em>Note: Requires content.module.</em>"
+msgstr ""
+"Définir un type de champ date/heure. <em>Note: dépend du module content."
+"module.</em>"
+
+#: date.module:36
+msgid "Year"
+msgstr "Année"
+
+#: date.module:37
+msgid "Year and month"
+msgstr "Année et mois"
+
+#: date.module:39
+msgid "Date and time"
+msgstr "Date et heure"
+
+#: date.module:43
+msgid "Granularity"
+msgstr "Granularité"
+
+#: date.module:101
+msgid "Times are entered and displayed with site's time zone"
+msgstr "Heures entrées et affichées dans le fuseau horaire du site"
+
+#: date.module:102
+msgid "Times are entered and displayed with user's time zone"
+msgstr "Heures entrées et affichées dans le fuseau horaire de l'usager"
+
+#: date.module:106
+msgid "Time zone handling"
+msgstr "Gestion des fuseaux horaires"
+
+#: date.module:154
+msgid "%name must be entered in ISO 8601 format (YYYY)."
+msgstr "%name doit être entré en format ISO 8601 (AAAA)."
+
+#: date.module:159
+msgid "%name must be entered in ISO 8601 format (YYYY-MM)."
+msgstr "%name doit être entré en format ISO 8601 (AAAA-MM)."
+
+#: date.module:164
+msgid "%name must be entered in ISO 8601 format (YYYY-MM-DD)."
+msgstr "%name doit être entré en format ISO 8601 (AAAA-MM-JJ)."
+
+#: date.module:169
+msgid "%name must be entered in ISO 8601 format (YYYY-MM-DDThh:mm:ss)."
+msgstr "%name doit être entré en format ISO 8601 (AAAA-MM-JJThh:mm:ss)."
+
+#: field.php:77 text.module:44
+msgid "Maximum length"
+msgstr "Taille maximale"
+
+#: field.php:80 text.module:47
+msgid ""
+"The maximum length of the field in characters. Leave blank for an unlimited "
+"size."
+msgstr ""
+"La taille maximale des champs, en caractères. Laisser vide pour ne pas "
+"limiter la taille."
+
+#: field.php:102 number.module:82 text.module:80
+msgid "is equal to"
+msgstr "est égal à"
+
+#: field.php:103 number.module:83 text.module:81
+msgid "is not equal to"
+msgstr "n'est pas égal à"
+
+#: field.php:104 text.module:82
+msgid "matches the pattern"
+msgstr "correspond au motif"
+
+#: field.php:265 text.module:159
+msgid "Rows"
+msgstr "Rangées"
+
+#: field.php:273 text.module:167
+msgid "\"Rows\" must be a positive integer."
+msgstr "\"Rangées\" doit être un entier positif."
+
+#: field.php:180;190 number.module:119 text.module:107
+msgid "Illegal value for %name."
+msgstr "Valeur illégale pour %name"
+
+#: nodereference.module:0
+msgid "nodereference"
+msgstr "nodereference"
+
+#: nodereference.module:15
+msgid ""
+"Defines a field type for referencing one node from another. <em>Note: "
+"Requires content.module.</em>"
+msgstr ""
+"Définir un type de champ pour référencer un noeud depuis un autre. <em>Note: "
+"dépend du module content.module.</em>"
+
+#: nodereference.module:26
+msgid "node reference autocomplete"
+msgstr "complétion automatique des références des noeuds"
+
+#: nodereference.module:51
+msgid "Content types that can be referenced"
+msgstr "Types de contenu pouvant être référencés"
+
+#: nodereference.module:204
+msgid "No post with that title exists."
+msgstr "Aucune soumission avec ce titre existe."
+
+#: number.module:0
+msgid "number"
+msgstr "nombre"
+
+#: number.module:15
+msgid "Defines numeric field types. <em>Note: Requires content.module.</em>"
+msgstr ""
+"Définir des types de champs numériques. <em>Note: dépend du module content."
+"module.</em>"
+
+#: number.module:38
+msgid "Minimum"
+msgstr "Minimum"
+
+#: number.module:43
+msgid "Maximum"
+msgstr "Maximum"
+
+#: number.module:48 text.module:51
+msgid "Allowed values"
+msgstr "Valeurs permises"
+
+#: number.module:52 text.module:55
+msgid ""
+"The possible values this field can contain. Any other values will result in "
+"an error. Enter one value per line."
+msgstr ""
+"Les valeurs possible que ce champ peut contenir. Tout autre valeur va "
+"résulter en une erreur. Entrer une valeur par ligne."
+
+#: number.module:58
+msgid "\"Minimum\" must be a number."
+msgstr "\"Minimum\" doit être un nombre."
+
+#: number.module:61
+msgid "\"Maximum\" must be a number."
+msgstr "\"Maximum\" doit être un nombre."
+
+#: number.module:113
+msgid "The value of %name may be no smaller than %min."
+msgstr "La valeur de %name ne peut être plus petite que %min."
+
+#: number.module:116
+msgid "The value of %name may be no larger than %max."
+msgstr "La valeur de %name ne peut pas être plus grande que %max."
+
+#: optionwidgets.module:0
+msgid "optionwidgets"
+msgstr "optionwidgets"
+
+#: optionwidgets.module:15
+msgid ""
+"Defines selection, check box and radio button widgets for text and numeric "
+"fields. <em>Note: Requires content.module, text.module and number.module.</"
+"em>"
+msgstr ""
+"Définis les contrôles de sélection, case à cocher et boutons \"radio\" pour "
+"les champs textes et numériques. <em>Note: dépend du module content.module, "
+"text.module et number.module.</em>"
+
+#: text.module:0
+msgid "text"
+msgstr "texte"
+
+#: text.module:15
+msgid ""
+"Defines simple text field types. <em>Note: Requires content.module.</em>"
+msgstr ""
+"Definis des types de champs texte simples. <em>Note: dépend du module "
+"content.module.</em>"
+
+#: text.module:35
+msgid "Filtered text (user selects input format)"
+msgstr "Texte filtré (l'utilisateur choisit le format d'entrée)"
+
+#: text.module:35
+msgid "Plain text"
+msgstr "Texte simple"
+
+#: text.module:38
+#, fuzzy
+msgid "Text processing"
+msgstr "Traitement de texte"
+
+#: text.module:144
+msgid "Text Field"
+msgstr "Champ texte"
+
+#: userreference.module:0
+msgid "userreference"
+msgstr "userreference"
+
+#: userreference.module:15
+msgid ""
+"Defines a field type for referencing a user from a node. <em>Note: Requires "
+"content.module.</em>"
+msgstr ""
+"Définis un type de champ pour référencer un utilisateur depuis un noeud. "
+"<em>Note: dépend du content.module.</em>"
+
+#: userreference.module:176
+msgid "Invalid user name."
+msgstr "Nom d'usager invalide."
+
+#: weburl.module:0
+msgid "weburl"
+msgstr "weburl"
+
+#: weburl.module:15
+msgid ""
+"Defines simple weburl field types. <em>Note: Requires content.module.</em>"
+msgstr ""
+"Définis des types de champ URL web simples. <em>Note: dépend du module "
+"content.module.</em>"
+
+#: weburl.module:164;172
+msgid "Not a valid Web URL."
+msgstr "N'est pas un URL web valide."

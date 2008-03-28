@@ -1,0 +1,368 @@
+<?php
+// $Id: text.module,v 1.41.2.12 2007/03/12 00:50:34 yched Exp $
+
+/**
+ * @file
+ * Defines simple text field types.
+ */
+
+/**
+ * Implementation of hook_field_info().
+ */
+function text_field_info() {
+  return array(
+    'text' => array('label' => 'Text'),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function text_field_settings($op, $field) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      $options = array(0 => t('Plain text'), 1 => t('Filtered text (user selects input format)'));
+      $form['text_processing'] = array(
+        '#type' => 'radios',
+        '#title' => t('Text processing'),
+        '#default_value' => isset($field['text_processing']) ? $field['text_processing'] : 0,
+        '#options' => $options,
+      );
+      $form['max_length'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Maximum length'),
+        '#default_value' => isset($field['max_length']) ? $field['max_length'] : '',
+        '#required' => FALSE,
+        '#description' => t('The maximum length of the field in characters. Leave blank for an unlimited size.'),
+      );
+      $form['allowed_values'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Allowed values list'),
+        '#default_value' => isset($field['allowed_values']) ? $field['allowed_values'] : '',
+        '#required' => FALSE,
+        '#rows' => 10,
+        '#description' => t('The possible values this field can contain. Enter one value per line, in the format key|label. The key is the value that will be stored in the database and it must match the field storage type, %type. The label is optional and the key will be used as the label if no label is specified.', array('%type' => $field['type'])),
+      );
+      $form['advanced_options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Php code'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['advanced_options']['allowed_values_php'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Code'),
+        '#default_value' => $field['allowed_values_php'],
+        '#rows' => 6,
+        '#description' => t('Advanced Usage Only: PHP code that returns a keyed array of allowed values. Should not include &lt;?php ?&gt; delimiters. If this field is filled out, the array returned by this code will override the allowed values list above.'),
+      );
+      return $form;
+
+    case 'save':
+      return array('text_processing', 'max_length', 'allowed_values', 'allowed_values_php');
+
+    case 'database columns':
+      $columns = array(
+        'value' => array('type' => 'varchar', 'not null' => TRUE, 'default' => "''", 'sortable' => TRUE),
+        'format' => array('type' => 'int', 'length' => 10, 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      );
+      if ($field['max_length'] == 0 || $field['max_length'] > 255) {
+        $columns['value']['type'] = 'longtext';
+      }
+      else {
+        $columns['value']['length'] = $field['max_length'];
+      }
+      if ($field['text_processing'] == 0) {
+        unset($columns['format']);
+      }
+      return $columns;
+
+    case 'filters':
+      $allowed_values = text_allowed_values($field);
+       if (count($allowed_values)) {
+         return array(
+           'default' => array(
+            'list' => $allowed_values,
+             'list-type' => 'list',
+             'operator' => 'views_handler_operator_or',
+             'value-type' => 'array',
+            ),
+          );
+        }
+      else {
+        return array(
+          'like' => array(
+            'operator' => 'views_handler_operator_like',
+            'handler' => 'views_handler_filter_like',
+          ),
+        );
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function text_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    case 'validate':
+      $allowed_values = text_allowed_values($field);
+
+      if (is_array($items)) {
+        foreach ($items as $delta => $item) {
+          $error_field = $field['field_name'] .']['. $delta .'][value';
+          if ($item['value'] != '') {
+            if (count($allowed_values) && !array_key_exists($item['value'], $allowed_values)) {
+              form_set_error($error_field, t('Illegal value for %name.', array('%name' => t($field['widget']['label']))));
+            }
+          }
+        }
+      }
+      if ($field['max_length'] > 0) {
+        foreach ($items as $delta => $data) {
+          $error_field = $field['field_name'] .']['. $delta .'][value';
+          if (strlen($data['value']) > $field['max_length']) {
+            form_set_error($error_field, t('%label is longer than %max characters.', array('%label' => $field['widget']['label'], '%max' => $field['max_length'])));
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function text_field_formatter_info() {
+  return array(
+    'default' => array(
+      'label' => 'Default',
+      'field types' => array('text'),
+    ),
+    'plain' => array(
+      'label' => 'Plain text',
+      'field types' => array('text'),
+    ),
+    'trimmed' => array(
+      'label' => 'Trimmed',
+      'field types' => array('text'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter().
+ *
+ * The $node argument is necessary so that filter access can be checked on
+ * node preview.
+ */
+function text_field_formatter($field, $item, $formatter, $node) {
+  if (!isset($item['value'])) {
+    return '';
+  }
+
+  if ($allowed_values = text_allowed_values($field)) {
+    return $allowed_values[$item['value']];
+  }
+
+  switch ($formatter) {
+    case 'plain':
+      $text = strip_tags($item['value']);
+      break;
+
+    case 'trimmed':
+      $text = node_teaser($item['value'], $field['text_processing'] ? $item['format'] : NULL);
+      break;
+
+    case 'default':
+      $text = $item['value'];
+  }
+
+  if ($field['text_processing']) {
+    return check_markup($text, $item['format'], is_null($node) || isset($node->in_preview));
+  }
+  else {
+    return check_plain($text);
+  }
+}
+
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function text_widget_info() {
+  return array(
+    'text' => array(
+      'label' => 'Text Field',
+      'field types' => array('text'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget_settings().
+ */
+function text_widget_settings($op, $widget) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      $form['rows'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Rows'),
+        '#default_value' => $widget['rows'] ? $widget['rows'] : 1,
+        '#required' => TRUE,
+      );
+      return $form;
+
+    case 'validate':
+      if (!is_numeric($widget['rows']) || intval($widget['rows']) != $widget['rows'] || $widget['rows'] <= 0) {
+        form_set_error('rows', t('"Rows" must be a positive integer.'));
+      }
+      break;
+
+    case 'save':
+      return array('rows');
+  }
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function text_widget($op, &$node, $field, &$items) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+
+      $form[$field['field_name']] = array('#tree' => TRUE);
+
+      if ($field['multiple']) {
+        $form[$field['field_name']]['#type'] = 'fieldset';
+        $form[$field['field_name']]['#description'] = t($field['widget']['description']);
+        $delta = 0;
+        foreach ($items as $data) {
+          if ($data['value']) {
+            if ($field['widget']['rows'] == 1) {
+              $form[$field['field_name']][$delta]['value'] = array(
+                '#type' => 'textfield',
+                '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+                '#default_value' => $data['value'],
+                '#required' => ($delta == 0) ? $field['required'] : FALSE,
+                '#maxlength' => $field['max_length'] ? $field['max_length'] : NULL,
+                '#weight' => $field['widget']['weight'],
+              );
+            }
+            else {
+              $form[$field['field_name']][$delta]['value'] = array(
+                '#type' => 'textarea',
+                '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+                '#default_value' => $data['value'],
+                '#required' => ($delta == 0) ? $field['required'] : FALSE,
+                '#rows' => $field['widget']['rows'],
+                '#weight' => $field['widget']['weight'],
+              );
+            }
+            if ($field['text_processing']) {
+              $form[$field['field_name']][$delta]['format'] = filter_form($data['format'], $form[$field['field_name']][$delta]['value']['#weight'] + 1, array($field['field_name'], $delta, 'format'));
+            }
+            $delta++;
+          }
+        }
+        foreach (range($delta, $delta + 2) as $delta) {
+          if ($field['widget']['rows'] == 1) {
+            $form[$field['field_name']][$delta]['value'] = array(
+              '#type' => 'textfield',
+              '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+              '#default_value' => '',
+              '#required' => ($delta == 0) ? $field['required'] : FALSE,
+              '#maxlength' => $field['max_length'] ? $field['max_length'] : NULL,
+              '#weight' => $field['widget']['weight'],
+            );
+          }
+          else {
+            $form[$field['field_name']][$delta]['value'] = array(
+              '#type' => 'textarea',
+              '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+              '#default_value' => '',
+              '#required' => ($delta == 0) ? $field['required'] : FALSE,
+              '#rows' => $field['widget']['rows'],
+              '#weight' => $field['widget']['weight'],
+            );
+          }
+          if ($field['text_processing']) {
+            $form[$field['field_name']][$delta]['format'] = filter_form($items[$delta]['format'], $form[$field['field_name']][$delta]['value']['#weight'] + 1, array($field['field_name'], $delta, 'format'));
+          }
+        }
+      }
+      else {
+        if ($field['widget']['rows'] == 1) {
+          $form[$field['field_name']][0]['value'] = array(
+            '#type' => 'textfield',
+            '#title' => t($field['widget']['label']),
+            '#default_value' => isset($items[0]['value']) ? $items[0]['value'] : '',
+            '#required' => $field['required'],
+            '#description' => t($field['widget']['description']),
+            '#maxlength' => $field['max_length'] ? $field['max_length'] : NULL,
+            '#weight' => $field['widget']['weight'],
+          );
+        }
+        else {
+          $form[$field['field_name']][0]['value'] = array(
+            '#type' => 'textarea',
+            '#title' => t($field['widget']['label']),
+            '#default_value' => $items[0]['value'],
+            '#required' => $field['required'],
+            '#rows' => $field['widget']['rows'],
+            '#description' => t($field['widget']['description']),
+            '#weight' => $field['widget']['weight'],
+          );
+        }
+        if ($field['text_processing']) {
+          $form[$field['field_name']][0]['format'] = filter_form($items[0]['format'], $form[$field['field_name']][0]['value']['#weight'] + 1, array($field['field_name'], 0, 'format'));
+        }
+      }
+      return $form;
+
+    case 'process form values':
+      // Don't save empty fields except the first value
+      foreach ($items as $delta => $item) {
+        if ($item['value'] == '' && $delta > 0) {
+          unset($items[$delta]);
+        }
+      }
+      break;
+  }
+}
+
+/**
+ *  Create an array of the allowed values for this field
+ */
+function text_allowed_values($field) {
+  static $allowed_values;
+
+  if ($allowed_values[$field['field_name']]) {
+    return $allowed_values[$field['field_name']];
+  }
+
+  $allowed_values[$field['field_name']] = array();
+  if ($field['allowed_values_php']) {
+    ob_start();
+    $result = eval($field['allowed_values_php']);
+    if (is_array($result)) {
+      $allowed_values[$field['field_name']] = $result;
+    }
+    ob_end_clean();
+  }
+  if (!$allowed_values[$field['field_name']]) {
+
+    $list = explode("\n", $field['allowed_values']);
+    $list = array_map('trim', $list);
+    $list = array_filter($list, 'strlen');
+    foreach ($list as $opt) {
+      list($key, $value) = explode('|', $opt);
+      $allowed_values[$field['field_name']][$key] = $value ? $value : $key;
+    }
+  }
+  return $allowed_values[$field['field_name']];
+}

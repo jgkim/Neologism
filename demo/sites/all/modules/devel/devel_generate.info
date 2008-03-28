@@ -1,0 +1,10 @@
+; $Id: devel_generate.info,v 1.1.2.6 2007/06/13 19:41:05 dww Exp $
+name = Generator
+description = Generate dummy users, nodes, and taxonomy terms.
+package = Development
+
+; Information added by drupal.org packaging script on 2008-02-28
+version = "5.x-0.2"
+project = "devel"
+datestamp = "1204164007"
+

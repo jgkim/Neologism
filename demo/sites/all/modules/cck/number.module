@@ -1,0 +1,372 @@
+<?php
+// $Id: number.module,v 1.34.2.20 2007/03/01 04:51:54 yched Exp $
+
+/**
+ * @file
+ * Defines numeric field types.
+ */
+
+/**
+ * Implementation of hook_field_info().
+ */
+function number_field_info() {
+  return array(
+    'number_integer' => array('label' => 'Integer'),
+    'number_decimal' => array('label' => 'Decimal'),
+  );
+}
+
+/**
+ * Implementation of hook_field_settings().
+ */
+function number_field_settings($op, $field) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+      foreach (number_field_formatter_info() as $format => $opt) {
+        if (in_array($field['type'], $opt['field types'])) {
+          $options[$format] = $opt['label'];
+        }
+      }
+      $form['min'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Minimum'),
+        '#default_value' => isset($field['min']) ? $field['min'] : '',
+      );
+      $form['max'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Maximum'),
+        '#default_value' => isset($field['max']) ? $field['max'] : '',
+      );
+      $form['append']['prefix'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Prefix'),
+        '#size' => 60,
+        '#default_value' => isset($field['prefix']) ? $field['prefix'] : '',
+        '#description' => t('Define a string that should be prefixed to the value, like $ or €. Leave blank for none. Separate singular and plural values with a pipe (pound|pounds).'),
+      );
+      $form['append']['suffix'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Suffix'),
+        '#size' => 60,
+        '#default_value' => isset($field['suffix']) ? $field['suffix'] : '',
+        '#description' => t('Define a string that should suffixed to the value, like m², m/s², kb/s. Leave blank for none. Separate singular and plural values with a pipe (pound|pounds). '),
+      );
+      $form['allowed_values'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Allowed values list'),
+        '#default_value' => isset($field['allowed_values']) ? $field['allowed_values'] : '',
+        '#required' => FALSE,
+        '#rows' => 10,
+        '#description' => t('The possible values this field can contain. Enter one value per line, in the format key|label. The key is the value that will be stored in the database and it must match the field storage type, %type. The label is optional and the key will be used as the label if no label is specified.', array('%type' => $field['type'])),
+      );
+      $form['advanced_options'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Php code'),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['advanced_options']['allowed_values_php'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Code'),
+        '#default_value' => $field['allowed_values_php'],
+        '#rows' => 6,
+        '#description' => t('Advanced Usage Only: PHP code that returns a keyed array of allowed values. Should not include &lt;?php ?&gt; delimiters. If this field is filled out, the array returned by this code will override the allowed values list above.'),
+      );
+      return $form;
+
+    case 'validate':
+      if ($field['min'] && !is_numeric($field['min'])) {
+        form_set_error('min', t('"Minimum" must be a number.'));
+      }
+      if ($field['max'] && !is_numeric($field['max'])) {
+        form_set_error('max', t('"Maximum" must be a number.'));
+      }
+      break;
+
+    case 'save':
+      return array('prefix', 'suffix', 'append_position', 'min', 'max', 'allowed_values', 'allowed_values_php');
+
+    case 'database columns':
+      if ($field['type'] == 'number_integer') {
+        return array(
+          'value' => array('type' => 'int', 'not null' => FALSE, 'default' => NULL, 'sortable' => TRUE),
+        );
+      }
+      if ($field['type'] == 'number_decimal') {
+        return array(
+          'value' => array('type' => 'float', 'not null' => FALSE, 'default' => NULL, 'sortable' => TRUE),
+        );
+      }
+
+    case 'filters':
+      $allowed_values = number_allowed_values($field);
+      if (count($allowed_values)) {
+        return array(
+          'default' => array(
+            'list' => $allowed_values,
+            'list-type' => 'list',
+            'operator' => 'views_handler_operator_or',
+            'value-type' => 'array',
+          ),
+        );
+      }
+      else {
+        return array(
+          'default' => array(
+            'operator' => 'views_handler_operator_gtlt',
+          ),
+        );
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_field().
+ */
+function number_field($op, &$node, $field, &$items, $teaser, $page) {
+  switch ($op) {
+    case 'validate':
+      $allowed_values = number_allowed_values($field);
+
+      if (is_array($items)) {
+        foreach ($items as $delta => $item) {
+          $error_field = $field['field_name'] .']['. $delta .'][value';
+          if ($item['value'] != '') {
+            if (is_numeric($field['min']) && $item['value'] < $field['min']) {
+              form_set_error($error_field, t('The value of %name may be no smaller than %min.', array('%name' => t($field['widget']['label']), '%min' => $field['min'])));
+            }
+            if (is_numeric($field['max']) && $item['value'] > $field['max']) {
+              form_set_error($error_field, t('The value of %name may be no larger than %max.', array('%name' => t($field['widget']['label']), '%max' => $field['max'])));
+            }
+            if (count($allowed_values) && !array_key_exists($item['value'], $allowed_values)) {
+              form_set_error($error_field, t('Illegal value for %name.', array('%name' => t($field['widget']['label']))));
+            }
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function number_field_formatter_info() {
+
+  return array(
+    'default' => array('label' => '9999',             'field types' => array('number_integer', 'number_decimal')),
+    'us_0'    => array('label' => '9,999',            'field types' => array('number_integer', 'number_decimal')),
+    'us_1'    => array('label' => '9,999.9',          'field types' => array('number_decimal')),
+    'us_2'    => array('label' => '9,999.99',         'field types' => array('number_decimal')),
+    'be_0'    => array('label' => '9.999',            'field types' => array('number_integer', 'number_decimal')),
+    'be_1'    => array('label' => '9.999,9',          'field types' => array('number_decimal')),
+    'be_2'    => array('label' => '9.999,99',         'field types' => array('number_decimal')),
+    'fr_0'    => array('label' => '9 999',            'field types' => array('number_integer', 'number_decimal')),
+    'fr_1'    => array('label' => '9 999, 9',         'field types' => array('number_decimal')),
+    'fr_2'    => array('label' => '9 999, 99',        'field types' => array('number_decimal')),
+    'unformatted' => array('label' => 'unformatted',  'field types' => array('number_integer', 'number_decimal')),
+  );
+}
+
+/**
+ * Implementation of hook_field_formatter().
+ */
+function number_field_formatter($field, $item, $formatter, $node) {
+  // If the value is empty, we have $item['value'] = NULL
+  if (is_null($item['value'])) {
+    return '';
+  }
+
+  $item['value'] = check_plain($item['value']);
+
+  if ($formatter == 'unformatted') {
+    return $item['value'];
+  }
+
+  if ($allowed_values = number_allowed_values($field)) {
+    if ($allowed_values[$item['value']] != $item['value']) {
+      return $allowed_values[$item['value']];
+    }
+  }
+
+  switch ($formatter) {
+  case 'us_0':
+    $value = number_format($item['value'], 0, '.', ',');
+    break;
+  case 'us_1':
+    $value = number_format($item['value'], 1, '.', ',');
+    break;
+  case 'us_2':
+    $value = number_format($item['value'], 2, '.', ',');
+    break;
+  case 'be_0':
+    $value = number_format($item['value'], 0, ',', ' ');
+    break;
+  case 'be_1':
+    $value = number_format($item['value'], 1, ',', '.');
+    break;
+  case 'be_2':
+    $value = number_format($item['value'], 2, ',', '.');
+    break;
+  case 'fr_0':
+    $value = number_format($item['value'], 0, ', ', ' ');
+    break;
+  case 'fr_1':
+    $value = number_format($item['value'], 1, ', ', ' ');
+    break;
+  case 'fr_2':
+    $value = number_format($item['value'], 2, ', ', ' ');
+    break;
+  default:
+    $value = ($item['value']);
+    break;
+  }
+  $prefixes = explode('|', $field['prefix']);
+  $suffixes = explode('|', $field['suffix']);
+  if ($prefixes) {
+    if (sizeof($prefixes) > 1) {
+      $prefix = format_plural($item['value'], $prefixes[0], $prefixes[1]);
+    }
+    else {
+      $prefix = $field['prefix'];
+    }
+  }
+  if ($suffixes) {
+    if (sizeof($suffixes) > 1) {
+      $suffix = format_plural($item['value'], $suffixes[0], $suffixes[1]);
+    }
+    else {
+      $suffix = $field['suffix'];
+    }
+  }
+  return $prefix . $value . $suffix;
+
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function number_widget_info() {
+  return array(
+    'number' => array(
+      'label' => 'Text Field',
+      'field types' => array('number_integer', 'number_decimal'),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function number_widget($op, &$node, $field, &$items) {
+  switch ($op) {
+    case 'form':
+      $form = array();
+
+      $prefixes = explode('|', $field['prefix']);
+      $suffixes = explode('|', $field['suffix']);
+      // We take the plural form (if any) for forms.
+      $prefix = array_pop($prefixes);
+      $suffix = array_pop($suffixes);
+
+      $form[$field['field_name']] = array('#tree' => TRUE);
+
+      if ($field['multiple']) {
+        $form[$field['field_name']]['#type'] = 'fieldset';
+        $form[$field['field_name']]['#description'] = t($field['widget']['description']);
+        $delta = 0;
+        foreach ($items as $data) {
+          if (isset($data['value'])) {
+            $form[$field['field_name']][$delta]['value'] = array(
+              '#type' => 'textfield',
+              '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+              '#default_value' => $data['value'],
+              '#required' => ($delta == 0) ? $field['required'] : FALSE,
+              '#size' => 20,
+              '#maxlength' => 11,
+              '#attributes' => array('class' => 'number'),
+              '#field_prefix' => $prefix,
+              '#field_suffix' => $suffix,
+            );
+            $delta++;
+          }
+        }
+        foreach (range($delta, $delta + 2) as $delta) {
+          $form[$field['field_name']][$delta]['value'] = array(
+            '#type' => 'textfield',
+            '#title' => ($delta == 0) ? t($field['widget']['label']) : '',
+            '#default_value' => '',
+            '#required' => ($delta == 0) ? $field['required'] : FALSE,
+            '#size' => 20,
+            '#maxlength' => 11,
+            '#attributes' => array('class' => 'number'),
+            '#field_prefix' => $prefix,
+            '#field_suffix' => $suffix,
+          );
+        }
+      }
+      else {
+        $form[$field['field_name']][0]['value'] = array(
+          '#type' => 'textfield',
+          '#title' => t($field['widget']['label']),
+          '#default_value' => isset($items[0]['value']) ? $items[0]['value'] : '',
+          '#required' => $field['required'],
+          '#description' => t($field['widget']['description']),
+          '#size' => 20,
+          '#maxlength' => 11,
+          '#attributes' => array('class' => 'number'),
+          '#field_prefix' => $prefix,
+          '#field_suffix' => $suffix,
+        );
+      }
+      return $form;
+
+    case 'process form values':
+      // Don't save empty fields.
+      foreach ($items as $delta => $item) {
+        $items[$delta]['value'] = preg_replace('@[^-0-9\.]@', '', $items[$delta]['value']);
+      }
+      if ($field['multiple']) {
+        foreach ($items as $delta => $item) {
+          if ($item['value'] == '' && $delta > 0) {
+            unset($items[$delta]);
+          }
+        }
+      }
+      break;
+  }
+}
+
+/**
+ *  Create an array of the allowed values for this field
+ */
+function number_allowed_values($field) {
+  static $allowed_values;
+
+  if ($allowed_values[$field['field_name']]) {
+    return $allowed_values[$field['field_name']];
+  }
+
+  $allowed_values[$field['field_name']] = array();
+  if ($field['allowed_values_php']) {
+    ob_start();
+    $result = eval($field['allowed_values_php']);
+    if (is_array($result)) {
+      $allowed_values[$field['field_name']] = $result;
+    }
+    ob_end_clean();
+  }
+  if (!$allowed_values[$field['field_name']]) {
+
+    $list = explode("\n", $field['allowed_values']);
+    $list = array_map('trim', $list);
+    $list = array_filter($list, 'strlen');
+    foreach ($list as $opt) {
+      list($key, $value) = explode('|', $opt);
+      $allowed_values[$field['field_name']][$key] = $value ? $value : $key;
+    }
+  }
+  return $allowed_values[$field['field_name']];
+}

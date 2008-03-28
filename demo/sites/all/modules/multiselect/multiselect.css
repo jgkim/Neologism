@@ -1,0 +1,24 @@
+select.multiselect_unsel
+{
+  width: 20%;
+}
+
+select.multiselect_sel
+{
+  width:20%;
+  position:relative;
+  left:-50px;
+}
+
+span.multiselect_add
+{
+  position:relative;
+  left:0px;
+}
+
+span.multiselect_remove
+{
+  position:relative;
+  left:-50px;
+}
+

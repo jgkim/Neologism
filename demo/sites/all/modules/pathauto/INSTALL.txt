@@ -1,0 +1,43 @@
+
+**Installation:
+
+Note that pathauto is an extension to the path module, which must
+be enabled.
+
+1. Unpack the pathauto folder and contents in the modules directory of 
+your Drupal installation.
+2. Enable the pathauto module in the administration tools.
+3. If you're not using Drupal's default administrative account, make
+sure "administer pathauto" is enabled through access control administration.
+4. Visit the pathauto settings page:
+  When first installing pathauto, to define the desired alias patterns.
+
+**Transliteration support:
+If you desire transliteration support in the creation of URLs (e.g. the 
+replacement of Ã€ with A) then you will need to rename the file 
+i18n-ascii.example.txt to i18n-ascii.txt 
+
+You can then freely edit the i18n-ascii.txt without worrying that your changes 
+will be over-written by upgrades of Pathauto.
+
+For details on how to transliterate any UTF8 character, please see the full 
+i18n-ascii-fill.txt file information at http://drupal.org/node/185664
+
+**Upgrading from previous versions:
+If you are upgrading from Pathauto 5.x-1.x to 5.x-2.x (or 6.x-2.x) then you will
+probably need to change your patterns.
+
+For content patterns:
+    [user] is now [author-name]
+    [cat] is now [term]
+
+There may be other changes as well.  Please review the pattern examples on
+      Administration > Site Configuration > Pathauto 
+
+NOTE: You must also have the token module installed.  If you upgraded from 
+Pathauto 5.x-1.x directly without enabling token first then you will need to
+1) download/install the token module 2) disable the Pathauto module 3) re-enable
+the Pathauto module 4) confirm the dependency on the token module.
+
+
+$Id: INSTALL.txt,v 1.1.4.6 2007/10/22 21:58:34 greggles Exp $

@@ -1,0 +1,208 @@
+<?php
+// $Id: optionwidgets.module,v 1.10.2.9 2007/08/09 19:03:52 yched Exp $
+
+/**
+ * @file
+ * Defines selection, check box and radio button widgets for text and numeric fields.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function optionwidgets_help($section) {
+  if (preg_match('|^admin/content/types/([^/]*)/fields/([^/]*)$|', $section, $matches)) {
+    if (($field = content_fields($matches[2], $matches[1])) && in_array($field['widget']['type'], array_keys(optionwidgets_widget_info()))) {
+      $output = t('Create a list of options as a list in <strong>Allowed values</strong> or as an array in Php code at the bottom of this page. These values will be the same for the %field in all content types. ', array('%field' => $field['widget']['label']));
+      if ($field['widget']['type'] == 'options_onoff') {
+        $output .= '<br/>'. t('For a \'Single on/off checkbox\' widget, define the \'off\' value first, then the \'on\' value in the <strong>Allowed values</strong> section. Note that the checkbox will be labeled with the label of the \'on\' value.');
+      }
+      else {
+        $output .= '<br/>'. t('The \'Checkboxes / radio buttons\' widget will display checkboxes if the multiple values option is selected for this field, otherwise radios will be displayed.');
+      }
+      return $output;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_widget_info().
+ */
+function optionwidgets_widget_info() {
+  $option_types = array('text', 'number_integer', 'number_decimal');
+  return array(
+    'options_select' => array(
+      'label' => 'Select list',
+      'field types' => $option_types,
+    ),
+    'options_buttons' => array(
+      'label' => 'Check boxes/radio buttons',
+      'field types' => $option_types,
+    ),
+    'options_onoff' => array(
+      'label' => 'Single on/off checkbox',
+      'field types' => $option_types,
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_widget().
+ */
+function optionwidgets_widget($op, &$node, $field, &$items) {
+  switch ($op) {
+    case 'prepare form values':
+      $options = _optionwidgets_options($field, $node);
+      $items_transposed = content_transpose_array_rows_cols($items);
+      $values = (isset($items_transposed['value']) && is_array($items_transposed['value'])) ? $items_transposed['value'] : array();
+
+      $keys = array();
+      foreach ($values as $value) {
+        $key = array_search($value, array_keys($options));
+        if (isset($key)) {
+          $keys[] = $value;
+        }
+      }
+      if ($field['multiple'] || $field['widget']['type'] == 'options_onoff') {
+        $items['default keys'] = $keys;
+      }
+      else {
+        $items['default key'] = reset($keys);
+      }
+      break;
+
+    case 'form':
+      $options = _optionwidgets_options($field, $node);
+
+      $form = array();
+
+      $form[$field['field_name']] = array('#tree' => TRUE);
+
+      switch ($field['widget']['type']) {
+        case 'options_select':
+          if ($field['multiple']) {
+            $form[$field['field_name']]['keys'] = array(
+              '#type' => 'select',
+              '#title' => t($field['widget']['label']),
+              '#default_value' => $items['default keys'],
+              '#multiple' => TRUE,
+              '#size' => min(count($options), 6),
+              '#options' => $options,
+              '#required' => $field['required'],
+              '#description' => t($field['widget']['description']),
+            );
+          }
+          else {
+            $form[$field['field_name']]['key'] = array(
+              '#type' => 'select',
+              '#title' => t($field['widget']['label']),
+              '#default_value' => $items['default key'],
+              '#multiple' => FALSE,
+              '#options' => $options,
+              '#required' => $field['required'],
+              '#description' => t($field['widget']['description']),
+            );
+          }
+          break;
+
+        case 'options_onoff':
+          // Display only the 'On' value of $options;
+          $vals = array_keys($options);
+          $on_value = $vals[1];
+          $form[$field['field_name']]['keys'] = array(
+            '#type' => 'checkbox',
+            '#title' => $options[$on_value],
+            '#default_value' => $items['default keys'][0],
+            '#return_value' => $on_value,
+            '#description' => t($field['widget']['description']),
+            '#required' => FALSE,
+          );
+          break;
+
+        case 'options_buttons':
+          if ($field['multiple']) {
+            $form[$field['field_name']]['keys'] = array(
+              '#type' => 'checkboxes',
+              '#title' => t($field['widget']['label']),
+              '#default_value' => $items['default keys'],
+              '#options' => $options,
+              '#required' => $field['required'],
+              '#description' => t($field['widget']['description']),
+            );
+          }
+          else {
+            $form[$field['field_name']]['key'] = array(
+              '#type' => 'radios',
+              '#title' => t($field['widget']['label']),
+              '#default_value' => $items['default key'],
+              '#options' => $options,
+              '#required' => $field['required'],
+              '#description' => t($field['widget']['description']),
+            );
+          }
+          break;
+      }
+      return $form;
+
+    case 'process form values':
+      $options = _optionwidgets_options($field, $node);
+
+      if ($field['multiple'] || $field['widget']['type'] == 'options_onoff') {
+        $keys = (array) $items['keys'];
+      }
+      else {
+        $keys = array($items['key']);
+      }
+
+      $values = array();
+      foreach ($keys as $key) {
+        if (isset($options[$key])) {
+          $values[] = $key;
+        }
+      }
+
+      if ($field['widget']['type'] == 'options_onoff' && empty($values)) {
+        $keys = array_keys($options);
+        $values[] = $keys[0];
+      }
+
+      $items = content_transpose_array_rows_cols(array('value' => $values));
+
+      // Remove the widget's data representation so it isn't saved.
+      unset($items['keys']);
+      unset($items['key']);
+      break;
+  }
+}
+
+function _optionwidgets_options($field, $node) {
+  $types = _content_field_types();
+  $field_allowed_values = $types[$field['type']]['module'] .'_allowed_values';
+  if (function_exists($field_allowed_values)) {
+    $allowed_values = $field_allowed_values($field);
+  }
+  else {
+    $allowed_values = array();
+  }
+
+  if ($field['widget']['type'] == 'options_select' ||
+     ($field['widget']['type'] == 'options_buttons' && !$field['multiple'])) {
+    if (!$field['required']) {
+      $allowed_values = array('' => theme('optionwidgets_none', $field['widget']['type'], $field['field_name'], $node->type)) + $allowed_values;
+    }
+  }
+
+  return $allowed_values;
+}
+
+/**
+ *  Theme the label for the empty value for options that are not required.
+ *  The default theme will display N/A for a radio list and blank for a select.
+ */
+function theme_optionwidgets_none($widget_type, $field_name, $node_type) {
+  switch ($widget_type) {
+  case 'options_buttons':
+    return t('N/A');
+  default :
+    return '';
+  }
+}

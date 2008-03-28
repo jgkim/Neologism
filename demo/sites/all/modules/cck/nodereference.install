@@ -1,0 +1,92 @@
+<?php
+// $Id: nodereference.install,v 1.7.2.2 2007/01/25 17:23:26 yched Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function nodereference_install() {
+}
+
+/**
+ * Add node ID column so we can delete old revisions at node delete time.
+ */
+function nodereference_update_1() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      db_add_column($ret, 'node_field_nodereference_data', 'nid', 'integer', array('not null' => TRUE, 'default' => 0));
+      break;
+
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {node_field_nodereference_data} ADD COLUMN nid int(10) NOT NULL DEFAULT 0");
+      break;
+  }
+
+  return $ret;
+}
+
+/**
+ * Populate nid column in existing node reference fields.
+ */
+function nodereference_update_2() {
+  // Multi-part update
+  if (!isset($_SESSION['nodereference_update_2'])) {
+    $_SESSION['nodereference_update_2'] = 0;
+    $_SESSION['nodereference_update_2_max'] = db_result(db_query("SELECT COUNT(*) FROM {node_field_nodereference_data}"));;
+  }
+
+  $limit = 20;
+  $result = db_query_range("SELECT nr.nid, nfnd.vid, nfnd.field_name, nfnd.delta FROM {node_field_nodereference_data} nfnd LEFT JOIN {node_revisions} nr ON nr.vid = nfnd.vid", $_SESSION['nodereference_update_2'], $limit);
+  if (db_num_rows($result) == 0) {
+    unset($_SESSION['nodereference_update_2']);
+    unset($_SESSION['nodereference_update_2_max']);
+    return array();
+  }
+  while ($data = db_fetch_object($result)) {
+    $_SESSION['nodereference_update_2']++;
+    db_query("UPDATE {node_field_nodereference_data} SET nid = %d WHERE vid = %d AND field_name = '%s' AND delta = %d", $data->nid, $data->vid, $data->field_name, $data->delta);
+  }
+
+  return array('#finished' => $_SESSION['nodereference_update_2'] / $_SESSION['nodereference_update_2_max']);
+}
+
+/**
+ * Data is now stored in per-field tables.
+ */
+function nodereference_update_3() {
+  $ret = array();
+
+  include_once('./'. drupal_get_path('module', 'content') .'/content.module');
+  include_once('./'. drupal_get_path('module', 'content') .'/content_admin.inc');
+
+  content_clear_type_cache();
+  $fields = content_fields();
+
+  foreach ($fields as $field) {
+    switch ($field['type']) {
+      case 'nodereference':
+        $columns = array(
+          'nid' => array('type' => 'int', 'not null' => TRUE, 'default' => '0'),
+        );
+        // the following line will trigger (negligible) warnings if content_update_5 was run before
+        // (column already exists)
+        @content_alter_db_field(array(), array(), $field, $columns);
+        $db_info = content_database_info($field);
+        $table = $db_info['table'];
+        if ($field['multiple']) {
+          $ret[] = update_sql('INSERT INTO {'. $table .'} (vid, delta, nid, '. $field['field_name'] ."_nid) SELECT vid, delta, nid, field_nid FROM {node_field_nodereference_data} WHERE field_name = '". $field['field_name'] ."'");
+        }
+        else {
+          $ret[] = update_sql('INSERT INTO {'. $table .'} (vid, nid, '. $field['field_name'] ."_nid) SELECT vid, nid, field_nid FROM {node_field_nodereference_data} WHERE field_name = '". $field['field_name'] ."'");
+        }
+        break;
+    }
+  }
+
+  $ret[] = update_sql('DROP TABLE {node_field_nodereference_data}');
+
+  db_query('DELETE FROM {cache}');
+  return $ret;
+}

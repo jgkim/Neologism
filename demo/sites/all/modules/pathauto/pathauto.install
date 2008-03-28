@@ -1,0 +1,197 @@
+<?php
+// $Id: pathauto.install,v 1.1.4.24 2008/02/19 16:52:27 greggles Exp $
+
+/**
+ *
+ * @file Provides install, updated, and uninstall functions for pathauto.
+ * 
+ */
+
+ 
+ 
+/**
+ * Implementation of hook_install().
+ */
+function pathauto_install() {
+  // Check to see if taxonomy module is enabled before we set those variables
+  if (module_exists('taxonomy')) {
+    variable_set('pathauto_modulelist', array('node', 'user', 'taxonomy'));
+    variable_set('pathauto_taxonomy_supportsfeeds', '0/feed');
+    variable_set('pathauto_taxonomy_pattern', 'category/[vocab-raw]/[catpath-raw]');
+    variable_set('pathauto_taxonomy_bulkupdate', FALSE);
+    variable_set('pathauto_taxonomy_applytofeeds', FALSE);
+    variable_set('pathauto_taxonomy_2_pattern', '');
+    variable_set('pathauto_taxonomy_1_pattern', '');
+  }
+  else { // Node and user are required so we don't have to check
+    variable_set('pathauto_modulelist', array('node', 'user'));
+  }
+  // Set the rest of the pathauto default variables
+  variable_set('pathauto_ignore_words', 'a,an,as,at,before,but,by,for,from,is,in,into,like,of,off,on,onto,per,since,than,the,this,that,to,up,via,with');
+  variable_set('pathauto_indexaliases', FALSE);
+  variable_set('pathauto_indexaliases_bulkupdate', FALSE);
+  variable_set('pathauto_max_component_length', '100');
+  variable_set('pathauto_max_length', '100');
+  variable_set('pathauto_node_bulkupdate', FALSE);
+  variable_set('pathauto_node_forum_pattern', '');
+  variable_set('pathauto_node_image_pattern', '');
+  variable_set('pathauto_node_page_pattern', '');
+  variable_set('pathauto_node_pattern', 'content/[title-raw]');
+  variable_set('pathauto_node_story_pattern', '');
+  variable_set("pathauto_punctuation_quotes", 0);
+  variable_set('pathauto_separator', '-');
+  variable_set('pathauto_update_action', '2');
+  variable_set('pathauto_user_bulkupdate', FALSE);
+  variable_set('pathauto_user_pattern', 'users/[user-raw]');
+  variable_set('pathauto_user_supportsfeeds', NULL);
+  variable_set('pathauto_verbose', FALSE);
+  
+  // Make sure we "replace hyphen with separator" by default
+  variable_set('pathauto_punctuation_hyphen', 1); // 1 is replace
+
+  // Set the weight to 1
+  db_query("UPDATE {system} SET weight = 1 WHERE name = 'pathauto'");
+
+  // Make the variable column wide enough for long cck names
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      // Using pgsql<8.x?  Help at http://drupal.org/node/195044
+      db_query("ALTER TABLE {variable} ALTER name TYPE varchar(128)");
+      break;
+    case 'mysql':
+    case 'mysqli':
+      db_query("ALTER TABLE {variable} CHANGE name name varchar(128) NOT NULL default ''");
+      break;
+  }
+
+  // Clear the cache to get these to take effect.
+  cache_clear_all();
+
+  // Create a table so that we can track which items we keep 
+  // And eventually to improve join performance
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+        db_query("CREATE TABLE {url_alias_extra} (
+        pid int unsigned NOT NULL default 0,
+        dst varchar(128) NOT NULL default '',
+        entity_type varchar(20) default NULL,
+        entity_id int(10) unsigned default NULL,
+        created_by varchar(20) default NULL,
+        PRIMARY KEY (pid),
+        UNIQUE KEY dst (dst)
+      ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+        break;
+    case 'pgsql':
+      db_query("CREATE TABLE {url_alias_extra} (
+        pid int_unsigned NOT NULL default 0,
+        dst varchar(128) NOT NULL default '',
+        entity_type varchar(20) default NULL,
+        entity_id int4 default NULL,
+        created_by varchar(20) default NULL,
+        PRIMARY KEY (pid),
+        UNIQUE (dst)
+      )");
+      break;
+  }
+  
+}
+ 
+/**
+ * Implementation of hook_uninstall().
+ */
+function pathauto_uninstall() {
+  // Delete all the pathauto variables and then clear the variable cache  
+  db_query("DELETE FROM {variable} WHERE name LIKE 'pathauto_%'");
+  cache_clear_all('variables', 'cache');
+}
+
+/**
+ * Set the weight a little heavier to allow taxonomy to do its work
+ *
+ */
+function pathauto_update_1() {
+  $items = array();
+  $items[] = update_sql("UPDATE {system} SET weight = 1 WHERE name = 'pathauto'");
+  return $items;
+}
+
+/**
+ * Increase the maximum length of variable names from 48 to 128.
+ * Copied from DRUPAL-6 sytem_update_6002 per http://drupal.org/node/66795
+ */
+function pathauto_update_2() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      db_change_column($ret, 'variable', 'name', 'name', 'varchar(128)', array('not null' => TRUE, 'default' => "''"));
+      break;
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {variable} CHANGE name name varchar(128) NOT NULL default ''");
+      break;
+  }
+  return $ret;
+}
+
+/**
+ * Delete the pathauto_node_supportsfeeds
+ *
+ */
+function pathauto_update_3() {
+  // Do nothing, this update was a mistake
+  $items = array();
+  return $items;
+}
+
+/**
+ * New style naming for the punctuation chars
+ *
+ */
+function pathauto_update_4() {
+  $quotes = variable_get('pathauto_quotes', 0);
+  variable_set("pathauto_punctuation_quotes", $quotes);
+  variable_del('pathauto_quotes');
+  $items = array();
+  return $items;
+}
+
+/**
+ * Create a table so that we can track which items we keep 
+ * And eventually to improve join performance
+ */
+function pathauto_update_5() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("CREATE TABLE {url_alias_extra} (
+          pid int unsigned NOT NULL default 0,
+          dst varchar(128) NOT NULL default '',
+          entity_type varchar(20) default NULL,
+          entity_id int(10) unsigned default NULL,
+          created_by varchar(20) default NULL,
+          PRIMARY KEY (pid)
+        ) /*!40100 DEFAULT CHARACTER SET UTF8 */ ");
+      break;
+    case 'pgsql':
+    $ret[] = update_sql("CREATE TABLE {url_alias_extra} (
+        pid int_unsigned NOT NULL default 0,
+        dst varchar(128) NOT NULL default '',
+        entity_type varchar(20) default NULL,
+        entity_id int4 default NULL,
+        created_by varchar(20) default NULL,
+        PRIMARY KEY (pid)
+      )");
+  }
+  return $ret;
+}
+
+/**
+ *  Remove some variables that are no longer used
+ */
+function pathauto_update_6() {
+  // Delete some unused variables
+  db_query("DELETE FROM {variable} WHERE name LIKE 'pathauto_%_supportsfeeds'");
+  cache_clear_all('variables', 'cache');
+  return array();
+}

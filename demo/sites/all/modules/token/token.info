@@ -1,0 +1,8 @@
+; $Id: token.info,v 1.1.2.1 2007/03/10 22:17:48 eaton Exp $
+name = Token
+description = Provides a shared API for replacement of textual placeholders with actual data.
+; Information added by drupal.org packaging script on 2008-01-29
+version = "5.x-1.10"
+project = "token"
+datestamp = "1201643712"
+

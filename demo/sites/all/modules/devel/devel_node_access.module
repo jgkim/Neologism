@@ -1,0 +1,316 @@
+<?php
+// $Id: devel_node_access.module,v 1.7.4.4 2008/01/23 16:49:37 weitzman Exp $
+/**
+ * @file
+ *
+ * This module gives developers feedback as to what there
+ * node_access table contains, and which nodes are protected or
+ * visible to the public.
+ *
+ */
+
+define('DNA_ACCESS_VIEW', 'view devel_node_access information');
+
+function devel_node_access_perm() {
+  return array(DNA_ACCESS_VIEW);
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function devel_node_access_help($section) {
+  switch ($section) {
+  case 'admin/settings/modules#description':
+	return t('Development helper for node_access table');
+	break;
+  case 'admin/help#devel_node_access':
+	$output .= '<p>'.t('This module helps in site development.  Specifically, when an access control module is used to limit access to some or all nodes, this module provides some feedback showing the node_access table in the database.') ."</p>\n";
+	$output .= '<p>'.t('The node_access table is one method Drupal provides to hide content from some users while displaying it to others.  By default, Drupal shows all nodes to all users.  There are a number of optional modules which may be installed to hide content from some users.')."</p>\n";
+	$output .= '<p>'.t('If you have not installed one of these modules, you really have no need for the devel_node_access module.  This module is intended for use during development, so that developers and admins can confirm that node_access table is working as expected.  You probably do not want this module enabled on a production site.')."</p>\n";
+	$output .= '<p>'.t('This module provides a %summary_page which shows show general information about your node_access table.  If you have installed the Views module, you may %browse_link.  This module also provides a block showing the rows of the node_access table relevant to whatever node(s) are shown on a given page.  Because the table shown is wide, it is recommended to enable the block in the page footer rather than a sidebar.',
+					   array('%summary_page' => l(t('summary page'), 'devel/node_access/summary'),
+							 '%browse_link' => l(t('browse node_access by realm'), 'devel/node_access/view'))
+					   )."</p>\n";
+	$output .= '<p>'.t('')."</p>\n";
+	return $output;
+  }
+}
+
+
+function devel_node_access_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+	$items[] = array('path' => 'devel/node_access/summary',
+					 'title' => t('node_access summary'),
+					 'callback' => 'dna_summary',
+					 'access' => user_access(DNA_ACCESS_VIEW),
+					 'type' => MENU_CALLBACK,
+					 );
+  }
+  return $items;
+}
+
+function dna_summary() {
+  // Warn user if they have any entries that could grant access to all nodes
+  $result = db_query('SELECT DISTINCT realm FROM {node_access} WHERE nid=0 AND gid=0');
+  if (db_num_rows($result)) {
+	$output .= '<h3>'.t('Access Granted to All Nodes (All Users)')."</h3>\n";
+	$output .= '<p>'.t('Your node_access table contains entries that may be granting all users access to all nodes.  Depending on which access control module(s) you use, you may want to delete these entries.  If you are not using an access control module, you should probably leave these entries as is.')."</p>\n";
+	$headers = array(t('realm'));
+	$rows = array();
+	while ($row = db_fetch_object($result)) {
+	  $rows[] = array($row->realm);
+	}
+	$output .= theme_table($headers, $rows);
+  }
+
+  // how many nodes are not represented in the node_access table
+  $result = db_fetch_object(db_query('SELECT COUNT(n.nid) as num_nodes FROM {node} n LEFT JOIN {node_access} na ON n.nid = na.nid WHERE na.nid IS NULL'));
+  if ($num = $result->num_nodes) {
+	$output .= '<h3>'.t('Legacy Nodes')."</h3>\n";
+	$output .= '<p>'.
+	  t('You have !num nodes in your node table which are not represented in your node_access table.  If you have an access control module installed, these nodes may be hidden from all users.  This could be caused by publishing nodes before enabling the access control module.  If this is the case, manually updating each node should add it to the node_access table and fix the problem.', array('!num' => l($num, 'devel/node_access/view/NULL'))).
+	  "</p>\n";
+  }
+  else {
+	$output .= '<h3>'.t('All Nodes Represented')."</h3>\n";
+	$output .= '<p>'.
+	  t('All nodes are represented in the node_access table.').
+	  "</p>\n";
+  }
+
+
+  // a similar warning to the one above, but slightly more specific
+  $result = db_query('SELECT DISTINCT realm FROM {node_access} WHERE nid=0 AND gid!=0');
+  if (db_num_rows($result)) {
+	$output .= '<h3>'.t('Access Granted to All Nodes (Some Users)')."</h3>\n";
+	$output .= '<p>'.t('Your node_access table contains entries that may be granting some users access to all nodes.  This may be perfectly normal, depending on which access control module(s) you use.')."</p>\n";
+	$headers = array(t('realm'));
+	$rows = array();
+	while ($row = db_fetch_object($result)) {
+	  $rows[] = array($row->realm);
+	}
+	$output .= theme_table($headers, $rows);
+  }
+
+
+  // find specific nodes which may be visible to all users
+  $result = db_query('SELECT DISTINCT realm, COUNT(DISTINCT nid) as node_count FROM {node_access} WHERE gid=0 AND nid > 0 GROUP BY realm');
+  if (db_num_rows($result)) {
+	$output .= '<h3>'.t('Access Granted to Some Nodes')."</h3>\n";
+	$output .= '<p>'.
+	  t('The following realms appear to grant all users access to some specific nodes.  This may be perfectly normal, if some of your content is available to the public.').
+	  "</p>\n";
+	$headers = array(t('realm'), t('public nodes'));
+	$rows = array();
+	while ($row = db_fetch_object($result)) {
+	  $rows[] = array($row->realm,
+					  array('data' => $row->node_count,
+							'align' => 'center'));
+	}
+	$output .= theme_table($headers, $rows, array(), t('Public Nodes'));
+  }
+
+
+  // find specific nodes protected by node_access table
+  $result = db_query('SELECT DISTINCT realm, COUNT(DISTINCT nid) as node_count FROM {node_access} WHERE gid != 0 AND nid > 0 GROUP BY realm');
+  if (db_num_rows($result)) {
+	$output .= '<h3>'.t('Summary by Realm')."</h3>\n";
+	$output .= '<p>'.
+	  t('The following realms grant limited access to some specific nodes.').
+	  "</p>\n";
+	$headers = array(t('realm'), t('private nodes'));
+	$rows = array();
+	while ($row = db_fetch_object($result)) {
+	  $rows[] = array(l($row->realm, "devel/node_access/view/$row->realm"),
+					  array('data' => $row->node_count,
+							'align' => 'center'));
+	}
+	$output .= theme_table($headers, $rows, array(), t('Protected Nodes'));
+  }
+
+
+
+  return $output;
+}
+
+function dna_visible_nodes($nid = null) {
+  static $nids = array();
+  if ($nid) {
+	$nids[$nid] = $nid;
+  }
+  return $nids;
+}
+
+function devel_node_access_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+  if ($op == 'view') {
+	// remember this node, for display in our block
+	dna_visible_nodes($node->nid);
+  }
+}
+
+function devel_node_access_block($op = 'list', $delta = 0) {
+  switch ($op) {
+  case 'list':
+	  $blocks[0]['info'] = t('Devel Node Access');
+	  $blocks[0]['status'] = 1;
+	  $blocks[0]['region'] = 'footer';
+	return $blocks;
+	break;
+  case 'view':
+	if (!user_access(DNA_ACCESS_VIEW))
+	  return;
+	if (!count(dna_visible_nodes()))
+	  return;
+	
+	// include rows where nid == 0
+	$nids = array_merge(array(0 => 0), dna_visible_nodes());
+	$result = db_query('SELECT na.*, n.title FROM {node_access} na LEFT JOIN {node} n ON n.nid = na.nid WHERE na.nid IN (%s) ORDER BY na.nid',
+					   implode(',', $nids));
+	$headers = array(t('node'), t('realm'), t('gid'), t('view'), t('update'), t('delete'), t('explained'));
+	$rows = array();
+	while ($row = db_fetch_object($result)) {
+	  $explained = module_invoke_all('node_access_explain', $row);
+	  $rows[] = array($row->title ? $row->title : $row->nid,
+					  $row->realm,
+					  $row->gid,
+					  $row->grant_view,
+					  $row->grant_update,
+					  $row->grant_delete,
+					  implode('; ', $explained));
+	}
+	$output = theme_table($headers, $rows);
+	$subject = t('node_access entries for nodes shown on this page');
+	return array('subject' => $subject, 'content' => $output);
+	break;
+	
+  }
+}
+
+/**
+* Implementation of hook_node_access_explain
+*/
+function devel_node_access_node_access_explain($row) {
+  if ($row->gid == 0 && $row->realm == 'all') {
+    if ($row->nid == 0) {
+      return 'All users may view all nodes.';
+    } else {
+      return 'All users may view this node.';
+    }
+  }
+}
+
+function devel_node_access_views_tables() {
+  $tables['node_access'] =
+	array('name' => 'node_access',
+		  'join' => array('left' => array('table' => 'node',
+										  'field' => 'nid'),
+						  'right' => array('field' => 'nid')),
+		  'fields' => array('realm' =>
+							array('name' => t('Node Access: realm'),
+								  'sortable' => true,
+								  ),
+							),
+		  'filters' =>
+		  array('realm' =>
+				array('name' => t('Node Access Realm'),
+					  'operator' => 'views_handler_operator_eqneq',
+					  ),
+				),
+		
+		  );
+  return $tables;
+}
+
+function devel_node_access_views_arguments() {
+  $arguments =
+	array('realm' =>
+		  array('name' => t('Node Access: Realm'),
+				'handler' => 'dna_handler_arg_realm',
+				),
+		  );
+  return $arguments;
+}
+
+function dna_handler_arg_realm($op, &$query, $argtype, $arg = '') {
+  switch ($op) {
+  case 'summary':
+	$query->ensure_table('node_access', true);
+	$query->add_field('realm', 'node_access');
+	$fieldinfo['field'] = 'realm';
+	$query->add_orderby('node_access', 'realm', 'ASC');
+	return $fieldinfo;
+	break;
+  case 'filter':
+	$query->ensure_table('node_access');
+	if ($arg == 'NULL')
+	  $query->add_where("node_access.realm IS NULL");
+	else
+	  $query->add_where("node_access.realm = '$arg'");
+	break;
+  case 'link':
+	if ($query->realm)
+	  return l($query->realm, "$arg/$query->realm");
+	else
+	  return l('NULL', "$arg/NULL");
+	break;
+  case 'title':
+	return $query;
+	break;
+  }
+}
+
+function devel_node_access_views_default_views() {
+  $view = new stdClass();
+  $view->name = 'devel_node_access';
+  $view->description = 'View nodes in node_access table';
+  $view->access = array (
+);
+  $view->page = TRUE;
+  $view->page_title = 'Nodes in node_access table';
+  $view->page_header = '';
+  $view->page_header_format = '1';
+  $view->page_type = 'table';
+  $view->url = 'devel/node_access/view';
+  $view->use_pager = TRUE;
+  $view->nodes_per_page = '100';
+  $view->sort = array (
+  );
+  $view->argument = array (
+    array (
+      'type' => 'realm',
+      'argdefault' => '3',
+      'title' => 'Nodes in node_access table where realm is %1',
+      'options' => '',
+    ),
+  );
+  $view->field = array (
+    array (
+      'tablename' => 'node',
+      'field' => 'title',
+      'label' => 'Title',
+      'handler' => 'views_handler_field_nodelink',
+      'sortable' => '1',
+      'defaultsort' => 'ASC',
+    ),
+    array (
+      'tablename' => 'node',
+      'field' => 'type',
+      'label' => 'Type',
+      'sortable' => '1',
+    ),
+    array (
+      'tablename' => 'node',
+      'field' => 'changed',
+      'label' => 'Updated',
+      'handler' => 'views_handler_field_date_small',
+      'sortable' => '1',
+    ),
+  );
+  $view->filter = array (
+  );
+  $view->requires = array(node);
+  $views[$view->name] = $view;
+
+  return $views;
+}

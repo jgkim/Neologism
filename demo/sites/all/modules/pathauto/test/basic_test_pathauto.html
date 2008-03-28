@@ -1,0 +1,522 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>basic_test</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">basic_test</td></tr>
+</thead><tbody>
+<!--Basic setup-->
+<tr>
+	<td>open</td>
+	<td>/?q=admin/build/modules</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-blog</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-book</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-forum</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-path</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-token</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-pathauto</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<!--basic tests - create blog post-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Create content</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Blog entry</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-title</td>
+	<td>this is a title</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-body</td>
+	<td>body</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Menu settings</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-menu-title</td>
+	<td>menu item</td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>edit-menu-pid</td>
+	<td>label=Primary links</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertLocation</td>
+	<td>http://clicks/workspace/5testbed/?q=content/title</td>
+	<td></td>
+</tr>
+<!--basic tests - create user-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=User management</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Users</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Add user</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-name</td>
+	<td>username</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-mail</td>
+	<td>asdf@example.com</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pass-pass1</td>
+	<td>asdf</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pass-pass2</td>
+	<td>asdf</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=List</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=username</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertLocation</td>
+	<td>http://clicks/workspace/5testbed/?q=users/username</td>
+	<td></td>
+</tr>
+<!--basic tests - create taxonomy term-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Content management</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Categories</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Add vocabulary</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-name</td>
+	<td>vocab test</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-blog</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-book</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-forum</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-page</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-nodereview</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-nodes-story</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>//a[contains(@href, '/workspace/5testbed/?q=admin/content/taxonomy/6/add/term')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-name</td>
+	<td>term test</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=List</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=term test</td>
+	<td></td>
+</tr>
+<tr>
+	<td>assertLocation</td>
+	<td>http://clicks/workspace/5testbed/?q=category/vocab-test/term-test</td>
+	<td></td>
+</tr>
+<!--Config a little more-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Site configuration</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Pathauto</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=General settings</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pathauto-separator</td>
+	<td>_</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Node path settings</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pathauto-node-blog-pattern</td>
+	<td>blog/[nid]/[term]/[vocab]/[title]</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pathauto-node-book-pattern</td>
+	<td>books/[bookpath]/[book]/[author-name]/[title]</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pathauto-node-page-pattern</td>
+	<td>[catpath]/[menupath]/[title]</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>link=Category path settings</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>edit-pathauto-taxonomy-pattern</td>
+	<td>category/[vocab]/[catpath]/[cat]/</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<!--Tear Down - delete created items-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Content management</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Categories</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=edit vocabulary</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-delete</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Content management</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Content</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@type='checkbox']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>edit-operation</td>
+	<td>label=Delete</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document.forms[1].op</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=User management</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Users</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>//input[@type='checkbox']</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-accounts-1</td>
+	<td></td>
+</tr>
+<tr>
+	<td>select</td>
+	<td>edit-operation</td>
+	<td>label=Delete the selected users</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>document.forms[1].op</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<!--Tear Down - delete all aliases-->
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Administer</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Site building</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=URL aliases</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Delete All Paths</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<!--Tear Down - disable modules-->
+<tr>
+	<td>open</td>
+	<td>/?q=admin/build/modules</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-blog</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-book</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-forum</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-pathauto</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-path</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-status-token</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>link=Uninstall</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-uninstall-book</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-uninstall-forum</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>edit-uninstall-pathauto</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>edit-submit</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

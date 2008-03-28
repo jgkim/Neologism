@@ -1,0 +1,133 @@
+<?php
+// $Id: userreference.install,v 1.7.2.3 2007/01/25 17:23:26 yched Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function userreference_install() {
+}
+
+/**
+ * Add node ID column so we can delete old revisions at node delete time.
+ */
+function userreference_update_1() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      db_add_column($ret, 'node_field_userreference_data', 'nid', 'integer', array('not null' => TRUE, 'default' => 0));
+      break;
+
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {node_field_userreference_data} ADD COLUMN nid int(10) NOT NULL DEFAULT 0");
+      break;
+  }
+
+  return $ret;
+}
+
+/**
+ * Populate nid column in existing user reference fields.
+ */
+function userreference_update_2() {
+  // Multi-part update
+  if (!isset($_SESSION['userreference_update_2'])) {
+    $_SESSION['userreference_update_2'] = 0;
+    $_SESSION['userreference_update_2_max'] = db_result(db_query("SELECT COUNT(*) FROM {node_field_userreference_data}"));;
+  }
+
+  $limit = 20;
+  $result = db_query_range("SELECT nr.nid, nfud.vid, nfud.field_name, nfud.delta FROM {node_field_userreference_data} nfud LEFT JOIN {node_revisions} nr ON nr.vid = nfud.vid", $_SESSION['userreference_update_2'], $limit);
+  if (db_num_rows($result) == 0) {
+    unset($_SESSION['userreference_update_2']);
+    unset($_SESSION['userreference_update_2_max']);
+    return array();
+  }
+  while ($data = db_fetch_object($result)) {
+    $_SESSION['userreference_update_2']++;
+    db_query("UPDATE {node_field_userreference_data} SET nid = %d WHERE vid = %d AND field_name = '%s' AND delta = %d", $data->nid, $data->vid, $data->field_name, $data->delta);
+  }
+
+  return array('#finished' => $_SESSION['userreference_update_2'] / $_SESSION['userreference_update_2_max']);
+}
+
+/**
+ * Data is now stored in per-field tables.
+ */
+function userreference_update_3() {
+  $ret = array();
+
+  include_once('./'. drupal_get_path('module', 'content') .'/content.module');
+  include_once('./'. drupal_get_path('module', 'content') .'/content_admin.inc');
+
+  content_clear_type_cache();
+  $fields = content_fields();
+
+  foreach ($fields as $field) {
+    switch ($field['type']) {
+      case 'userreference':
+        $columns = array(
+          'uid' => array('type' => 'int', 'not null' => TRUE, 'default' => '0'),
+        );
+        // the following line will trigger (negligible) warnings if content_update_5 was run before
+        // (column already exists)
+        @content_alter_db_field(array(), array(), $field, $columns);
+        $db_info = content_database_info($field);
+        $table = $db_info['table'];
+        if ($field['multiple']) {
+          $ret[] = update_sql('INSERT INTO {'. $table .'} (vid, delta, nid, '. $field['field_name'] ."_uid) SELECT vid, delta, nid, field_uid FROM {node_field_userreference_data} WHERE field_name = '". $field['field_name'] ."'");
+        }
+        else {
+          $ret[] = update_sql('INSERT INTO {'. $table .'} (vid, nid, '. $field['field_name'] ."_uid) SELECT vid, nid, field_uid FROM {node_field_userreference_data} WHERE field_name = '". $field['field_name'] ."'");
+        }
+        break;
+    }
+  }
+
+  $ret[] = update_sql('DROP TABLE {node_field_userreference_data}');
+
+  db_query('DELETE FROM {cache}');
+  return $ret;
+}
+
+/**
+ * Set the value columns to accept NULL values
+ * and replace 0 with NULL in the field data tables
+ */
+function userreference_update_4() {
+  $ret = array();
+
+  include_once('./'. drupal_get_path('module', 'content') .'/content.module');
+  include_once('./'. drupal_get_path('module', 'content') .'/content_admin.inc');
+
+  $fields = content_fields();
+
+
+  foreach ($fields as $field) {
+    switch ($field['type']) {
+      case 'userreference':
+        $db_info = content_database_info($field);
+        $columns_old = $db_info['columns'];
+        $columns = $columns_old;
+        $columns['uid']['not null'] = FALSE;
+        $columns['uid']['default'] = NULL;
+        // force the old values : if the db info was rebuilt before the update is run,
+        // it will already contain the new values, and nothing gets changed in content_alter_db_field
+        $columns_old['uid']['not null'] = TRUE;
+        $columns_old['uid']['default'] = 0;
+
+        content_alter_db_field($field, $columns_old, $field, $columns);
+        $ret[] = array(
+          'query' => strtr('The field %field_name has been updated to accept NULL values.', array('%field_name' => $field['field_name'])),
+          'success' => TRUE
+        );
+
+        $ret[] = update_sql("UPDATE {". $db_info['table'] ."} SET ". $db_info['columns']['uid']['column'] ." = NULL WHERE ". $db_info['columns']['uid']['column'] ." = 0");
+        break;
+    }
+  }
+
+  db_query('DELETE FROM {cache}');
+  return $ret;
+}

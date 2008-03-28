@@ -1,0 +1,33 @@
+// $Id: UPGRADE.txt,v 1.1.2.5 2007/01/05 23:33:23 yched Exp $
+
+UPDATING FROM VERSION 4.7 TO 5.x
+
+Depending on the exact version of Drupal 5.x and CCK 4.7 you are using,
+you may run into sql errors when you upgrade to Drupal 5.0. This problem
+has been corrected for Drupal 5 HEAD and will be corrected for releases
+after Drupal 5 Beta-2, but may still occur if you upgrade using Drupal 5
+Beta-1 or Drupal 5 Beta-2. If you would like to know the details behind
+this issue, read on. Otherwise, just be aware that you should use the
+latest possible versions of both Drupal 5.x and CCK 5.x when you upgrade.
+
+MORE DETAILS ABOUT THE UPDATE
+
+The 4.7 version of the content module created a table called node_type
+to track the custom node types that were created in CCK. In Drupal 5.x,
+that table is created and maintained as a core file. The most recent 4.7
+versions include an update to rename the content module version of this
+table so that the upgrade to 5.x will be able to create it's own version
+of that table.
+
+If you are running the the most recent 4.7 content module version and have
+performed all possible updates in 4.7, you should have no trouble updating
+to 5.0, since that table will have been renamed and will create no conflict.
+However, if your version of 4.7 is not up to date, you may still have a table
+in your database called node_type. If so, and if you are using Drupal 5 Beta-1
+or Drupal 5 Beta-2, you will get error messages when you update to 5.x when
+the core installation tries to create that table.
+
+The latest 5.x version of CCK will correct any errors that occur during the
+core upgrade by renaming the table and rerunning the failed core updates.
+However, it is recommended that you just avoid this problem altogether by
+using the latest versions of all these components when you upgrade.

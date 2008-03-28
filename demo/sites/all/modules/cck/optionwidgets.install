@@ -1,0 +1,87 @@
+<?php
+// $Id: optionwidgets.install,v 1.1.4.5 2007/01/25 17:23:26 yched Exp $
+
+/**
+ * Implementation of hook_install().
+ */
+function optionwidgets_install() {
+}
+
+/**
+ * Reformat allowed values settings into new key|label format
+ */
+function optionwidgets_update_1() {
+  $ret = array();
+
+  // find distinct values already stored in the database
+
+
+  $result = db_query("SELECT * FROM {node_field_instance} fi LEFT JOIN {node_field} f ON fi.field_name=f.field_name WHERE widget_type IN ('options_select', 'options_buttons')");
+  while ($field_instance = db_fetch_array($result)) {
+    $db_info = content_database_info($field_instance);
+    $result2 = db_query("SELECT DISTINCT ". $db_info['columns']['value']['column'] ." FROM {". $db_info['table'] ."}");
+    while ($value = db_fetch_array($result2)) {
+      $values[$field_instance['field_name']][$value[$db_info['columns']['value']['column']]] = $value[$db_info['columns']['value']['column']];
+    }
+  }
+
+  // find all field instances that use the optionwidgets widget
+
+  $result = db_query("SELECT DISTINCT f.field_name, f.type, global_settings FROM {node_field} f LEFT JOIN {node_field_instance} fi ON fi.field_name=f.field_name WHERE widget_type IN ('options_select', 'options_buttons') AND type IN ('text', 'number_integer', 'number_decimal')");
+  while ($field = db_fetch_object($result)) {
+
+    $updated = FALSE;
+    $used_keys = $used_deltas = $keys = $deltas = $delta_values = $key_values = $allowed_values = array();
+
+    // get the current allowed values settings
+
+    $global_settings = array();
+    if ($field->global_settings) {
+      $global_settings = unserialize($field->global_settings);
+    }
+    $start_values = $global_settings['allowed_values'];
+    $list = explode("\n", $start_values);
+    $list = array_map('trim', $list);
+    $list = array_filter($list, 'strlen');
+
+    $delta = 1;
+    foreach ($list as $opt) {
+      list ($key, $label) = explode('|', $opt);
+      $delta_values[] = $delta .'|'. $key;
+      $key_values[]   = $key   .'|'. $key;
+      if ($label) {
+        // this field has already been updated to use keys and labels, no change needed
+        $updated = TRUE;
+      }
+      else {
+        $keys[]   = $key;
+        $deltas[] = $delta;
+        $delta++;
+      }
+    }
+    if (!$updated && $global_settings['allowed_values']) {
+      // see if current data is storing the delta or the allowed values value
+      if (is_array($values[$field->field_name])) {
+        $used_keys   = array_intersect($keys, $values[$field->field_name]);
+        $used_deltas = array_intersect($deltas, $values[$field->field_name]);
+      }
+      if (!$used_keys || sizeof($used_deltas) > sizeof($used_keys)) {
+        $allowed_values = $delta_values;
+      }
+      else {
+        $allowed_values = $key_values;
+      }
+      // update the allowed values setting to use the correct key|label combination
+      $global_settings['allowed_values'] = implode("\n", $allowed_values);
+      db_query("UPDATE {node_field} SET type = '%s', global_settings = '%s' WHERE field_name = '%s'", $field->type, serialize($global_settings), $field->field_name);
+      drupal_set_message(t('<div>The allowed values list for %field was updated from </div><pre>%start</pre><div> to </div><pre>%end</pre><div>You can go to the field settings page to give each option a more user-friendly label.', array('%field' => $field->field_name, '%start' => $start_values, '%end' => $global_settings['allowed_values'])));
+    }
+    else {
+      drupal_set_message(t('<div>The allowed values list for %field was not changed from </div><pre>%start</pre>', array('%field' => $field->field_name, '%start' => $start_values)));
+    }
+  }
+
+  db_query('DELETE FROM {cache}');
+
+  return $ret;
+}
