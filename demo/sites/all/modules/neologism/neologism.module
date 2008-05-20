@@ -373,7 +373,7 @@ function neologism_layout($node) {
             echo $xml->asXml();
         } else {
             header("Content-Type: application/xml; charset=utf-8");
-            $echo layout;
+            echo $layout;
         }
         return;
     } else {
