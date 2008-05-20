@@ -399,12 +399,12 @@ function neologism_show_diagram($node) {
         <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
             id="Neologism" width="800px" height="600px"
             codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-                <param name="movie" value="http://mmlab.deri.ie/neologism/resources/Neologism.swf" />
+                <param name="movie" value="http://neologism.deri.ie/resources/Neologism.swf" />
                 <param name="quality" value="high" />
                 <param name="bgcolor" value="#869ca7" />
-                <param name='flashVars' value='vocabulary=$name&prefix=/neologism/demo/neologism/'/>
+                <param name='flashVars' value='vocabulary=$name&prefix=/demo/neologism/'/>
                 <param name="allowScriptAccess" value="sameDomain" />
-                <embed src="http://mmlab.deri.ie/neologism/resources/Neologism.swf" quality="high" bgcolor="#869ca7"
+                <embed src="http://neologism.deri.ie/resources/Neologism.swf" quality="high" bgcolor="#869ca7"
                     width="800px" 
                     height="600px" 
                     name="Neologism" 
@@ -415,7 +415,7 @@ function neologism_show_diagram($node) {
                     allowScriptAccess="sameDomain"
                     type="application/x-shockwave-flash"
                     pluginspage="http://www.adobe.com/go/getflashplayer"
-                    flashVars='vocabulary=$name&prefix=/neologism/demo/neologism/'>
+                    flashVars='vocabulary=$name&prefix=/demo/neologism/'>
                 </embed>
         </object>
 
