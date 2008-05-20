@@ -370,8 +370,11 @@ function neologism_layout($node) {
         return;
     } else {
         //POST, so import
-        
-        return "For the moment this feature is not available, seeAlso issue #5";
+        $query = "UPDATE content_type_vocabulary SET field_layout_value = " . $layout . " WHERE nid = " . $node->nid;
+        if (db_query($query))
+            return "Layout stored"
+        else
+            return "An error occurred trying to store this layout";
     }
 
 }
