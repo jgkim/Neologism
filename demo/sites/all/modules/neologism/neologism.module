@@ -370,7 +370,7 @@ function neologism_layout($node) {
         return;
     } else {
         //POST, so import
-        $query = "UPDATE content_type_vocabulary SET field_layout_value = " . $layout . " WHERE nid = " . $node->nid;
+        $query = "UPDATE content_type_vocabulary SET field_layout_value = '" . $layout . "' WHERE nid = " . $node->nid;
         if (db_query($query))
             return "Layout stored";
         else
