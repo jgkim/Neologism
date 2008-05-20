@@ -366,11 +366,6 @@ function neologism_layout($node) {
         return;
     } else {
         //POST, so import
-        //FIXME issue #5: store it in the data model
-        //$file = "/home/neologism/cosmin.xml";
-        //$fh = fopen($file, 'w');
-        //fwrite($fh, $layout);
-        //fclose($fh);
         return "For the moment this feature is not available, seeAlso issue #5";
     }
 
@@ -419,7 +414,7 @@ function neologism_show_diagram($node) {
                 </embed>
         </object>
 
-        <img src="http://mmlab.deri.ie/neologism/resources/images/legend.png" 
+        <img src="http://neologism.deri.ie/resources/images/legend.png" 
              alt="green arrows mean property, red inheritance"
              width="226" height="80" id="legend" />
 
