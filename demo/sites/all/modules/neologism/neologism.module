@@ -354,23 +354,27 @@ function neologism_layout($node) {
         $query = "SELECT field_layout_value FROM content_type_vocabulary WHERE nid = " . $node->nid;
         $result = db_fetch_array(db_query($query));
         $layout = $result[field_layout_value];
-        var_dump($layout);
-        $xml = simplexml_load_string('<layout/>');        
-        $classes = get_all_classes($node);
-        $y = 0;
-        foreach ($classes as $oneclass) {
-            //export all classes
-            $y = $y + 50;
-            $class = $xml->addChild("rdfclass");
-            $class->addAttribute("name", $oneclass["title"]);
-            $class->addAttribute("label", $oneclass["label"]);
-            $class->addAttribute("x", "50");
-            $class->addAttribute("y", $y);
-            $class->addAttribute("width", "100");
-            $class->addAttribute("height", "30");
+        if ($layout == NULL) {
+            $xml = simplexml_load_string('<layout/>');        
+            $classes = get_all_classes($node);
+            $y = 0;
+            foreach ($classes as $oneclass) {
+                //export all classes
+                $y = $y + 50;
+                $class = $xml->addChild("rdfclass");
+                $class->addAttribute("name", $oneclass["title"]);
+                $class->addAttribute("label", $oneclass["label"]);
+                $class->addAttribute("x", "50");
+                $class->addAttribute("y", $y);
+                $class->addAttribute("width", "100");
+                $class->addAttribute("height", "30");
+            }
+            header("Content-Type: application/xml; charset=utf-8");
+            echo $xml->asXml();
+        } else {
+            header("Content-Type: application/xml; charset=utf-8");
+            $echo layout;
         }
-        header("Content-Type: application/xml; charset=utf-8");
-        echo $xml->asXml();
         return;
     } else {
         //POST, so import
