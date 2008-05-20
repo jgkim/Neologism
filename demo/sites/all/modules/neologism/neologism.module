@@ -352,9 +352,8 @@ function neologism_layout($node) {
     if ($layout == NULL) {
         //GET, so export
         $query = "SELECT field_layout_value FROM content_type_vocabulary WHERE nid = " . $node->nid;
-        $result = db_query($query);
-        $row = db_fetch_object($result);
-        $layout = $row->field_layout_value;
+        $result = db_fetch_array(db_query($query));
+        $layout = $result[field_layout_value];
         var_dump($layout);
         $xml = simplexml_load_string('<layout/>');        
         $classes = get_all_classes($node);
