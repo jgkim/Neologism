@@ -231,6 +231,8 @@ function neologism_get_rdf_model($node, $uri, $document) {
         $model->add(new Statement($classresource, new Resource($ns["rdf"], "type"), new Resource($ns["rdfs"], "Class")));
         $model->add(new Statement($classresource, new Resource($ns["rdfs"], "isDefinedBy"), $ontology));
         $model->add(new Statement($classresource, new Resource($ns["rdfs"], "label"), new Literal($oneclass["label"])));
+        if ($oneclass["comment_rdfs"] != NULL)
+            $model->add(new Statement($classresource, new Resource($ns["rdfs"], "comment"), new Literal($oneclass["comment_rdfs"])));
         if ($oneclass["subclass"] != NULL)
             $model->add(new Statement($classresource, new Resource($ns["rdfs"], "subClassOf"), new Resource($uri.$oneclass["subclass"])));
         if ($oneclass["disjoint"] != NULL)
@@ -244,6 +246,8 @@ function neologism_get_rdf_model($node, $uri, $document) {
         $model->add(new Statement($propresource, new Resource($ns["rdf"], "type"), new Resource($ns["rdf"], "Property")));
         $model->add(new Statement($propresource, new Resource($ns["rdfs"], "isDefinedBy"), $ontology));
         $model->add(new Statement($propresource, new Resource($ns["rdfs"], "label"), new Literal($oneprop["label"])));
+        if ($oneprop["comment_rdfs"] != NULL)
+            $model->add(new Statement($propresource, new Resource($ns["rdfs"], "comment"), new Literal($oneprop["comment_rdfs"])));
         if ($oneprop["domain"] != NULL)
             $model->add(new Statement($propresource, new Resource($ns["rdfs"], "domain"), new Resource($uri, $oneprop["domain"])));
         if ($oneprop["range"] != NULL)
