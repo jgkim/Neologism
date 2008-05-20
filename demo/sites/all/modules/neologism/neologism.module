@@ -370,6 +370,7 @@ function neologism_layout($node) {
         return;
     } else {
         //POST, so import
+        
         return "For the moment this feature is not available, seeAlso issue #5";
     }
 
@@ -558,15 +559,17 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                             break;
 
             case 'delete':
-                            // Deletion of the path when deleting a vocabulary.
-                            path_set_alias("node/$node->nid");
-                            path_set_alias("node/$node->nid/".HTML);
-                            path_set_alias("node/$node->nid/".RDF);
-                            path_set_alias("node/$node->nid/n3");
-                            path_set_alias("node/$node->nid/".XML);
-                            path_set_alias("node/$node->nid/layout");
-                            path_set_alias("node/$node->nid/diagram");
-                            path_set_alias("node/$node->nid/image");
+                            // Deletion of the path when deleting a vocabulary
+                            if($node->type == 'vocabulary') {
+                                path_set_alias("node/$node->nid");
+                                path_set_alias("node/$node->nid/".HTML);
+                                path_set_alias("node/$node->nid/".RDF);
+                                path_set_alias("node/$node->nid/n3");
+                                path_set_alias("node/$node->nid/".XML);
+                                path_set_alias("node/$node->nid/layout");
+                                path_set_alias("node/$node->nid/diagram");
+                                path_set_alias("node/$node->nid/image");
+                            }
                             break;
 
             default:
