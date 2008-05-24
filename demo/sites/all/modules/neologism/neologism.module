@@ -645,6 +645,10 @@ function get_all_properties($node, $domain='') {
   $label = db_fetch_array(db_query(db_rewrite_sql('SELECT field_id_value FROM {content_field_id} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['label']=$label[field_id_value];
 
+// TODO fix the name of the field in the CCK definition to be consistent with the one used for classes
+  $comment_rdfs = db_fetch_array(db_query(db_rewrite_sql('SELECT field_comment_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $properies_data[$i]['comment_rdfs']=$comment_rdfs[field_comment_value];
+
   $i++;
   }
   // var_dump($properies_data);
@@ -675,6 +679,9 @@ function get_all_classes($node) {
   $label = db_fetch_array(db_query(db_rewrite_sql('SELECT field_id_value FROM {content_field_id} WHERE nid = %d'), $item->nid));
   $class_data[$i]['label']=$label[field_id_value];
   
+  $comment_rdfs = db_fetch_array(db_query(db_rewrite_sql('SELECT field_comment_rdfs_value FROM {content_type_class} WHERE nid = %d'), $item->nid));
+  $class_data[$i]['comment_rdfs']=$comment_rdfs[field_comment_rdfs_value];
+    
   // $title = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $item->nid));
   // $class_data[$i]['title']=$title[title];
   
