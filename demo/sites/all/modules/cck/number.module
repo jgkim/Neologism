@@ -1,5 +1,5 @@
 <?php
-// $Id: number.module,v 1.34.2.20 2007/03/01 04:51:54 yched Exp $
+// $Id: number.module,v 1.34.2.24 2008/03/21 23:52:35 yched Exp $
 
 /**
  * @file
@@ -11,8 +11,8 @@
  */
 function number_field_info() {
   return array(
-    'number_integer' => array('label' => 'Integer'),
-    'number_decimal' => array('label' => 'Decimal'),
+    'number_integer' => array('label' => t('Integer')),
+    'number_decimal' => array('label' => t('Decimal')),
   );
 }
 
@@ -62,7 +62,7 @@ function number_field_settings($op, $field) {
       );
       $form['advanced_options'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Php code'),
+        '#title' => t('PHP code'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -106,7 +106,7 @@ function number_field_settings($op, $field) {
           'default' => array(
             'list' => $allowed_values,
             'list-type' => 'list',
-            'operator' => 'views_handler_operator_or',
+            'operator' => 'views_handler_operator_andor',
             'value-type' => 'array',
           ),
         );
@@ -156,17 +156,17 @@ function number_field($op, &$node, $field, &$items, $teaser, $page) {
 function number_field_formatter_info() {
 
   return array(
-    'default' => array('label' => '9999',             'field types' => array('number_integer', 'number_decimal')),
-    'us_0'    => array('label' => '9,999',            'field types' => array('number_integer', 'number_decimal')),
-    'us_1'    => array('label' => '9,999.9',          'field types' => array('number_decimal')),
-    'us_2'    => array('label' => '9,999.99',         'field types' => array('number_decimal')),
-    'be_0'    => array('label' => '9.999',            'field types' => array('number_integer', 'number_decimal')),
-    'be_1'    => array('label' => '9.999,9',          'field types' => array('number_decimal')),
-    'be_2'    => array('label' => '9.999,99',         'field types' => array('number_decimal')),
-    'fr_0'    => array('label' => '9 999',            'field types' => array('number_integer', 'number_decimal')),
-    'fr_1'    => array('label' => '9 999, 9',         'field types' => array('number_decimal')),
-    'fr_2'    => array('label' => '9 999, 99',        'field types' => array('number_decimal')),
-    'unformatted' => array('label' => 'unformatted',  'field types' => array('number_integer', 'number_decimal')),
+    'default' => array('label' => '9999',               'field types' => array('number_integer', 'number_decimal')),
+    'us_0'    => array('label' => '9,999',              'field types' => array('number_integer', 'number_decimal')),
+    'us_1'    => array('label' => '9,999.9',            'field types' => array('number_decimal')),
+    'us_2'    => array('label' => '9,999.99',           'field types' => array('number_decimal')),
+    'be_0'    => array('label' => '9.999',              'field types' => array('number_integer', 'number_decimal')),
+    'be_1'    => array('label' => '9.999,9',            'field types' => array('number_decimal')),
+    'be_2'    => array('label' => '9.999,99',           'field types' => array('number_decimal')),
+    'fr_0'    => array('label' => '9 999',              'field types' => array('number_integer', 'number_decimal')),
+    'fr_1'    => array('label' => '9 999, 9',           'field types' => array('number_decimal')),
+    'fr_2'    => array('label' => '9 999, 99',          'field types' => array('number_decimal')),
+    'unformatted' => array('label' => t('unformatted'), 'field types' => array('number_integer', 'number_decimal')),
   );
 }
 
@@ -202,7 +202,7 @@ function number_field_formatter($field, $item, $formatter, $node) {
     $value = number_format($item['value'], 2, '.', ',');
     break;
   case 'be_0':
-    $value = number_format($item['value'], 0, ',', ' ');
+    $value = number_format($item['value'], 0, ',', '.');
     break;
   case 'be_1':
     $value = number_format($item['value'], 1, ',', '.');
@@ -251,7 +251,7 @@ function number_field_formatter($field, $item, $formatter, $node) {
 function number_widget_info() {
   return array(
     'number' => array(
-      'label' => 'Text Field',
+      'label' => t('Text Field'),
       'field types' => array('number_integer', 'number_decimal'),
     ),
   );

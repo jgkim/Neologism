@@ -1,5 +1,5 @@
 <?php
-// $Id: text.module,v 1.41.2.12 2007/03/12 00:50:34 yched Exp $
+// $Id: text.module,v 1.41.2.16 2008/03/21 23:52:35 yched Exp $
 
 /**
  * @file
@@ -11,7 +11,7 @@
  */
 function text_field_info() {
   return array(
-    'text' => array('label' => 'Text'),
+    'text' => array('label' => t('Text')),
   );
 }
 
@@ -46,7 +46,7 @@ function text_field_settings($op, $field) {
       );
       $form['advanced_options'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Php code'),
+        '#title' => t('PHP code'),
         '#collapsible' => TRUE,
         '#collapsed' => TRUE,
       );
@@ -78,6 +78,17 @@ function text_field_settings($op, $field) {
       }
       return $columns;
 
+    case 'arguments':
+      $arguments = content_views_field_arguments($field);
+      $alias = "content: $field[field_name]";
+      $argument = array(
+        'handler' => 'text_views_argument_handler',
+        'option' => 'string',
+        'help' => t('Set the option to the number of initial characters to filter by. Leave empty for full term; use 1 for an A/B/C style glossary.'),
+      );
+      $arguments[$alias] = array_merge($arguments[$alias], $argument);
+      return $arguments;
+
     case 'filters':
       $allowed_values = text_allowed_values($field);
        if (count($allowed_values)) {
@@ -85,7 +96,7 @@ function text_field_settings($op, $field) {
            'default' => array(
             'list' => $allowed_values,
              'list-type' => 'list',
-             'operator' => 'views_handler_operator_or',
+             'operator' => 'views_handler_operator_andor',
              'value-type' => 'array',
             ),
           );
@@ -99,6 +110,44 @@ function text_field_settings($op, $field) {
         );
       }
       break;
+  }
+}
+
+function text_views_argument_handler($op, &$query, $argtype, $arg = '') {
+  $name = explode(':', is_array($argtype) ? $argtype['type'] : $argtype);
+  $field_name = trim($name[1]);
+  $field      = content_fields($field_name);
+  $db_info    = content_database_info($field);
+  $value      = $db_info['columns']['value']['column'];
+  $table      = 'node_data_'. $field['field_name'];
+
+  switch($op) {
+    case 'summary':
+      $query->ensure_table($table);
+      $query->add_field($value, $table);
+
+      $length = intval($arg);
+      $fieldinfo['field'] = $length <= 0 ? "$table.$value" : "LEFT($table.$value, $length)";
+      $fieldinfo['fieldname'] = 'letter';
+      return $fieldinfo;
+
+    case 'sort':
+      break;
+
+    case 'filter':
+      $query->ensure_table($table);
+      $query->add_field($value, $table);
+
+      $length = intval($argtype['options']);
+      $where = $length <= 0 ? "$table.$value = '%s'" : "LEFT($table.$value, $length) = '%s'";
+      $query->add_where($where, $arg);
+      break;
+
+    case 'link':
+      return l(strtoupper($query->letter), "$arg/$query->letter");
+
+    case 'title':
+      return check_plain(strtoupper($query));
   }
 }
 
@@ -138,15 +187,15 @@ function text_field($op, &$node, $field, &$items, $teaser, $page) {
 function text_field_formatter_info() {
   return array(
     'default' => array(
-      'label' => 'Default',
+      'label' => t('Default'),
       'field types' => array('text'),
     ),
     'plain' => array(
-      'label' => 'Plain text',
+      'label' => t('Plain text'),
       'field types' => array('text'),
     ),
     'trimmed' => array(
-      'label' => 'Trimmed',
+      'label' => t('Trimmed'),
       'field types' => array('text'),
     ),
   );
@@ -195,7 +244,7 @@ function text_field_formatter($field, $item, $formatter, $node) {
 function text_widget_info() {
   return array(
     'text' => array(
-      'label' => 'Text Field',
+      'label' => t('Text Field'),
       'field types' => array('text'),
     ),
   );

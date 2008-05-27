@@ -1,4 +1,50 @@
-// $Id: CHANGELOG.txt,v 1.1.4.25 2007/08/15 19:13:22 yched Exp $
+// $Id: CHANGELOG.txt,v 1.1.4.46 2008/04/29 13:23:54 karens Exp $
+
+5--1.x
+======
+Features
+--------
+
+General
+- #97375   Panels 2 integration : add fields and move non-content module integration to relevant modules - fieldgroup, nodereference, userreference.
+- #203495  Panels 2 integration : render a fieldgroup in a panel.
+-          Panels 2 integration : reletionships for nodereference and userreference fields.
+- #189807  Views field handlers : show first or last of multiple values.
+
+Field / Widget modules
+- #60713   Userreference : Add optional reverse link on user profile page for referenced users.
+- #228979  Userreference : Don't show empty section for reverse links in user profile page.
+- #131260  Userreference : Allow filter referenceable users by active/blocked status.
+- #221288  Text : Views argument can filter by the first letters of the values.
+- #194818  Text / Number : 'Is all of' filter op for Views.
+
+Bugfix
+------
+
+General
+- #237804  Critical bugfix : unsharing a field deletes the field's data for the remaining content type.
+           (introduced previously in the 5.x-1.7 cycle - 5.x-1.6 was not affected.
+- #211566  Limit data to nodes of the right content type when migrating data from per field to per type tables.
+- #210683  Execute content_clear_type_cache() after removing fields from nodes.
+- #210683  Clear node values from cache if field information is changed so stale values don't appear in node_load().
+- #198420  Make sure internal field and widget names are truncated to 32 characters to match the database values.
+- Include views module in content_clear_type_cache() to prevent errors when this is called from .install files.
+- #226549  Fix untranslatable message on fieldgroup deletion.
+- #226607  Fix untranslatable human names for field widget types.
+- #168526  Fix display settings lost on content type import / export
+- #139554, #144706 : remove unneeded db_rewrite_sql in Views 'group multiple values' handler.
+- #242737  Content_copy : include required files for safe drupal_execute() of import / export forms
+
+Field / widget modules
+- #243196  Userreference : Make reverse user link code more efficient, load only on user profile page when reverse link has been chosen.
+- #196575  Userreference : autocomplete did not filter users by role, need custom autocomplete instead of standard user autocomplete.
+- #183816  Number : Fix missing decimal in formatter.
+- #140687  OptionWidgets : fix 'single checkbox' stick on checked when used with text values.
+- #194788  Nodereference : Remove duplicate check_plain in nodereference.
+- #186775  Nodereference : fix 'Invalid argument supplied for foreach()' when formatter is 'full node'
+           and referenced node has been deleted.
+- #242917  Userreference / reversed link : do not list unpublished nodes.
+           Also, fix the query to rely only on current revisions of the nodes, and run it through db_rewrite_sql.
 
 5--1.6-1
 ========
@@ -18,16 +64,16 @@ Field / widget modules
 5--1.6
 ======
 
-IMPORTANT : this release fixes two cross-site scripting (XSS) vulnerabilities 
+IMPORTANT : this release fixes two cross-site scripting (XSS) vulnerabilities
 in nodereference.module :
 - when a nodereference field is displayed using the 'plain' formatter
-- when a nodereference field is edited using the 'autocomplete text field' widget 
-  (only when _not_ using the 'advanced options - Views.module' for the field) 
-  
+- when a nodereference field is edited using the 'autocomplete text field' widget
+  (only when _not_ using the 'advanced options - Views.module' for the field)
+
 All sites using CCK / nodereference.module should consider upgrading to this release
 as soon as possible.
 
-Features 
+Features
 --------
 
 General
@@ -38,7 +84,7 @@ General
 - #136697  Make field form_alter easier, if fieldgroups are used.
 
 Field / widget modules
-- #152892  Optionwidgets : Better help text for 'single on/off checkbox' widget label.   
+- #152892  Optionwidgets : Better help text for 'single on/off checkbox' widget label.
 - #65133 / #152016  Nodereference : Added 'full node' and 'teaser' formatters.
 - #126926  Nodereference : Skip node_load in 'title'-based formatters.
 
@@ -58,23 +104,23 @@ Field / widget modules
 -          Nodereference : Fixed XSS vulnerabilities (missing check_plain's around node titles).
 - #147205  Nodereference : Fixed 'advanced settings - view arguments' not working.
 - #155327  Nodereference : Added missing "n." table aliases in 'referenceable nodes' query.
-- #153284  Nodereference : Fix unneeded and repeating {view_view} queries when 
+- #153284  Nodereference : Fix unneeded and repeating {view_view} queries when
            'advanced (Views) node selection' is *not* used.
-- #150297  Nodereference : Fix encoded raw htmlentities appearing in select widgets when using 
+- #150297  Nodereference : Fix encoded raw htmlentities appearing in select widgets when using
            'advanced (Views) node selection' is used.
 - #129016  Nodereference : Prevent possible errors if formatter is called with non numeric 'nid'.
-   
+
 5--1.5
 ======
 
-Features 
+Features
 --------
-- #126333  Update to Views 1.6 API 
+- #126333  Update to Views 1.6 API
            (no need to update cached queries on field setup changes anymore)
 - #115848  Optimization : use dedicated cache table
 - #126776  Enhance 'default value php code' help text and error message.
 -          minor - collapse 'default value php code' if empty
-           
+
 Bugfix
 ------
 
@@ -83,9 +129,9 @@ General
 - #130545  Core translation destroyed by German translation
 -          Fieldgroup_data cache was fetched every time from the database -> fixed static caching
 - #128994  Fix for 'ungroup multiple values' views handler populating every 'column'
-           of the values with the first column (revert http://drupal.org/cvs?commit=58000) 
+           of the values with the first column (revert http://drupal.org/cvs?commit=58000)
 - #116775  Stupid conflict on field form when field_name == 'name'
-- #122991  Fixes further display page issues with no fields / groups           
+- #122991  Fixes further display page issues with no fields / groups
 - #127010  (followup to #125661) - proper escaping in update_sql
 -          Forgot some t() labels in fieldgroups
 - #125661  escape group description in update_sql (fieldgroup update)
@@ -147,7 +193,7 @@ Field / widget modules
 - #108302  Number : Added formatters for numbers (+ be sure non-numeric data is not stored)
 - #110570  Number : Added prefix and suffix option
 - #111129  Optionwidgets : Added widget to handle single on/off checkbox
-- #112464  Standardize validation in field rather than widget, 
+- #112464  Standardize validation in field rather than widget,
            Standardize use of $items rather than $node_field
 
 Bugfix

@@ -1,5 +1,5 @@
 <?php
-// $Id: content_admin.inc,v 1.28.2.38 2007/08/09 18:58:52 yched Exp $
+// $Id: content_admin.inc,v 1.28.2.42 2008/03/24 01:05:32 yched Exp $
 
 /**
  * @file
@@ -713,7 +713,7 @@ function _content_admin_field_remove_submit($form_id, $form_values) {
     content_field_instance_delete($form_values);
 
     drupal_set_message(t('Removed field %field from %type.', array('%field' => $field['widget']['label'], '%type' => $type['name'])));
-
+    content_clear_type_cache();
     return 'admin/content/types/'. $type['url_str'] .'/fields';
   }
 }
@@ -806,7 +806,7 @@ function _content_admin_field($type_name, $field_name) {
     $form['widget']['default_value_fieldset']['default_value_widget']['#tree'] = TRUE;
     $form['widget']['default_value_fieldset']['advanced_options'] = array(
       '#type' => 'fieldset',
-      '#title' => t('Php code'),
+      '#title' => t('PHP code'),
       '#collapsible' => TRUE,
       '#collapsed' => empty($field['widget']['default_value_php']),
     );
@@ -921,7 +921,7 @@ function _content_admin_field_validate($form_id, $form_values, $form) {
   1 => array('. implode(', ', $columns) .'),
   2 => ...
 );';
-        form_set_error('default_value_php', t('The default value php code returned an incorrect value<br/>Expected format : <pre>!sample</pre>Returned value : @value', array('!sample' => $sample, '@value' => print_r($return, true))));
+        form_set_error('default_value_php', t('The default value PHP code returned an incorrect value<br/>Expected format : <pre>!sample</pre>Returned value : @value', array('!sample' => $sample, '@value' => print_r($return, true))));
         return;
       }
       else {
@@ -944,7 +944,7 @@ function _content_admin_field_validate($form_id, $form_values, $form) {
       $field_function = $field_type['module'] .'_field';
       $widget_function = $widget_type['module'] .'_widget';
 
-      // If default_value is created from php code, don't run it through widget processing.
+      // If default_value is created from PHP code, don't run it through widget processing.
       // This way the default value code can directly create the correct array without being
       // mangled by widget processing which sometimes requires an input array in a completely different format.
       if (function_exists($widget_function) && !$is_code) {
@@ -959,7 +959,7 @@ function _content_admin_field_validate($form_id, $form_values, $form) {
       // The field validation routine won't set an error on the right field, so set it here.
       if (form_get_errors()) {
         if (trim($form_values['default_value_php'])) {
-          form_set_error('default_value_php', t('The default value php code created @value which is invalid.', array('@value' => print_r($default_value, true))));
+          form_set_error('default_value_php', t('The default value PHP code created @value which is invalid.', array('@value' => print_r($default_value, true))));
         }
         else {
           form_set_error('default_value', t('The default value is invalid.'));
@@ -1254,10 +1254,10 @@ function content_alter_db_field($previous_field, $previous_columns, $new_field, 
           }
         }
         if ($previous_field['multiple']) {
-          $result = db_query('SELECT '. implode(', ', $column_names) .', vid, nid FROM {'. $previous_db_info['table'] .'} WHERE delta = 0');
+          $result = db_query("SELECT ". implode(', ', $column_names) .", c.vid, c.nid FROM {". $previous_db_info['table'] ."} c JOIN {node} n ON c.nid = n.nid WHERE delta = 0 AND n.type = '%s'", $new_field['type_name']);
         }
         else {
-          $result = db_query('SELECT '. implode(', ', $column_names) .', vid, nid FROM {'. $previous_db_info['table'] .'}');
+          $result = db_query("SELECT ". implode(', ', $column_names) .", c.vid, c.nid FROM {". $previous_db_info['table'] ."} c JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'", $new_field['type_name']);
         }
         while ($data = db_fetch_array($result)) {
           $column_assignments = $column_assignments_default;

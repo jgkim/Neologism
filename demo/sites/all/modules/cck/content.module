@@ -1,5 +1,5 @@
 <?php
-// $Id: content.module,v 1.90.2.44 2007/08/15 18:00:28 yched Exp $
+// $Id: content.module,v 1.90.2.49 2008/03/03 00:02:47 yched Exp $
 
 /**
  * @file
@@ -14,6 +14,22 @@ define('CONTENT_CALLBACK_DEFAULT', 0x0002);
 define('CONTENT_CALLBACK_CUSTOM', 0x0004);
 
 function content_help($section) {
+  switch ($section) {
+    case 'admin/help#content':
+      $output = '<p>'. t('The content module, a required component of the Content Construction Kit (CCK), allows administrators to associate custom fields with content types. In Drupal, content types are used to define the characteristics of a post, including the title and description of the fields displayed on its add and edit pages. Using the content module (and the other helper modules included in CCK), custom fields beyond the default "Title" and "Body" may be added. CCK features are accessible through tabs on the <a href="@content-types">content types administration page</a>. (See the <a href="@node-help">node module help page</a> for more information about content types.)', array('@content-types' => url('admin/content/types'), '@node-help' => url('admin/help/node'))) .'</p>';
+      $output .= '<p>'. t('When adding a custom field to a content type, you determine its type (whether it will contain text, numbers, or references to other objects) and how it will be displayed (either as a text field or area, a select box, checkbox, radio button, or autocompleting field). A field may have multiple values (i.e., a "person" may have multiple e-mail addresses) or a single value (i.e., an "employee" has a single employee identification number). As you add and edit fields, CCK automatically adjusts the structure of the database as necessary. CCK also provides a number of other features, including intelligent caching for your custom data, an import and export facility for content type definitions, and integration with other contributed modules.') .'</p>';
+      $output .= '<p>'. t('Custom field types are provided by a set of optional modules included with CCK (each module provides a different type). The <a href="@modules">modules page</a> allows you to enable or disable CCK components. A default installation of CCK includes:', array('@modules' => url('admin/build/modules'))) .'</p>';
+      $output .= '<ul>';
+      $output .= '<li>'. t('<em>number</em>, which adds numeric field types, in integer, decimal or floating point form. You may define a set of allowed inputs, or specify an allowable range of values. A variety of common formats for displaying numeric data are available.') .'</li>';
+      $output .= '<li>'. t("<em>text</em>, which adds text field types. A text field may contain plain text only, or optionally, may use Drupal's input format filters to securely manage rich text input. Text input fields may be either a single line (text field), multiple lines (text area), or for greater input control, a select box, checkbox, or radio buttons. If desired, CCK can validate the input to a set of allowed values.") .'</li>';
+      $output .= '<li>'. t('<em>nodereference</em>, which creates custom references between Drupal nodes. By adding a <em>nodereference</em> field and two different content types, for instance, you can easily create complex parent/child relationships between data (multiple "employee" nodes may contain a <em>nodereference</em> field linking to an "employer" node).') .'</li>';
+      $output .= '<li>'. t('<em>userreference</em>, which creates custom references to your sites\' user accounts. By adding a <em>userreference</em> field, you can create complex relationships between your site\'s users and posts. To track user involvement in a post beyond Drupal\'s standard <em>Authored by</em> field, for instance, add a <em>userreference</em> field named "Edited by" to a content type to store a link to an editor\'s user account page.') .'</li>';
+      $output .= '<li>'. t('<em>fieldgroup</em>, which creates collapsible fieldsets to hold a group of related fields. A fieldset may either be open or closed by default. The order of your fieldsets, and the order of fields within a fieldset, is managed via a drag-and-drop interface provided by content module.') .'</li>';
+      $output .= '</ul>';
+      $output .= '<p>'. t('For more information, see the online handbook entry for <a href="@handbook-cck">CCK</a> or the <a href="@project-cck">CCK project page</a>.', array('@handbook-cck' => 'http://drupal.org/handbook/modules/cck', '@project-cck' => 'http://drupal.org/project/cck')) .'</p>';
+      return $output;
+  }
+
   if (preg_match('!^admin/content/types/.*/display$!', $section)) {
     return t("Configure how this content type's fields and field labels should be displayed when it's viewed in teaser and full-page mode.");
   }
@@ -37,6 +53,9 @@ function content_init() {
     // views_menu is executed
     if (module_exists('views')) {
       include_once('./'. drupal_get_path('module', 'content') .'/content_views.inc');
+    }
+    if (module_exists('panels')) {
+      include_once('./'. drupal_get_path('module', 'content') .'/content_panels.inc');
     }
     // according to http://drupal.org/node/60526, this should not go in hook_menu
     if (module_exists('pathauto')) {
@@ -739,17 +758,24 @@ function _content_type_info($reset = FALSE) {
         $module_field_types = module_invoke($module, 'field_info');
         if ($module_field_types) {
           foreach ($module_field_types as $name => $field_info) {
-            $info['field types'][$name] = $field_info;
-            $info['field types'][$name]['module'] = $module;
-            $info['field types'][$name]['formatters'] = array();
+            // Truncate names to match the value that is stored in the database.
+            $db_name = substr($name, 0, 32);
+            $info['field types'][$db_name] = $field_info;
+            $info['field types'][$db_name]['module'] = $module;
+            $info['field types'][$db_name]['formatters'] = array();
           }
         }
 
         $module_widgets = module_invoke($module, 'widget_info');
         if ($module_widgets) {
           foreach ($module_widgets as $name => $widget_info) {
-            $info['widget types'][$name] = $widget_info;
-            $info['widget types'][$name]['module'] = $module;
+            // Truncate names to match the value that is stored in the database.
+            $db_name = substr($name, 0, 32);
+            $info['widget types'][$db_name] = $widget_info;
+            $info['widget types'][$db_name]['module'] = $module;
+            foreach ($widget_info['field types'] as $delta => $type) {
+              $info['widget types'][$db_name][$delta] = substr($type, 0, 32);
+            }
           }
         }
       }
@@ -758,8 +784,10 @@ function _content_type_info($reset = FALSE) {
         if ($module_formatters) {
           foreach ($module_formatters as $name => $formatter_info) {
             foreach ($formatter_info['field types'] as $field_type) {
-              $info['field types'][$field_type]['formatters'][$name] = $formatter_info;
-              $info['field types'][$field_type]['formatters'][$name]['module'] = $module;
+              // Truncate names to match the value that is stored in the database.
+              $db_name = substr($field_type, 0, 32);
+              $info['field types'][$db_name]['formatters'][$name] = $formatter_info;
+              $info['field types'][$db_name]['formatters'][$name]['module'] = $module;
             }
           }
         }
@@ -838,11 +866,17 @@ function content_node_type($op, $info) {
  * information is changed.
  */
 function content_clear_type_cache() {
-  cache_clear_all('content_type_info', 'cache_content');
+  // If type type cache needs to be cleared because type information has
+  // changed, the cached node values also need to be emptied so they
+  // don't carry stale values.
+  // TODO see if there is a less destructive way to do this.
+  cache_clear_all('*', 'cache_content', TRUE);
 
   _content_type_info(TRUE);
 
   if (module_exists('views')) {
+    // Needed because this can be called from .install files
+    include_once('./'. drupal_get_path('module', 'views') .'/views.module');
     views_invalidate_cache();
   }
 }

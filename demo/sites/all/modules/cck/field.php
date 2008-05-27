@@ -1,5 +1,5 @@
 <?php
-// $Id: field.php,v 1.7.2.8 2007/03/01 00:20:35 yched Exp $
+// $Id: field.php,v 1.7.2.10 2008/02/25 19:59:11 yched Exp $
 
 /**
  * @file
@@ -27,11 +27,14 @@
  *   An array keyed by field type name. Each element of the array is an associative
  *   array with these keys and values:
  *   - "label": The human-readable label for the field type.
+ *
+ * IMPORTANT! - field and widget names will be truncated to 32 characters in
+ * the database and in internal arrays, like content_fields().
  */
 function hook_field_info() {
   return array(
-    'number_integer' => array('label' => 'Integer'),
-    'number_decimal' => array('label' => 'Decimal'),
+    'number_integer' => array('label' => t('Integer')),
+    'number_decimal' => array('label' => t('Decimal')),
   );
 }
 
@@ -236,15 +239,15 @@ function hook_field($op, &$node, $field, &$node_field, $teaser, $page) {
 function hook_field_formatter_info() {
   return array(
     'default' => array(
-      'label' => 'Default',
+      'label' => t('Default'),
       'field types' => array('text'),
     ),
     'plain' => array(
-      'label' => 'Plain text',
+      'label' => t('Plain text'),
       'field types' => array('text'),
     ),
     'trimmed' => array(
-      'label' => 'Trimmed',
+      'label' => t('Trimmed'),
       'field types' => array('text'),
     ),
   );
@@ -307,11 +310,14 @@ function hook_field_formatter($field, $item, $formatter, $node) {
  *   - "label": The human-readable label for the widget.
  *   - "field types": An array of field type names that can be edited using
  *     this widget.
+ *
+ * IMPORTANT! - field and widget names will be truncated to 32 characters in
+ * the database and in internal arrays, like content_fields().
  */
 function hook_widget_info() {
   return array(
     'text' => array(
-      'label' => 'Text Field',
+      'label' => t('Text Field'),
       'field types' => array('text'),
     ),
   );

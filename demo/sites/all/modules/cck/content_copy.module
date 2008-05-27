@@ -1,5 +1,5 @@
 <?php
-// $Id: content_copy.module,v 1.1.2.8 2007/07/17 21:57:26 yched Exp $
+// $Id: content_copy.module,v 1.1.2.12 2008/04/05 00:00:26 yched Exp $
 
 /**
  *  @file
@@ -20,6 +20,12 @@
  *
  *  Content type, group and field names will be imported exactly as exported.
  *  If the names are already in use, no import will be performed.
+ *
+ *
+ *  Note: The "display fields" information is being handled a little differently than the rest of the
+ *  data that's imported and exported.  Instead of calling through the create and playback macros,
+ *  we get and set the data directly from/into the database.  the reason for this is that the
+ *  playback macro method does not lend itself well to the display fields.
  */
 
 /**
@@ -56,6 +62,8 @@ function content_copy_menu($may_cache) {
  *  A form to export field definitions.
  */
 function content_copy_export_form($form_values = NULL) {
+  include_once('./'. drupal_get_path('module', 'content') .'/content_admin.inc');
+  include_once('./'. drupal_get_path('module', 'node') .'/content_types.inc');
 
   $step = intval($form_values['step'] + 1);
 
@@ -92,7 +100,7 @@ function content_copy_export_form($form_values = NULL) {
         '#multiple' => FALSE,
         '#options' => $types,
         '#description' => t('Select the content type to export.'),
-        );
+      );
 
       // For some reason using #default_value in step 2 won't initialize
       // all fields as checked, but setting a hidden value in step 1 will do it.
@@ -100,12 +108,12 @@ function content_copy_export_form($form_values = NULL) {
         $form['groups'] = array(
           '#type' => 'hidden',
           '#value' => serialize(array_keys(content_copy_groups())),
-          );
+        );
       }
       $form['fields'] = array(
         '#type' => 'hidden',
         '#value' => serialize(array_keys(content_fields())),
-        );
+      );
       break;
 
     case 2: // Select groups and fields.
@@ -113,7 +121,7 @@ function content_copy_export_form($form_values = NULL) {
       $form['type_name'] = array(
         '#type' => 'hidden',
         '#value' => $type_name,
-        );
+      );
       if (module_exists('fieldgroup') && !empty($groups)) {
         $form['groups'] = array(
           '#title' => t('Groups'),
@@ -121,9 +129,9 @@ function content_copy_export_form($form_values = NULL) {
           '#multiple' => TRUE,
           '#options' => $groups,
           '#description' => t('Select the group definitions to export from %type.', array(
-            '%type' => node_get_types('name', $type_name
-            ))),
-          );
+            '%type' => node_get_types('name', $type_name)
+          )),
+        );
       }
       $form['fields'] = array(
         '#title' => t('Fields'),
@@ -131,9 +139,9 @@ function content_copy_export_form($form_values = NULL) {
         '#multiple' => TRUE,
         '#options' => $fields,
         '#description' => t('Select the field definitions to export from %type.', array(
-          '%type' => node_get_types('name', $type_name
-          ))),
-        );
+          '%type' => node_get_types('name', $type_name)
+        )),
+      );
       break;
 
     case 3: // Display the export macro.
@@ -146,7 +154,7 @@ function content_copy_export_form($form_values = NULL) {
         '#value' => content_copy_export($form_id, $form_values),
         '#rows' => max(40, $GLOBALS['content_copy']['count']),
         '#description' => t('Copy the export text and paste it into another content type using the import function.'),
-        );
+      );
 
       break;
   }
@@ -210,6 +218,8 @@ function content_copy_export($form_id, $form_values) {
  *  A form to import formatted text created with export.
  */
 function content_copy_import_form($type_name = '') {
+  include_once('./'. drupal_get_path('module', 'content') .'/content_admin.inc');
+  include_once('./'. drupal_get_path('module', 'node') .'/content_types.inc');
 
   $form['#prefix'] = t('This form will import field definitions exported from another content type or another database.<br/>Note that fields cannot be duplicated within the same content type, so imported fields will be added only if they do not already exist in the selected type.');
   $form['type_name'] = array(
@@ -217,15 +227,15 @@ function content_copy_import_form($type_name = '') {
     '#options' => array('<create>' => t('<Create>')) + node_get_types('names'),
     '#default_value' => $type_name,
     '#title' => t('Content type'),
-    '#description' => t('Select the content type to import these fields into.<br/>Select <Create> to create a new content type to contain the fields.'),
-    );
+    '#description' => t('Select the content type to import these fields into.<br/>Select &lt;Create&gt; to create a new content type to contain the fields.'),
+  );
   $form['macro'] = array(
     '#type' => 'textarea',
     '#rows' => 40,
     '#title' => t('Import data'),
     '#required' => TRUE,
     '#description' => t('Paste the text created by a content export into this field.'),
-    );
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Submit'),
@@ -354,6 +364,7 @@ function content_copy_import_form_submit($form_id, $form_values) {
     fieldgroup_groups('', FALSE, TRUE);
   }
 
+  $should_clear_type_cache = 0;
   // Iterate through the field forms in the import and execute each.
   foreach ($imported_fields as $field) {
 
@@ -424,9 +435,37 @@ function content_copy_import_form_submit($form_id, $form_values) {
                '%type' => $type_label
                )));
         }
+        else {
+          // If we successfully updated the form, serialize the display_settings info
+          // and insert the display_settings (if it exists) into the database.
+          if (array_key_exists('display_settings', $field)) {
+            $query = 'UPDATE {node_field_instance} SET display_settings = \'%s\' WHERE field_name = \'%s\'';
+            db_query($query, serialize($field['display_settings']), $field['field_name']);
+            if ($db_err = db_error()) {
+              drupal_set_message(t("The field %field_label (%field_name) was added to the content type %type, but an error has occured updating the field's 'display_settings'.<br/>The db error is: '%db_err'.", array(
+                   '%field_label' => $field_label,
+                   '%field_name' => $field_name,
+                   '%type' => $type_label,
+                   '%db_err' => $db_err
+              )));
+            }
+            else {
+              // If any data was successfully inserted into the DB,
+              // we make sure the cache is cleared.
+              $should_clear_type_cache = 1;
+            }
+          }
+        }
       }
     }
   }
+
+  // If no errors occured when inserting field data directly into the DB,
+  // clear the type cache.
+  if ($should_clear_type_cache) {
+    content_clear_type_cache();
+  }
+
   if (!form_get_errors()) {
     if (sizeof($imported_fields) > 0 || sizeof($imported_groups) > 0) {
       return 'admin/content/types/'. $content_info['content types'][$type_name]['url_str'] .'/fields';
@@ -452,7 +491,6 @@ function content_copy_form_alter($form_id, &$form) {
  *  Get all the fields for a content type.
  */
 function content_copy_fields($type_name) {
-
   $fields = array();
   if (!$type_name) {
     return $fields;
@@ -488,7 +526,6 @@ function content_copy_groups($type_name = '') {
   return $groups;
 }
 
-
 /**
  *  Get all content types.
  */
@@ -513,29 +550,52 @@ function content_copy_record_macro($form_id, $edit, $form) {
 
   unset($edit['type_name'], $edit['submit'], $edit['delete'], $edit['form_id']);
   switch ($form_id) {
-  case 'node_type_form':
-    $subs['type'] = $edit;
-    $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
-    break;
-  case 'fieldgroup_edit_group_form':
-    $subs['groups'][] = $edit;
-    $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
-    break;
-  default:
-    if ($edit['field_widget_type']) {
-      $tmp = explode('-', $edit['field_widget_type']);
-      $field_name = $tmp[0];
-    }
-    else {
-      $field_name = $edit['field_name'];
-    }
-    $subs['fields'][] = $edit;
-    $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
+    case 'node_type_form':
+      $subs['type'] = $edit;
+      $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
+      break;
+
+    case 'fieldgroup_edit_group_form':
+      $subs['groups'][] = $edit;
+      $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
+      break;
+
+    default:
+      if ($edit['field_widget_type']) {
+        $tmp = explode('-', $edit['field_widget_type']);
+        $field_name = $tmp[0];
+      }
+      else {
+        $field_name = $edit['field_name'];
+      }
+
+      // The display settings are being fetched directly from the DB. During import,
+      // we'll re-insert the data directly as well.
+      //
+      $query = 'SELECT display_settings FROM {node_field_instance} WHERE field_name = \'%s\'';
+      $row_info = db_fetch_array(db_query($query, $field_name));
+
+      // If an error occurs, notify the user.
+      if ($db_err = db_error()) {
+        drupal_set_message(t("An error occurred when exporting the 'display settings' data for the field %field_name.<br/>The db error is: '%db_err'.", array(
+             '%field_name' => $field_name,
+             '%db_err' => $db_err
+        )));
+      }
+      else {
+        // The db fetch occurred successfully, unserialize the data blob and
+        // insert it into a new "display_settings" field of the data.
+        if ($display_settings = unserialize($row_info['display_settings'])) {
+          $edit['display_settings'] = $display_settings;
+        }
+      }
+      $subs['fields'][] = $edit;
+      $GLOBALS['content_copy']['count'] += sizeof($edit) + 5;
+      break;
   }
 
   $GLOBALS['content_copy']['submissions'] = $subs;
 }
-
 
 /**
  * @return a code representation of the recorded macro.

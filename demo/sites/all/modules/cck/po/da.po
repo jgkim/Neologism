@@ -1,0 +1,839 @@
+# Danish translation of Drupal (cck.module)
+# Copyright 2007 Morten Wulff <wulff@ratatosk.net>
+msgid ""
+msgstr ""
+"Project-Id-Version: Danish translation of Drupal (cck.module) $Id: da.po,v 1.1.2.1 2007/12/09 21:52:00 wulff Exp $\n"
+"POT-Creation-Date: 2007-05-18 17:31+0200\n"
+"PO-Revision-Date: 2007-12-09 22:51+0100\n"
+"Last-Translator: Morten Wulff <wulff@ratatosk.net>\n"
+"Language-Team: Danish <l10n@drupaldanmark.dk>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-Language: Danish\n"
+"X-Poedit-Country: DENMARK\n"
+
+#: field.php:106
+#: text.module:34
+msgid "Maximum length"
+msgstr "Maksimal længde"
+
+#: field.php:109
+#: text.module:37
+msgid "The maximum length of the field in characters. Leave blank for an unlimited size."
+msgstr "Feltets maksimale længde i karakterer. Lad feltet stå tomt for ubegrænset størrelse."
+
+#: field.php:217
+#: number.module:144
+#: text.module:118
+msgid "Illegal value for %name."
+msgstr "Ugyldig værdi af %name."
+
+#: field.php:352
+#: text.module:213
+msgid "Rows"
+msgstr "Rækker"
+
+#: field.php:360
+#: text.module:221
+msgid "\"Rows\" must be a positive integer."
+msgstr "\"Rækker\" skal være et positivt heltal."
+
+#: content_admin.inc:15
+msgid "Field name"
+msgstr "Feltnavn"
+
+#: content_admin.inc:15
+#: ;529
+msgid "Field type"
+msgstr "Felttype"
+
+#: content_admin.inc:15
+msgid "Used in"
+msgstr "Brugt i"
+
+#: content_admin.inc:73
+msgid "There are no groups configured for this content type."
+msgstr "Ingen grupper defineret for denne indholdstype."
+
+#: content_admin.inc:83
+#: ;363
+msgid "There are no fields configured for this content type."
+msgstr "Ingen felter defineret for denne indholdstype."
+
+#: content_admin.inc:108
+msgid "group"
+msgstr "gruppe"
+
+#: content_admin.inc:111
+#: ;124;149
+msgid "configure"
+msgstr "indstil"
+
+#: content_admin.inc:112
+#: ;125;150
+msgid "remove"
+msgstr "fjern"
+
+#: content_admin.inc:163
+msgid "body"
+msgstr "indhold"
+
+#: content_admin.inc:184
+msgid "Update"
+msgstr "Opdater"
+
+#: content_admin.inc:212
+#: ;216;376;760 fieldgroup.module:83
+#: ;511
+msgid "Label"
+msgstr "Etiket"
+
+#: content_admin.inc:212
+#: ;216;521
+msgid "Name"
+msgstr "Navn"
+
+#: content_admin.inc:212
+#: ;216;376
+msgid "Type"
+msgstr "Type"
+
+#: content_admin.inc:212
+#: ;216
+msgid "Weight"
+msgstr "Vægt"
+
+#: content_admin.inc:212
+#: fieldgroup.module:511
+msgid "Group"
+msgstr "Gruppe"
+
+#: content_admin.inc:212
+#: ;216
+msgid "Operations"
+msgstr "Handlinger"
+
+#: content_admin.inc:280
+msgid "No fields have been added to this group."
+msgstr "Der er ikke tilføjet filtre til denne gruppe."
+
+#: content_admin.inc:285
+msgid "!label (!name)"
+msgstr "!label (!name)"
+
+#: content_admin.inc:320
+msgid "Updated field groups."
+msgstr "Feltgrupper opdateret."
+
+#: content_admin.inc:331
+msgid "Updated group weights."
+msgstr "Gruppevægt opdateret."
+
+#: content_admin.inc:342
+msgid "Updated field weights."
+msgstr "Feltvægt opdateret."
+
+#: content_admin.inc:371
+#: content_copy.module:158
+#: ;231 fieldgroup.module:334
+msgid "Submit"
+msgstr "Indsend"
+
+#: content_admin.inc:376
+msgid "Field"
+msgstr "Felt"
+
+#: content_admin.inc:411
+msgid "Your settings have been saved."
+msgstr "Indstillingerne er blevet gemt."
+
+#: content_admin.inc:421
+#: ;426 fieldgroup.module:478
+#: ;486
+msgid "<Hidden>"
+msgstr "<Skjult>"
+
+#: content_admin.inc:424
+#: fieldgroup.module:477
+msgid "Above"
+msgstr "Ovenover"
+
+#: content_admin.inc:425
+msgid "Inline"
+msgstr "Integreret"
+
+#: content_admin.inc:451
+msgid "Teaser"
+msgstr "Smagsprøve"
+
+#: content_admin.inc:452
+msgid "Full"
+msgstr "Fuld"
+
+#: content_admin.inc:483
+msgid "Add existing field"
+msgstr "Tilføj eksisterende felt"
+
+#: content_admin.inc:492
+#: content.module:108
+msgid "Add field"
+msgstr "Tilføj felt"
+
+#: content_admin.inc:518
+msgid "Create new field"
+msgstr "Opret nyt felt"
+
+#: content_admin.inc:524
+msgid "The machine-readable name of the field.<br/>Allowed characters : unaccentuated a-z, numbers and _. All other characters will be discarded.<br/>You'll be able to choose a human-readable label for the field on next page"
+msgstr "Feltets navn i systemet.<br />Tilladte tegn: a-z, tal og _. Alle andre tegn ignoreres.<br />Du kan vælge et læsevenligt feltnavn på næste side."
+
+#: content_admin.inc:537
+msgid "Create field"
+msgstr "Opret felt"
+
+#: content_admin.inc:549
+msgid "No field modules are enabled. You need to <a href=\"!modules_url\">enable one</a>, such as text.module, before you can add new fields."
+msgstr "Ingen feltmoduler aktive. Du skal <a href=\"!modules_url\">aktivere et</a> før du kan tilføje nye felter."
+
+#: content_admin.inc:605
+msgid "Added field %label."
+msgstr "Feltet %label tilføjet."
+
+#: content_admin.inc:617
+msgid "The field name %field_name already exists."
+msgstr "Feltnavnet %field_name findes allerede."
+
+#: content_admin.inc:621
+msgid "The field name %field_name is invalid."
+msgstr "Feltnavnet %field_name er ugyldigt."
+
+#: content_admin.inc:672
+msgid "Created field %label."
+msgstr "Feltet %label oprettet."
+
+#: content_admin.inc:694
+msgid "Are you sure you want to remove the field %field?"
+msgstr "Ønsker du at fjerne feltet %field?"
+
+#: content_admin.inc:696
+msgid "If you have any content left in this field, it will be lost. This action cannot be undone."
+msgstr "Hvis der stadig er indhold i feltet vil det gå tabt. Denne handling kan ikke fortrydes."
+
+#: content_admin.inc:697
+#: fieldgroup.module:215
+msgid "Remove"
+msgstr "Fjern"
+
+#: content_admin.inc:697
+#: fieldgroup.module:215
+msgid "Cancel"
+msgstr "Annuller"
+
+#: content_admin.inc:715
+msgid "Removed field %field from %type."
+msgstr "Feltet %field fjernet fra %type."
+
+#: content_admin.inc:738
+msgid "Widget settings"
+msgstr "Kontrolindstillinger"
+
+#: content_admin.inc:739
+msgid "These settings apply only to the %field field as it appears in the %type content type."
+msgstr "Indstillingerne gælder kun for feltet %field når det indgår i indholdstypen %type."
+
+#: content_admin.inc:753
+msgid "Widget"
+msgstr "Kontrol"
+
+#: content_admin.inc:774
+#: fieldgroup.module:105
+msgid "Help text"
+msgstr "Hjælpetekst"
+
+#: content_admin.inc:777
+msgid "Instructions to present to the user below this field on the editing form."
+msgstr "Instruktioner til brugeren vises under feltet på indholdsformularen."
+
+#: content_admin.inc:786
+msgid "Default value"
+msgstr "Standardværdi"
+
+#: content_admin.inc:809
+#: number.module:65
+#: text.module:49
+msgid "Php code"
+msgstr "PHP kode"
+
+#: content_admin.inc:827
+#: number.module:71
+#: text.module:55
+msgid "Code"
+msgstr "Kode"
+
+#: content_admin.inc:831
+msgid "Advanced Usage Only: PHP code that returns a default value. Should not include &lt;?php ?&gt; delimiters. If this field is filled out, the value returned by this code will override any value specified above. Expected format :<pre>!sample</pre>Using !link_devel's 'devel load' tab on a %type content page might help you figure out the expected format."
+msgstr "Avanceret brug: PHP kode som returnerer en standardværdi. Skal ikke indeholde &lt;?php ?&gt;<br />. Hvis feltet er udfyldt vil værdien returneret af koden tilsidesætte værdieri tekstfeltet ovenfor.<br />Forventet format: <pre>!sample</pre> Bruger du  !link_devel's 'devel load' faneblad på en %type-side kan det være nemmere at bestemme det forventede format."
+
+#: content_admin.inc:837
+msgid "Data settings"
+msgstr "Dataindstillinger"
+
+#: content_admin.inc:838
+msgid "These settings apply to the %field field in every content type in which it appears."
+msgstr "Indstillingerne for feltet %field uanset hvilken indholdstype det indgår i."
+
+#: content_admin.inc:842
+msgid "Required"
+msgstr "Påkrævet"
+
+#: content_admin.inc:847
+msgid "Multiple values"
+msgstr "Flere værdier"
+
+#: content_admin.inc:858
+msgid "Save field settings"
+msgstr "Gem feltindstillinger"
+
+#: content_admin.inc:924
+msgid "The default value php code returned an incorrect value<br/>Expected format : <pre>!sample</pre>Returned value : @value"
+msgstr "PHP koden for standardværdien returnerede en ugyldig værdi<br />Forventet format: !sample<br />Returneret værdi: @value"
+
+#: content_admin.inc:962
+msgid "The default value php code created @value which is invalid."
+msgstr "PHP koden for standardværdien returnerede @value, som er ugyldig."
+
+#: content_admin.inc:965
+msgid "The default value is invalid."
+msgstr "Standardværdien er ugyldig."
+
+#: content_admin.inc:1022
+msgid "Saved field %field."
+msgstr "Feltet %field gemt."
+
+#: content_admin.inc:1313
+#: ;1410
+msgid "No PostgreSQL mapping found for %type data type."
+msgstr "Der findes ingen PostgreSQL-kortlægning af datatypen %type."
+
+#: content_admin.inc:1313
+#: ;1410
+msgid "database"
+msgstr "database"
+
+#: content_crud.inc:59
+msgid "The content fields table %name has been created."
+msgstr "Indholdstabel %name oprettet."
+
+#: content_crud.inc:89
+msgid "Content fields table %old_name has been renamed to %new_name and field instances have been updated."
+msgstr "Indholdstabel %old_name omdøbt til %new_name. Feltinstanser opdareret."
+
+#: content_crud.inc:111
+msgid "The content fields table %name has been deleted."
+msgstr "Indholdstabel %name slettet."
+
+#: content_views.inc:70
+msgid "Group multiple values"
+msgstr "Grupper forskellige værdier"
+
+#: content_views.inc:71
+msgid "Do not group multiple values"
+msgstr "Gruppér ikke forskellige værdier"
+
+#: content.module:18
+msgid "Configure how this content type's fields and field labels should be displayed when it's viewed in teaser and full-page mode."
+msgstr "Bestem hvordan indholdstypens felter og feltetiketter skal se ud når de vises i smagsprøver og på hele sider."
+
+#: content.module:67
+#: content_copy.module:129
+msgid "Fields"
+msgstr "Felter"
+
+#: content.module:83
+msgid "Edit"
+msgstr "Rediger"
+
+#: content.module:90
+msgid "Manage fields"
+msgstr "Håndter felter"
+
+#: content.module:99
+msgid "Display fields"
+msgstr "Vis lfelter"
+
+#: content.module:127
+msgid "Remove field"
+msgstr "Fjern felt"
+
+#: content.module:0
+msgid "content"
+msgstr "indhold"
+
+#: content_copy.module:35
+msgid "Export"
+msgstr "Eksporter"
+
+#: content_copy.module:44
+msgid "Import"
+msgstr "Importer"
+
+#: content_copy.module:81
+msgid "This form will process a content type and one or more fields from that type and export the settings. The export created by this process can be copied and pasted as an import into the current or any other database. The import will add the fields to into an existing content type or create a new content type that includes the selected fields."
+msgstr "Eksporter en indholdstype og et eller flere felter. De eksporterede data kan kopieres til denne eller en anden database. Importen tilføjer felterne til en eksisterende indholdstype eller opretter en ny indholdstype som indeholder de valgte felter."
+
+#: content_copy.module:90
+msgid "Types"
+msgstr "Typer"
+
+#: content_copy.module:94
+msgid "Select the content type to export."
+msgstr "Vælg hvilken indholdstype der skal eksporteres."
+
+#: content_copy.module:119
+msgid "Groups"
+msgstr "Grupper"
+
+#: content_copy.module:123
+msgid "Select the group definitions to export from %type."
+msgstr "Vælg de gruppedefinitioner der skal exporteres fra %type."
+
+#: content_copy.module:133
+msgid "Select the field definitions to export from %type."
+msgstr "Vælg de feltdefinitioner der skal exporteres fra %type."
+
+#: content_copy.module:143
+msgid "Export data"
+msgstr "Eksporter data"
+
+#: content_copy.module:148
+msgid "Copy the export text and paste it into another content type using the import function."
+msgstr "Kopier den eksporterede tekst og sæt den ind i en anden indholdstype ved hjælp af importfunktionen."
+
+#: content_copy.module:214
+msgid "This form will import field definitions exported from another content type or another database.<br/>Note that fields cannot be duplicated within the same content type, so imported fields will be added only if they do not already exist in the selected type."
+msgstr "Importerer feltdefinitioner fra en eksportfil fra en anden indholdstype eller database.<br />Bemærk at felter ikke kan dubleres i en indholdstype, så felter bliver kun tilføjet hvis de ikke allerede findes i indholdstypen."
+
+#: content_copy.module:217
+msgid "<Create>"
+msgstr "<Opret>"
+
+#: content_copy.module:219
+msgid "Content type"
+msgstr "Indholdstype"
+
+#: content_copy.module:220
+msgid "Select the content type to import these fields into.<br/>Select &lt;Create&gt; to create a new content type to contain the fields."
+msgstr "Vælg hvilken indholdstype felterne skal importeres til.<br />Vælg <Opret> for at oprette en ny indholdstype til de importerede felter."
+
+#: content_copy.module:225
+msgid "Import data"
+msgstr "Importer data"
+
+#: content_copy.module:227
+msgid "Paste the text created by a content export into this field."
+msgstr "Indsæt teksten fra en eksport i dette felt."
+
+#: content_copy.module:255
+msgid "The import data is not valid import text."
+msgstr "De importerede data er ikke gyldig importtekst."
+
+#: content_copy.module:300
+msgid "The following modules must be enabled for this import to work: %modules."
+msgstr "Følgende module skal aktiveres før importen kan foretage: %modules."
+
+#: content_copy.module:306
+#: ;320
+msgid "<create>"
+msgstr "<opret>"
+
+#: content_copy.module:308
+msgid "The content type %type already exists in this database."
+msgstr "Indholdstypen %type findes allerede i databasen."
+
+#: content_copy.module:315
+msgid "Exiting. No import performed."
+msgstr "Afslutter. Ingen import foretaget."
+
+#: content_copy.module:332
+msgid "An error has occured adding the content type %type.<br/>Please check the errors displayed for more details."
+msgstr "Der opstod en fejl ved oprettelsen af indholdstypen %type.<br />Læs fejlmeddelelserne for yderligere information."
+
+#: content_copy.module:367
+msgid "The imported field %field_label (%field_name) was not added to %type because that field already exists in %type."
+msgstr "Det importerede felt %field_label (%field_name) blev ikke tilføjet til %type fordi feltet allerede findes i %type."
+
+#: content_copy.module:388
+#: ;407
+msgid "An error has occured adding the field %field_label (%field_name).<br/>Please check the errors displayed for more details."
+msgstr "Der opstod en fejl ved tilføjelsen af feltet %field_label (%field_name).<br />Læs fejlmeddelelserne for yderligere information."
+
+#: content_copy.module:421
+msgid "The field %field_label (%field_name) was added to the content type %type, but an error has occured updating the field settings.<br/>Please check the errors displayed for more details."
+msgstr "Feltet %field_label (%field_name) blev tilføjet til indholdstypen %type, men der opstod en fejl ved opdateringen af feltindstillingerne.<br />Læs fejlmeddelelserne for yderligere information."
+
+#: content_copy.module:0
+msgid "content_copy"
+msgstr "content_copy"
+
+#: fieldgroup.module:18
+msgid "Add group"
+msgstr "Tilføj gruppe"
+
+#: fieldgroup.module:28
+#: ;36
+msgid "Edit group"
+msgstr "Rediger gruppe"
+
+#: fieldgroup.module:65
+msgid "Add"
+msgstr "Tilføj"
+
+#: fieldgroup.module:72
+msgid "Save"
+msgstr "Gem"
+
+#: fieldgroup.module:91
+msgid "These settings apply to the group in the node editing form"
+msgstr "Indstillinger for gruppen i indholdsformularen"
+
+#: fieldgroup.module:95
+msgid "Style"
+msgstr "Typografi"
+
+#: fieldgroup.module:98
+msgid "always open"
+msgstr "altid åben"
+
+#: fieldgroup.module:99
+msgid "collapsible"
+msgstr "sammenklappelig"
+
+#: fieldgroup.module:100
+msgid "collapsed"
+msgstr "sammenklappet"
+
+#: fieldgroup.module:108
+msgid "Instructions to present to the user on the editing form."
+msgstr "Instruktioner der vises til brugeren i formularen."
+
+#: fieldgroup.module:114
+msgid "These settings apply to the group on node display."
+msgstr "Indstillinger for gruppen i indholdsvisning."
+
+#: fieldgroup.module:118
+msgid "Description"
+msgstr "Beskrivelse"
+
+#: fieldgroup.module:121
+msgid "A description of the group."
+msgstr "Beskrivelse af gruppen."
+
+#: fieldgroup.module:143
+msgid "The group name %name already exists."
+msgstr "Gruppenavnet %name findes allerede."
+
+#: fieldgroup.module:147
+msgid "The group name %name is invalid."
+msgstr "Gruppenavnet %name er ugyldigt."
+
+#: fieldgroup.module:212
+msgid "Are you sure you want to remove the group %label?"
+msgstr "Ønsker du at fjerne gruppen %label?"
+
+#: fieldgroup.module:214
+msgid "This action cannot be undone."
+msgstr "Handlingen kan ikke fortrydes."
+
+#: fieldgroup.module:276
+msgid "No group"
+msgstr "Ingen gruppe"
+
+#: fieldgroup.module:319
+msgid "Display in group"
+msgstr "Vis i gruppe"
+
+#: fieldgroup.module:322
+msgid "Select a group, in which the field will be displayed on the editing form."
+msgstr "Vælg i hvilken gruppe feltet skal vises i indholdsformularen."
+
+#: fieldgroup.module:481
+msgid "no styling"
+msgstr "ingen typografi"
+
+#: fieldgroup.module:482
+msgid "simple"
+msgstr "simpel"
+
+#: fieldgroup.module:483
+msgid "fieldset"
+msgstr "feltgruppe"
+
+#: fieldgroup.module:484
+msgid "fieldset - collapsible"
+msgstr "feltgruppe - sammenklappelig"
+
+#: fieldgroup.module:485
+msgid "fieldset - collapsed"
+msgstr "feltset - sammenklappet"
+
+#: fieldgroup.module:0
+msgid "fieldgroup"
+msgstr "feltgruppe"
+
+#: nodereference.module:17
+msgid "node reference autocomplete"
+msgstr "autofuldførende indholdsreference"
+
+#: nodereference.module:42
+msgid "Content types that can be referenced"
+msgstr "Indholdstyper der kan refereres til"
+
+#: nodereference.module:51
+msgid "Existing Views"
+msgstr "Eksisterende visninger"
+
+#: nodereference.module:56
+msgid "Default Views"
+msgstr "Standardvisninger"
+
+#: nodereference.module:61
+msgid "Advanced - Nodes that can be referenced (View)"
+msgstr "Avnaceret - indhold der kan refereres til (Visning)"
+
+#: nodereference.module:67
+msgid "View"
+msgstr "Visning"
+
+#: nodereference.module:70
+msgid "Choose the \"Views module\" view that selects the nodes that can be referenced.<br>Note :<ul><li>This will discard the \"Content types\" settings above. Use the view's \"filters\" section instead.</li><li>Use the view's \"fields\" section to display additional informations about candidate nodes on node creation/edition form.</li><li>Use the view's \"sort criteria\" section to determine the order in which candidate nodes will be displayed.</li></ul>"
+msgstr "Vælg den visning, der bestemmer hvilke indholdselementer, der kan refereres til.<br />Bemærk:<ul><li>Dette tilsidesætter indstillingen \"Indholdstyper\" ovenfor. Brug visningens filtre i stedet.</li><li>Brug visningens felter for at vise yderligere information om indholdselementerne i formularen.</li><li>Brug visningens indstillinger for sortering til at bestemme i hvilken rækkefølge indholdselementerne vises.</li></ul>"
+
+#: nodereference.module:74
+msgid "View arguments"
+msgstr "Visningsargumenter"
+
+#: nodereference.module:77
+msgid "Provide a comma separated list of arguments to pass to the view."
+msgstr "Angiv en kommasepareret liste af argumenter til visningen."
+
+#: nodereference.module:122
+msgid "%name : This post can't be referenced."
+msgstr "%name: Kan ikke referere til dette indhold."
+
+#: nodereference.module:243
+#: userreference.module:142
+msgid "<none>"
+msgstr "<ingen>"
+
+#: nodereference.module:345
+msgid "%name : Title mismatch. Please check your selection."
+msgstr "%name: Fejl i titel. Tjek venligts dit valg."
+
+#: nodereference.module:527
+msgid "<empty>"
+msgstr "<tom>"
+
+#: nodereference.module:0
+msgid "nodereference"
+msgstr "indholdsreference"
+
+#: number.module:33
+msgid "Minimum"
+msgstr "Minimum"
+
+#: number.module:38
+msgid "Maximum"
+msgstr "Maksimum"
+
+#: number.module:43
+msgid "Prefix"
+msgstr "Præfiks"
+
+#: number.module:46
+msgid "Define a string that should be prefixed to the value, like $ or €. Leave blank for none. Separate singular and plural values with a pipe (pound|pounds)."
+msgstr "Angiv den streng som skal bruges so præfiks, f.eks. $ eller €. Lad feltet tomt hvis du ikker ønsker et præfiks. Adskil ental og flertal med et rør (krone|kroner)."
+
+#: number.module:50
+msgid "Suffix"
+msgstr "Endelse"
+
+#: number.module:53
+msgid "Define a string that should suffixed to the value, like m², m/s², kb/s. Leave blank for none. Separate singular and plural values with a pipe (pound|pounds). "
+msgstr "Angiv den streng som skal bruges som endelse, f.eks. m², m/s², kb/s. Lad feltet stå tomt hvis du ikke ønsker en endelse. Adskil ental og flertal med et rør (krone|kroner)."
+
+#: number.module:57
+#: text.module:41
+msgid "Allowed values list"
+msgstr "Liste af tilladte værdier"
+
+#: number.module:61
+#: text.module:45
+msgid "The possible values this field can contain. Enter one value per line, in the format key|label. The key is the value that will be stored in the database and it must match the field storage type, %type. The label is optional and the key will be used as the label if no label is specified."
+msgstr "Feltets mulige værdier. Indtast én værdi pr. linje på formen nøgle|etiket. Nøglen er den værdi, der gemmes i databasen, og den skal matche felttypen. Etiketten er valgfri; nøglen bruges hvis der ikke er angivet en etiket."
+
+#: number.module:74
+#: text.module:58
+msgid "Advanced Usage Only: PHP code that returns a keyed array of allowed values. Should not include &lt;?php ?&gt; delimiters. If this field is filled out, the array returned by this code will override the allowed values list above."
+msgstr "Kun avanceret brug: PHP kode der returnerer en liste af tilladte værdier. Skal ikke indeholde &lt;?php ?&gt; mærker. Hvis dette felt udfyldes vil den returnerede liste tilsidesætte de tilladte værdier der er angivet ovenfor."
+
+#: number.module:80
+msgid "\"Minimum\" must be a number."
+msgstr "\"Minimum\" skal være et tal."
+
+#: number.module:83
+msgid "\"Maximum\" must be a number."
+msgstr "\"Maximum\" skal være et tal."
+
+#: number.module:138
+msgid "The value of %name may be no smaller than %min."
+msgstr "Værdien af %name kan ikke være mindre end %min."
+
+#: number.module:141
+msgid "The value of %name may be no larger than %max."
+msgstr "Værdien af %name kan ikke være større end %max."
+
+#: number.module:0
+msgid "number"
+msgstr "tal"
+
+#: optionwidgets.module:15
+msgid "Create a list of options as a list in <strong>Allowed values</strong> or as an array in Php code at the bottom of this page. These values will be the same for the %field in all content types. "
+msgstr "Opret en liste af valgmuligheder i feltet <strong>tilladte værdier</strong> eller som PHP kode i bunden af siden. Værdierne bruges i %field i alle indholdstyper."
+
+#: optionwidgets.module:17
+msgid "For a 'Single on/off checkbox' widget, define the 'off' value first, then the 'on' value in the <strong>Allowed values</strong> section. Note that the checkbox will be labeled with the label of the 'on' value."
+msgstr " For et 'til/fra afkrydsningsfelt' skal 'fra'-værdien defineres først. Derefter skrives 'til'-værdien i feltet <strong>tilladte værdier</strong>. Afkrydsningsfeltet bruger 'til'-værdiens etiket."
+
+#: optionwidgets.module:20
+msgid "The 'Checkboxes / radio buttons' widget will display checkboxes if the multiple values option is selected for this field, otherwise radios will be displayed."
+msgstr "Hvis 'flere valgmuligheder' er markeret viser kontrollen afkrydsningsfelter, ellers vises radioknapper."
+
+#: optionwidgets.module:204
+msgid "N/A"
+msgstr "N/A"
+
+#: optionwidgets.module:0
+msgid "optionwidgets"
+msgstr "valgmulighedskontrol"
+
+#: text.module:25
+msgid "Plain text"
+msgstr "Ren tekst"
+
+#: text.module:25
+msgid "Filtered text (user selects input format)"
+msgstr "Filtreret tekst (bruger vælge inddataformat)"
+
+#: text.module:28
+msgid "Text processing"
+msgstr "Tekstbehandling"
+
+#: text.module:127
+msgid "%label is longer than %max characters."
+msgstr "%label er længere end %max tegn."
+
+#: text.module:0
+msgid "text"
+msgstr "tekst"
+
+#: userreference.module:27
+msgid "User roles that can be referenced"
+msgstr "Brugerroller, der kan refereres til"
+
+#: userreference.module:65
+msgid "%name : Invalid user."
+msgstr "%name: Ugyldig bruger."
+
+#: userreference.module:0
+msgid "userreference"
+msgstr "brugerreference"
+
+#: optionwidgets.install:77
+msgid "<div>The allowed values list for %field was updated from </div><pre>%start</pre><div> to </div><pre>%end</pre><div>You can go to the field settings page to give each option a more user-friendly label."
+msgstr "<div>Tilladte værdier for %field ændret fra</div><pre>%start</pre><div> til </div><pre>%end</pre><div>Gå til siden med feltindstillinger for at give hvert valg en mere brugervenlig etiket."
+
+#: optionwidgets.install:80
+msgid "<div>The allowed values list for %field was not changed from </div><pre>%start</pre>"
+msgstr "<div>Tilladte værdier for %field blev ikke ændret fra</div><pre>%start</pre>"
+
+#: content.info:0
+msgid "Content"
+msgstr "Indhold"
+
+#: content.info:0
+msgid "Allows administrators to define new content types."
+msgstr "Lad administratorer oprette nye indholdstyper."
+
+#: content.info:0
+#: content_copy.info:0
+#: fieldgroup.info:0
+#: nodereference.info:0
+#: number.info:0
+#: optionwidgets.info:0
+#: text.info:0
+#: userreference.info:0
+msgid "CCK"
+msgstr "CCK"
+
+#: content_copy.info:0
+msgid "Content Copy"
+msgstr "Indholdskopi"
+
+#: content_copy.info:0
+msgid "Enables ability to import/export field definitions."
+msgstr "Gør det muligt at importere/eksportere feltdefinitioner."
+
+#: fieldgroup.info:0
+msgid "Fieldgroup"
+msgstr "Feltgruppe"
+
+#: fieldgroup.info:0
+msgid "Create field groups for CCK fields."
+msgstr "Opret feltgrupper for CCK_felter."
+
+#: nodereference.info:0
+msgid "Node Reference"
+msgstr "Indholdsreference"
+
+#: nodereference.info:0
+msgid "Defines a field type for referencing one node from another."
+msgstr "Definerer felter der refererer til et indholdselement fra et andet."
+
+#: number.info:0
+msgid "Number"
+msgstr "Tal"
+
+#: number.info:0
+msgid "Defines numeric field types."
+msgstr "Definerer talfelter."
+
+#: optionwidgets.info:0
+msgid "Option Widgets"
+msgstr "Valgmulighedskontrol"
+
+#: optionwidgets.info:0
+msgid "Defines selection, check box and radio button widgets for text and numeric fields."
+msgstr "Definerer valg, afkrydsningsfelter og radioknapper for tekst- og talfelter."
+
+#: text.info:0
+msgid "Text"
+msgstr "Tekst"
+
+#: text.info:0
+msgid "Defines simple text field types."
+msgstr "Definerer simple tekstfelter."
+
+#: userreference.info:0
+msgid "User Reference"
+msgstr "Brugerreference"
+
+#: userreference.info:0
+msgid "Defines a field type for referencing a user from a node."
+msgstr "Definerer et felt der refererer til en bruger fra et indholdselement."
+
+#: theme/node-content_example.tpl.php:10
+msgid "!date — !username"
+msgstr "!date – !username"
+
