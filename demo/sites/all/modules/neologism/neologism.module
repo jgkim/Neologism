@@ -237,6 +237,7 @@ function neologism_get_rdf_model($node, $uri, $document) {
             $model->add(new Statement($classresource, new Resource($ns["rdfs"], "subClassOf"), new Resource($uri.$oneclass["subclass"])));
         if ($oneclass["disjoint"] != NULL)
             $model->add(new Statement($classresource, new Resource($ns["owl"], "disjointWith"), new Resource($uri.$oneclass["disjoint"]))); 
+		
 		// if ($oneclass["superclassOf"] != NULL) {
             // $model->add(new Statement(new Resource($uri.$oneclass["superclassOf"]), new Resource($ns["rdfs"], "subClassOf"), $classresource));
 			//}
@@ -247,6 +248,12 @@ function neologism_get_rdf_model($node, $uri, $document) {
     foreach ($properties as $oneprop) {
         $propresource = new Resource($uri . $oneprop["title"]);
         $model->add(new Statement($propresource, new Resource($ns["rdf"], "type"), new Resource($ns["rdf"], "Property")));
+		if ($oneprop["ifp"] == true) {
+			$ifp_uri="http://www.w3.org/2002/07/owl#InverseFunctionalProperty";
+            $model->add(new Statement($propresource, new Resource($ns["rdf"], "type"), new Resource($ifp_uri))); 	}
+		if ($oneprop["fp"] == true) {
+			$ifp_uri="http://www.w3.org/2002/07/owl#FunctionalProperty";
+            $model->add(new Statement($propresource, new Resource($ns["rdf"], "type"), new Resource($ifp_uri))); 	}
         $model->add(new Statement($propresource, new Resource($ns["rdfs"], "isDefinedBy"), $ontology));
         $model->add(new Statement($propresource, new Resource($ns["rdfs"], "label"), new Literal($oneprop["label"])));
         if ($oneprop["comment_rdfs"] != NULL)
@@ -325,6 +332,7 @@ function neologism_export_xml($node) {
             $class->addAttribute("subclass", $oneclass["subclass"]);
 		// if ($oneclass["superclassOf"] != NULL)
             // $class->addAttribute("superclassOf", $oneclass["superclassOf"]);
+		// TODO also show IFPs/FPs in a special way?
     }
 
     //export all properties
@@ -653,6 +661,11 @@ function get_all_properties($node, $domain='') {
 // TODO fix the name of the field in the CCK definition to be consistent with the one used for classes
   $comment_rdfs = db_fetch_array(db_query(db_rewrite_sql('SELECT field_comment_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['comment_rdfs']=$comment_rdfs[field_comment_value];
+  
+  $ifp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_ifp_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $properies_data[$i]['ifp']=$ifp_value[field_ifp_value];
+  $fp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_fp_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $properies_data[$i]['fp']=$fp_value[field_fp_value];
 
   $i++;
   }
