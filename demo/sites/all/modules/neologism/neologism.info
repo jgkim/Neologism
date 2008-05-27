@@ -1,6 +1,6 @@
 ; $Id: 
 name = Neologism
 description = Allows users to easily publish their own vocabulary online.
-dependencies = content nodereference text optionwidgets
+dependencies = content nodereference text optionwidgets  
 package = Neologism
 
