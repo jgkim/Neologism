@@ -239,7 +239,7 @@ function neologism_get_rdf_model($node, $uri, $document) {
             $model->add(new Statement($classresource, new Resource($ns["owl"], "disjointWith"), new Resource($uri.$oneclass["disjoint"]))); 
 		// if ($oneclass["superclassOf"] != NULL) {
             // $model->add(new Statement(new Resource($uri.$oneclass["superclassOf"]), new Resource($ns["rdfs"], "subClassOf"), $classresource));
-			}
+			//}
     }
 
     //export all properties
