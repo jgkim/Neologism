@@ -237,6 +237,9 @@ function neologism_get_rdf_model($node, $uri, $document) {
             $model->add(new Statement($classresource, new Resource($ns["rdfs"], "subClassOf"), new Resource($uri.$oneclass["subclass"])));
         if ($oneclass["disjoint"] != NULL)
             $model->add(new Statement($classresource, new Resource($ns["owl"], "disjointWith"), new Resource($uri.$oneclass["disjoint"]))); 
+		// if ($oneclass["superclassOf"] != NULL) {
+            // $model->add(new Statement(new Resource($uri.$oneclass["superclassOf"]), new Resource($ns["rdfs"], "subClassOf"), $classresource));
+			}
     }
 
     //export all properties
@@ -320,6 +323,8 @@ function neologism_export_xml($node) {
         $class->addAttribute("label", $oneclass["label"]);
         if ($oneclass["subclass"] != NULL)
             $class->addAttribute("subclass", $oneclass["subclass"]);
+		// if ($oneclass["superclassOf"] != NULL)
+            // $class->addAttribute("superclassOf", $oneclass["superclassOf"]);
     }
 
     //export all properties
@@ -675,6 +680,10 @@ function get_all_classes($node) {
   $subclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_subclassof_nid FROM {content_type_class} WHERE nid = %d'), $item->nid));
   $subclass = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $subclass_id[field_subclassof_nid]));
   $class_data[$i]['subclass']=$subclass[title];
+
+  // $superclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_superclassof_nid FROM {content_type_class} WHERE nid = %d'), $item->nid));
+  // $superclass = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $superclass_id[field_superclassof_nid]));
+  // $class_data[$i]['superclassOf']=$superclass[title];
   
   $label = db_fetch_array(db_query(db_rewrite_sql('SELECT field_id_value FROM {content_field_id} WHERE nid = %d'), $item->nid));
   $class_data[$i]['label']=$label[field_id_value];
