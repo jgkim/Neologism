@@ -184,7 +184,7 @@
 			<mx:Button label="About" click="about()"/>
 			<mx:Button label="Save Layout"
 				click="onSavelayout()"
-				visible="false"
+				visible="true"
 				/>
 		</mx:HBox>
 	
