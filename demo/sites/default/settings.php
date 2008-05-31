@@ -91,7 +91,7 @@
  *   $db_url = 'pgsql://username:password@localhost/databasename';
  */
 
-$db_url = 'mysql://root:passw0rd@localhost/dneo';
+$db_url = 'mysql://root:root@localhost/dneotest';
 
 $db_prefix = '';
 
