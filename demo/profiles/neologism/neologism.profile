@@ -16,7 +16,7 @@ function neologism_profile_modules() {
   return array(
 
     // Core - optional
-    'color', 'help', 'menu', 'path', 'search', 'taxonomy',
+    'color', 'help', 'menu', 'path', 'taxonomy',
 
     // Core - required
     'block', 'filter', 'node', 'system', 'user', 'watchdog',
@@ -55,18 +55,25 @@ function neologism_profile_details() {
 function neologism_profile_final() {
   // Site information
   variable_set('site_name', 'Neologism');
-  variable_set('site_mission', 'Welcome to <strong>Neologism</strong>, an online editor to publish RDF vocabularies.');
+  variable_set('site_mission', '<strong>Neologism</strong> is an online editor to publish RDF vocabularies.');
+  variable_set('site_slogan', 'Easy Vocabulary Publishing');
+  variable_set('menu_primary_menu', 2);
+  variable_set('menu_secondary_menu', 2);
+  variable_set('menu_secondary_menu', 2);
+  variable_set('theme_settings', array (
+    'toggle_slogan' => true,
+  ));
   //variable_set('site_frontpage', 'node/add/class');
   
   // Menus
-//   $item = array();
-//   $item['pid'] = 2; // Primary items
-//   $item['path'] = 'node/add/geshinode';
-//   $item['title'] = 'Submit Code';
-//   $item['description'] = 'Paste a code snippet.';
-//   $item['weight'] = -6;
-//   $item['type'] = 118;
-//   menu_save_item($item); 
+  $item = array();
+  $item['pid'] = 2; // Primary items
+  $item['path'] = 'user';
+  $item['title'] = 'Login';
+  $item['description'] = 'Click here to login to Neologism.';
+  $item['weight'] = 0;
+  $item['type'] = 118;
+  menu_save_item($item); 
   
   // Permissions
 //   db_query("UPDATE {permission} SET perm = '%s' WHERE rid = %d",
