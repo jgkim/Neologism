@@ -2,8 +2,695 @@
 // $Id:  $
 
 /**
- * Implementation of hook_install().
+ * Definitions of the CCK content types for Neologism which get created via hook_enable()
+ * when the module is enabled.
  */
+
+function _neologism_install_create_content($content, $type_name = '<create>') {
+  $type = $content['type']['type'];
+  global $_neologism_install_macro;
+  $_neologism_install_macro[$type] = $content;
+  include_once drupal_get_path('module', 'node') .'/content_types.inc';
+  include_once drupal_get_path('module', 'content') .'/content_admin.inc';
+  $macro = 'global $_neologism_install_macro; $content = $_neologism_install_macro[\''. $type .'\'];';
+  drupal_execute('content_copy_import_form', array('type_name' => $type_name, 'macro' => $macro));
+  content_clear_type_cache();
+//echo 'creat';  
+//  set_message('cck creation');
+}
+
+
+function _neologism_content_vocabulary() {
+$content[type]  = array (
+  'name' => 'Vocabulary',
+  'type' => 'vocabulary',
+  'description' => '',
+  'title_label' => 'id',
+  'body_label' => 'Description',
+  'min_word_count' => '0',
+  'help' => '',
+  'node_options' => 
+  array (
+    'status' => true,
+    'promote' => true,
+    'sticky' => false,
+    'revision' => false,
+  ),
+  'comment' => '2',
+  'old_type' => 'vocabulary',
+  'orig_type' => '',
+  'module' => 'node',
+  'custom' => '1',
+  'modified' => '1',
+  'locked' => '0',
+);
+$content[fields]  = array (
+  0 => 
+  array (
+    'widget_type' => 'text',
+    'label' => 'title',
+    'weight' => '-4',
+    'rows' => '1',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_id' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '1',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_id',
+    'field_type' => 'text',
+    'module' => 'text',
+    'default_value' => 
+    array (
+      0 => 
+      array (
+        'value' => '',
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  1 => 
+  array (
+    'widget_type' => 'userreference_select',
+    'label' => 'authors',
+    'weight' => '-3',
+    'reverse_link' => 0,
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_authors' => 
+      array (
+        'uids' => 
+        array (
+          0 => 'none',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '1',
+    'referenceable_roles' => 
+    array (
+      0 => 1,
+      2 => false,
+      3 => false,
+    ),
+    'referenceable_status' => 
+    array (
+      1 => true,
+      0 => false,
+    ),
+    'field_name' => 'field_authors',
+    'field_type' => 'userreference',
+    'module' => 'userreference',
+  ),
+  2 => 
+  array (
+    'widget_type' => 'text',
+    'label' => 'abstract',
+    'weight' => '-2',
+    'rows' => '5',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_abstract' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_abstract',
+    'field_type' => 'text',
+    'module' => 'text',
+  ),
+);
+  return $content;
+}
+
+
+function _neologism_content_class() {
+$content[type]  = array (
+  'name' => 'Class',
+  'type' => 'class',
+  'description' => '',
+  'title_label' => 'id',
+  'body_label' => 'comment',
+  'min_word_count' => '0',
+  'help' => '',
+  'node_options' => 
+  array (
+    'status' => true,
+    'promote' => false,
+    'sticky' => false,
+    'revision' => false,
+  ),
+  'comment' => '2',
+  'old_type' => 'class',
+  'orig_type' => '',
+  'module' => 'node',
+  'custom' => '1',
+  'modified' => '1',
+  'locked' => '0',
+);
+$content[fields]  = array (
+  0 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'vocabulary',
+    'weight' => '-10',
+    'description' => 'Specify the vocabulary this class belongs to.',
+    'default_value_widget' => 
+    array (
+      'field_vocabulary' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '1',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'vocabulary' => true,
+      0 => 1,
+      'class' => false,
+      'page' => false,
+      'property' => false,
+    ),
+    'field_name' => 'field_vocabulary',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'default_value' => 
+    array (
+      0 => 
+      array (
+        'nid' => '0',
+        'error_field' => 'field_vocabulary][nids',
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'hidden',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  1 => 
+  array (
+    'widget_type' => 'text',
+    'label' => 'label',
+    'weight' => '-4',
+    'rows' => '1',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_id' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '1',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_id',
+    'field_type' => 'text',
+    'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  2 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'subClassOf',
+    'weight' => '-3',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_subclassof' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'class' => true,
+      0 => 1,
+      'page' => false,
+      'property' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_subclassof',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'widget_type' => 'multiselect_select',
+    'label' => 'disjointWith',
+    'weight' => '-2',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_disjointwith' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '1',
+    'referenceable_types' => 
+    array (
+      'class' => true,
+      0 => 1,
+      'page' => false,
+      'property' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_disjointwith',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference, multiselect',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+);
+  return $content;
+}
+
+
+function _neologism_content_property() {
+$content[type]  = array (
+  'name' => 'Property',
+  'type' => 'property',
+  'description' => '',
+  'title_label' => 'id',
+  'body_label' => 'comment',
+  'min_word_count' => '0',
+  'help' => '',
+  'node_options' => 
+  array (
+    'status' => true,
+    'promote' => false,
+    'sticky' => false,
+    'revision' => false,
+  ),
+  'comment' => '2',
+  'old_type' => 'property',
+  'orig_type' => '',
+  'module' => 'node',
+  'custom' => '1',
+  'modified' => '1',
+  'locked' => '0',
+);
+$content[fields]  = array (
+  0 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'vocabulary',
+    'weight' => '-10',
+    'description' => 'Specify the vocabulary this class belongs to.',
+    'default_value_widget' => 
+    array (
+      'field_vocabulary' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '1',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'vocabulary' => true,
+      0 => 1,
+      'class' => false,
+      'page' => false,
+      'property' => false,
+    ),
+    'field_name' => 'field_vocabulary',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'default_value' => 
+    array (
+      0 => 
+      array (
+        'nid' => '0',
+        'error_field' => 'field_vocabulary][nids',
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'hidden',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  1 => 
+  array (
+    'widget_type' => 'text',
+    'label' => 'label',
+    'weight' => '-4',
+    'rows' => '1',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_id' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '1',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_id',
+    'field_type' => 'text',
+    'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  2 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'domain',
+    'weight' => '-3',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_domain' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'class' => true,
+      0 => 1,
+      'page' => false,
+      'property' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_domain',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'range',
+    'weight' => '-2',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_range' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'class' => true,
+      0 => 1,
+      'page' => false,
+      'property' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_range',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  4 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'inverse',
+    'weight' => '-1',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_inverse' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'property' => true,
+      0 => 1,
+      'class' => false,
+      'page' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_inverse',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  5 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'subPropertyOf',
+    'weight' => '0',
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_subpropertyof' => 
+      array (
+        'nids' => 
+        array (
+          0 => '0',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'required' => '0',
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      'property' => true,
+      0 => 1,
+      'class' => false,
+      'page' => false,
+      'vocabulary' => false,
+    ),
+    'field_name' => 'field_subpropertyof',
+    'field_type' => 'nodereference',
+    'module' => 'nodereference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+);
+  return $content;
+}
 
 
 
