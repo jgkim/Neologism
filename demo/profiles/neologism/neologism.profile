@@ -22,7 +22,7 @@ function neologism_profile_modules() {
     'block', 'filter', 'node', 'system', 'user', 'watchdog',
 
     // CCK core
-    'content', 'nodereference', 'optionwidgets', 'text', 'userreference',
+    'content', 'nodereference', 'optionwidgets', 'text', 'userreference', 'content_copy',
     
     // CCK
     'multiselect',
