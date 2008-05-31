@@ -84,7 +84,7 @@ DirectoryIndex index.php
 
   # Modify the RewriteBase if you are using Drupal in a subdirectory and
   # the rewrite rules are not working properly.
-  RewriteBase /dneo
+  #RewriteBase /drupal
 
   # Rewrite old-style URLs of the form 'node.php?id=x'.
   #RewriteCond %{REQUEST_FILENAME} !-f
