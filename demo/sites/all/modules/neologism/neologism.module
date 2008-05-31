@@ -21,6 +21,16 @@ function neologism_perm() {
 }
 
 /**
+ * Implementation of hook_enable().
+ */
+function neologism_enable () {
+  include_once drupal_get_path('module', 'neologism') .'/neologism.install';
+  _neologism_install_create_content(_neologism_content_vocabulary());
+  _neologism_install_create_content(_neologism_content_property());
+  _neologism_install_create_content(_neologism_content_class());
+}
+
+/**
  * Implementation of hook_menu().
  */
 function neologism_menu($may_cache) {
