@@ -36,7 +36,6 @@ $content[type]  = array (
     'sticky' => false,
     'revision' => false,
   ),
-  'comment' => '2',
   'old_type' => 'vocabulary',
   'orig_type' => '',
   'module' => 'node',
@@ -63,6 +62,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '1',
     'multiple' => '0',
     'text_processing' => '0',
@@ -112,14 +112,19 @@ $content[fields]  = array (
         ),
       ),
     ),
-    'default_value_php' => '',
+    'default_value_php' => 'return array(
+  0 => array(\'uid\' => $node->uid)
+);',
+    'group' => false,
     'required' => '0',
     'multiple' => '1',
     'referenceable_roles' => 
     array (
+      1 => 1,
       0 => 1,
       2 => false,
       3 => false,
+      4 => false,
     ),
     'referenceable_status' => 
     array (
@@ -129,6 +134,21 @@ $content[fields]  = array (
     'field_name' => 'field_authors',
     'field_type' => 'userreference',
     'module' => 'userreference',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'above',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
   ),
   2 => 
   array (
@@ -148,6 +168,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'text_processing' => '0',
@@ -157,6 +178,65 @@ $content[fields]  = array (
     'field_name' => 'field_abstract',
     'field_type' => 'text',
     'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'above',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'widget_type' => 'text',
+    'label' => 'layout',
+    'weight' => '0',
+    'rows' => 1,
+    'description' => '',
+    'default_value_widget' => 
+    array (
+      'field_layout' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'group' => false,
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => 0,
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_layout',
+    'field_type' => 'text',
+    'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'hidden',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'plain',
+      ),
+      'full' => 
+      array (
+        'format' => 'plain',
+      ),
+    ),
   ),
 );
   return $content;
@@ -168,8 +248,8 @@ $content[type]  = array (
   'name' => 'Class',
   'type' => 'class',
   'description' => '',
-  'title_label' => 'id',
-  'body_label' => 'comment',
+  'title_label' => 'Id',
+  'body_label' => 'Description of the class (only used in the documentation)',
   'min_word_count' => '0',
   'help' => '',
   'node_options' => 
@@ -179,13 +259,35 @@ $content[type]  = array (
     'sticky' => false,
     'revision' => false,
   ),
-  'comment' => '2',
   'old_type' => 'class',
   'orig_type' => '',
   'module' => 'node',
   'custom' => '1',
   'modified' => '1',
   'locked' => '0',
+);
+$content[groups]  = array (
+  0 => 
+  array (
+    'label' => 'Vocabulary',
+    'settings' => 
+    array (
+      'form' => 
+      array (
+        'style' => 'fieldset_collapsed',
+        'description' => 'You can change the vocabulary this class belongs to. Only change this if you know what you are doing.',
+      ),
+      'display' => 
+      array (
+        'description' => '',
+        'teaser' => 'no_style',
+        'full' => 'no_style',
+        'label' => 'above',
+      ),
+    ),
+    'weight' => '-10',
+    'group_name' => 'group_vocabulary',
+  ),
 );
 $content[fields]  = array (
   0 => 
@@ -205,6 +307,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => 'group_vocabulary',
     'required' => '1',
     'multiple' => '0',
     'referenceable_types' => 
@@ -245,10 +348,10 @@ $content[fields]  = array (
   1 => 
   array (
     'widget_type' => 'text',
-    'label' => 'label',
+    'label' => 'Label',
     'weight' => '-4',
     'rows' => '1',
-    'description' => '',
+    'description' => 'This will be used for rdfs:label ',
     'default_value_widget' => 
     array (
       'field_id' => 
@@ -260,6 +363,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '1',
     'multiple' => '0',
     'text_processing' => '0',
@@ -287,10 +391,54 @@ $content[fields]  = array (
   ),
   2 => 
   array (
-    'widget_type' => 'nodereference_select',
-    'label' => 'subClassOf',
+    'widget_type' => 'text',
+    'label' => 'Comment',
     'weight' => '-3',
-    'description' => '',
+    'rows' => '1',
+    'description' => 'This will be used for rdfs:comment',
+    'default_value_widget' => 
+    array (
+      'field_comment_rdfs' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'group' => false,
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_comment_rdfs',
+    'field_type' => 'text',
+    'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'widget_type' => 'nodereference_select',
+    'label' => 'Superclass',
+    'weight' => '-2',
+    'description' => 'Select the superclass of this class. Your new class will have a statement expressing that it is a rdfs:subClassOf the selected class.',
     'default_value_widget' => 
     array (
       'field_subclassof' => 
@@ -302,6 +450,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'referenceable_types' => 
@@ -331,23 +480,21 @@ $content[fields]  = array (
       ),
     ),
   ),
-  3 => 
+  4 => 
   array (
     'widget_type' => 'multiselect_select',
-    'label' => 'disjointWith',
-    'weight' => '-2',
-    'description' => '',
+    'label' => 'Disjoint with',
+    'weight' => '-1',
+    'description' => 'Select the classes that are disjoint with this class. Your new class will have statements expressing that it is owl:disjointWith the selected classes.',
     'default_value_widget' => 
     array (
       'field_disjointwith' => 
       array (
-        'nids' => 
-        array (
-          0 => '0',
-        ),
+        'nids' => '',
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '1',
     'referenceable_types' => 
@@ -387,8 +534,8 @@ $content[type]  = array (
   'name' => 'Property',
   'type' => 'property',
   'description' => '',
-  'title_label' => 'id',
-  'body_label' => 'comment',
+  'title_label' => 'Id',
+  'body_label' => 'Description of the property (only used in the documentation)',
   'min_word_count' => '0',
   'help' => '',
   'node_options' => 
@@ -398,13 +545,35 @@ $content[type]  = array (
     'sticky' => false,
     'revision' => false,
   ),
-  'comment' => '2',
   'old_type' => 'property',
   'orig_type' => '',
   'module' => 'node',
   'custom' => '1',
   'modified' => '1',
   'locked' => '0',
+);
+$content[groups]  = array (
+  0 => 
+  array (
+    'label' => 'Vocabulary',
+    'settings' => 
+    array (
+      'form' => 
+      array (
+        'style' => 'fieldset_collapsed',
+        'description' => 'You can change the vocabulary this property belongs to. Only change this if you know what you are doing.',
+      ),
+      'display' => 
+      array (
+        'description' => '',
+        'teaser' => 'no_style',
+        'full' => 'no_style',
+        'label' => 'above',
+      ),
+    ),
+    'weight' => '-10',
+    'group_name' => 'group_vocabulary',
+  ),
 );
 $content[fields]  = array (
   0 => 
@@ -424,6 +593,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => 'group_vocabulary',
     'required' => '1',
     'multiple' => '0',
     'referenceable_types' => 
@@ -464,10 +634,10 @@ $content[fields]  = array (
   1 => 
   array (
     'widget_type' => 'text',
-    'label' => 'label',
-    'weight' => '-4',
+    'label' => 'Label',
+    'weight' => '-5',
     'rows' => '1',
-    'description' => '',
+    'description' => 'This will be used for rdfs:label ',
     'default_value_widget' => 
     array (
       'field_id' => 
@@ -479,6 +649,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '1',
     'multiple' => '0',
     'text_processing' => '0',
@@ -507,9 +678,9 @@ $content[fields]  = array (
   2 => 
   array (
     'widget_type' => 'nodereference_select',
-    'label' => 'domain',
-    'weight' => '-3',
-    'description' => '',
+    'label' => 'Domain',
+    'weight' => '-4',
+    'description' => 'Select the class for the rdfs:domain of this property.',
     'default_value_widget' => 
     array (
       'field_domain' => 
@@ -521,6 +692,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'referenceable_types' => 
@@ -553,9 +725,9 @@ $content[fields]  = array (
   3 => 
   array (
     'widget_type' => 'nodereference_select',
-    'label' => 'range',
-    'weight' => '-2',
-    'description' => '',
+    'label' => 'Range',
+    'weight' => '-3',
+    'description' => 'Select the class for the rdfs:range of this property.',
     'default_value_widget' => 
     array (
       'field_range' => 
@@ -567,6 +739,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'referenceable_types' => 
@@ -598,10 +771,56 @@ $content[fields]  = array (
   ),
   4 => 
   array (
+    'widget_type' => 'text',
+    'label' => 'Comment',
+    'weight' => '-2',
+    'rows' => '1',
+    'description' => 'This will be used for rdfs:comment',
+    'default_value_widget' => 
+    array (
+      'field_comment' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+        ),
+      ),
+    ),
+    'default_value_php' => '',
+    'group' => false,
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'field_name' => 'field_comment',
+    'field_type' => 'text',
+    'module' => 'text',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  5 => 
+  array (
     'widget_type' => 'nodereference_select',
-    'label' => 'inverse',
+    'label' => 'Inverse',
     'weight' => '-1',
-    'description' => '',
+    'description' => 'Select the inverse of this property. Your new property will have a statement expressing that it is a owl:inverseOf the selected property.
+
+',
     'default_value_widget' => 
     array (
       'field_inverse' => 
@@ -613,6 +832,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'referenceable_types' => 
@@ -642,12 +862,64 @@ $content[fields]  = array (
       ),
     ),
   ),
-  5 => 
+  6 => 
+  array (
+    'widget_type' => 'options_onoff',
+    'label' => 'Functional Property',
+    'weight' => '0',
+    'description' => 'Check this box, if your property is an FP, i.e. when you use this property in a statement, then the subject of the statement uniquely determines its object.',
+    'default_value_widget' => 
+    array (
+      'field_fp' => 
+      array (
+        'keys' => 0,
+      ),
+    ),
+    'default_value_php' => '',
+    'group' => false,
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '|
+1|Functional Property',
+    'allowed_values_php' => '',
+    'field_name' => 'field_fp',
+    'field_type' => 'text',
+    'module' => 'text, optionwidgets',
+  ),
+  7 => 
+  array (
+    'widget_type' => 'options_onoff',
+    'label' => 'Inverse Functional Property',
+    'weight' => '0',
+    'description' => 'Check this box, if your property is an IFP, i.e. the object of a statment that uses your property uniquely determines its subject.',
+    'default_value_widget' => 
+    array (
+      'field_ifp' => 
+      array (
+        'keys' => 0,
+      ),
+    ),
+    'default_value_php' => '',
+    'group' => false,
+    'required' => '0',
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '|
+1|Inverse Functional Property',
+    'allowed_values_php' => '',
+    'field_name' => 'field_ifp',
+    'field_type' => 'text',
+    'module' => 'text, optionwidgets',
+  ),
+  8 => 
   array (
     'widget_type' => 'nodereference_select',
-    'label' => 'subPropertyOf',
+    'label' => 'Superproperty',
     'weight' => '0',
-    'description' => '',
+    'description' => 'Select the superproperty of this property. Your new property will have a statement expressing that it is a rdfs:subPropertyOf the selected property.',
     'default_value_widget' => 
     array (
       'field_subpropertyof' => 
@@ -659,6 +931,7 @@ $content[fields]  = array (
       ),
     ),
     'default_value_php' => '',
+    'group' => false,
     'required' => '0',
     'multiple' => '0',
     'referenceable_types' => 
