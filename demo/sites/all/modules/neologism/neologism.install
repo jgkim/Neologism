@@ -25,7 +25,7 @@ $content[type]  = array (
   'name' => 'Vocabulary',
   'type' => 'vocabulary',
   'description' => '',
-  'title_label' => 'id',
+  'title_label' => 'Id',
   'body_label' => 'Description',
   'min_word_count' => '0',
   'help' => '',
@@ -47,7 +47,7 @@ $content[fields]  = array (
   0 => 
   array (
     'widget_type' => 'text',
-    'label' => 'title',
+    'label' => 'Title',
     'weight' => '-4',
     'rows' => '1',
     'description' => '',
@@ -98,7 +98,7 @@ $content[fields]  = array (
   1 => 
   array (
     'widget_type' => 'userreference_select',
-    'label' => 'authors',
+    'label' => 'Authors',
     'weight' => '-3',
     'reverse_link' => 0,
     'description' => '',
@@ -153,7 +153,7 @@ $content[fields]  = array (
   2 => 
   array (
     'widget_type' => 'text',
-    'label' => 'abstract',
+    'label' => 'Abstract',
     'weight' => '-2',
     'rows' => '5',
     'description' => '',
@@ -197,7 +197,7 @@ $content[fields]  = array (
   3 => 
   array (
     'widget_type' => 'text',
-    'label' => 'layout',
+    'label' => 'Layout',
     'weight' => '0',
     'rows' => 1,
     'description' => '',
@@ -293,7 +293,7 @@ $content[fields]  = array (
   0 => 
   array (
     'widget_type' => 'nodereference_select',
-    'label' => 'vocabulary',
+    'label' => 'Vocabulary',
     'weight' => '-10',
     'description' => 'Specify the vocabulary this class belongs to.',
     'default_value_widget' => 
@@ -579,7 +579,7 @@ $content[fields]  = array (
   0 => 
   array (
     'widget_type' => 'nodereference_select',
-    'label' => 'vocabulary',
+    'label' => 'Vocabulary',
     'weight' => '-10',
     'description' => 'Specify the vocabulary this class belongs to.',
     'default_value_widget' => 
