@@ -10,8 +10,8 @@ define("HTML", "html");
 define("RDF", "rdf");
 define("N3", "n3");
 define("XML", "xml");
-define("RDFAPI_INCLUDE_DIR", "./includes/neologism/rap/");
-define("CONTENT_NEGOTATION_DIR", "./includes/neologism/content_negotiation/");
+define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'neologism') ."/includes/rap/");
+define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', 'neologism') ."/includes/content_negotiation/");
 
 /**
  * Implementation of hook_perm().
@@ -556,13 +556,10 @@ function neologism_form_alter($form_id, &$form) {
   }
 }
 
-
-
 /**
  * Implementation of hook_nodeapi().
  */
 function neologism_nodeapi(&$node, $op, $teaser, $page) {
-    //var_dump($node);
     if (module_exists('path')) {
         switch ($op) {
 
@@ -578,13 +575,12 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                             break;
 
             case 'insert':
-            case 'update':
-                            // Add a user friendly path to the vocabulary node
+                            // Create a user friendly path to the vocabulary node
                             if($node->type == 'vocabulary') {
                                 path_set_alias("node/$node->nid", NEOLOGISM.'/'.check_plain($node->title));
                                 path_set_alias("node/$node->nid/".HTML, NEOLOGISM.'/'.check_plain($node->title).'/' . HTML);        
                                 path_set_alias("node/$node->nid/".RDF, NEOLOGISM.'/'.check_plain($node->title).'/' . RDF);
-                                path_set_alias("node/$node->nid/n3", NEOLOGISM.'/'.check_plain($node->title).'/n3');
+                                path_set_alias("node/$node->nid/n3", NEOLOGISM.'/'.check_plain($node->title).'/' . N3);
                                 path_set_alias("node/$node->nid/".XML, NEOLOGISM.'/'.check_plain($node->title).'/' . XML);
                                 path_set_alias("node/$node->nid/layout", NEOLOGISM.'/'.check_plain($node->title).'/layout');
                                 path_set_alias("node/$node->nid/diagram", NEOLOGISM.'/'.check_plain($node->title).'/diagram');
@@ -598,7 +594,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 path_set_alias("node/$node->nid");
                                 path_set_alias("node/$node->nid/".HTML);
                                 path_set_alias("node/$node->nid/".RDF);
-                                path_set_alias("node/$node->nid/n3");
+                                path_set_alias("node/$node->nid/".N3);
                                 path_set_alias("node/$node->nid/".XML);
                                 path_set_alias("node/$node->nid/layout");
                                 path_set_alias("node/$node->nid/diagram");
