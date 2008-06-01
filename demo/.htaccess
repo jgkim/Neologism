@@ -22,6 +22,13 @@ DirectoryIndex index.php
 # Override PHP settings. More in sites/default/settings.php
 # but the following cannot be changed at runtime.
 
+# Maximum execution time and memory limit 
+# sometimes need to be increased depending on the server.
+# Note that on some configurations this is not allowed. See
+# settings.php for an alternative.
+# php_value max_execution_time 300
+# php_value memory_limit 32M
+
 # PHP 4, Apache 1.
 <IfModule mod_php4.c>
   php_value magic_quotes_gpc                0
