@@ -9,6 +9,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import mx.core.Container;
 			import flash.net.sendToURL;
 			import mx.binding.utils.BindingUtils;
 			import mx.utils.URLUtil;
@@ -61,8 +62,6 @@
 				else 
 					editMode = '1';
 				
-				Alert.show(editMode);
-				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
 					_urlVocab = 'vocabulary.xml';
@@ -79,12 +78,12 @@
 				this.vocabularyPanel.loadVocabulary(_urlVocab,_urlLayout);
 				this.vocabularyPanel.addEventListener(MouseEvent.CLICK,onMouseClickHandler);
 				
-				if (active=='1') {
+				if (editMode=='1') {
 					this.toolbar.visible = true;
-					this.vocabularyPanel.enabled = true;
+					//this.vocabularyPanel.enabled = true;
 				} else {
 					this.toolbar.visible = false;
-					this.vocabularyPanel.enabled = false;
+					//this.vocabularyPanel.enabled = false; 
 				}
 	 		}
 			
