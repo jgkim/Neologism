@@ -398,7 +398,7 @@ $content[fields]  = array (
     'description' => 'This will be used for rdfs:comment',
     'default_value_widget' => 
     array (
-      'field_comment_rdfs' => 
+      'field_comment' => 
       array (
         0 => 
         array (
@@ -414,7 +414,7 @@ $content[fields]  = array (
     'max_length' => '',
     'allowed_values' => '',
     'allowed_values_php' => '',
-    'field_name' => 'field_comment_rdfs',
+    'field_name' => 'field_comment',
     'field_type' => 'text',
     'module' => 'text',
     'display_settings' => 
