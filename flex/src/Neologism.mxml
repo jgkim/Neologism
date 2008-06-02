@@ -37,7 +37,7 @@
 			public var prefix:String;
 			
 			[Bindable]
-			public var active:Boolean;
+			public var active:String;
 			
 			[Embed(source="assets/dialog-information.png")] 
             [Bindable]
@@ -59,7 +59,7 @@
 				if (Application.application.parameters.active != undefined)
 					active = Application.application.parameters.active;
 				else 
-					active = true;
+					active = '1';
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
@@ -77,8 +77,13 @@
 				this.vocabularyPanel.loadVocabulary(_urlVocab,_urlLayout);
 				this.vocabularyPanel.addEventListener(MouseEvent.CLICK,onMouseClickHandler);
 				
-				this.toolbar.visible = active;
-				this.vocabularyPanel.enabled = active;
+				if (active=='1') {
+					this.toolbar.visible = true;
+					this.vocabularyPanel.enabled = true;
+				} else {
+					this.toolbar.visible = false;
+					this.vocabularyPanel.enabled = false;
+				}
 	 		}
 			
 			private function onMouseClickHandler(event:MouseEvent) : void
