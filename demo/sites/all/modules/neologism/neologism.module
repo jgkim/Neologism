@@ -12,6 +12,9 @@ define("N3", "n3");
 define("XML", "xml");
 define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'neologism') ."/includes/rap/");
 define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', 'neologism') ."/includes/content_negotiation/");
+define("NEOLOGISM_CT_VOCABULARY", "neo_vocabulary");
+define("NEOLOGISM_CT_CLASS", "neo_class");
+define("NEOLOGISM_CT_PROPERTY", "neo_property");
 
 /**
  * Implementation of hook_perm().
@@ -54,7 +57,7 @@ function neologism_menu($may_cache) {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $node = node_load(arg(1));
       // We only display the export tabs on the vocabulary node.
-      if ($node->nid && $node->type == 'vocabulary') {
+      if ($node->nid && $node->type == NEOLOGISM_CT_VOCABULARY) {
         $items[] = array(
             'path' => 'node/'. arg(1) .'/' . HTML,
             'title' => t('View HTML'),
@@ -114,7 +117,7 @@ function neologism_menu($may_cache) {
         );
       }
       // Display a tab 'Vocabulary' on the class and property nodes to allow users to switch easily to the vocabulary
-      if ($node->nid && ($node->type == 'class' || $node->type == 'property') && isset($node->field_vocabulary[0]['nid'])) {
+      if ($node->nid && ($node->type == NEOLOGISM_CT_CLASS || $node->type == NEOLOGISM_CT_PROPERTY) && isset($node->field_vocabulary[0]['nid'])) {
         $vocabulary_nid = $node->field_vocabulary[0]['nid'];
         $items[] = array(
             'path' => 'node/'. arg(1) .'/vocabulary',
@@ -170,7 +173,7 @@ function neologism_export_html($node) {
 
     // Links to add term to the vocabulary. TODO: manage the multi vocabulary situation, and create a /parent path
     if (user_access('edit neologism')) {
-      $output .= '<p id="add_terms_link" class="neologism">' . l('Add class', 'node/add/class', array(), "v=$node->nid") .' '. l('Add property', 'node/add/property', array(), "v=$node->nid") . ' </p>';
+      $output .= '<p id="add_terms_link" class="neologism">' . l('Add class', 'node/add/'.NEOLOGISM_CT_CLASS, array(), "v=$node->nid") .' '. l('Add property', 'node/add/'.NEOLOGISM_CT_PROPERTY, array(), "v=$node->nid") . ' </p>';
     }
     
     //Vocabulary at glance
@@ -376,7 +379,7 @@ function neologism_export_xml($node) {
 function neologism_layout($node) {
     $name = $node->title;
 
-		$query = "SELECT field_layout_value FROM content_type_vocabulary WHERE nid = " . $node->nid;
+			$query = "SELECT field_layout_value FROM content_type_".NEOLOGISM_CT_VOCABULARY." WHERE nid = " . $node->nid;
 		$result = db_fetch_array(db_query($query));
 		$layout = $result[field_layout_value];
 		if ($layout == NULL) {
@@ -409,7 +412,7 @@ function neologism_layout($node) {
  */
 function neologism_write_layout($node) {
     if ($layout = $_POST['layout']) {
-				$success = db_query("UPDATE content_type_vocabulary SET field_layout_value = '%s' WHERE nid = %d", $layout, $node->nid);
+				$success = db_query("UPDATE content_type_".NEOLOGISM_CT_VOCABULARY." SET field_layout_value = '%s' WHERE nid = %d", $layout, $node->nid);
 				if ($update)
 					return "Layout stored";
 				else
@@ -480,7 +483,7 @@ EXCERPT;
  */
 function neologism_view_index() {
 
-  $result = pager_query(db_rewrite_sql('SELECT n.nid, n.sticky, n.created FROM {node} n WHERE n.type = "vocabulary" AND n.status = 1 ORDER BY n.sticky DESC, n.created DESC'), variable_get('default_nodes_main', 10));
+  $result = pager_query(db_rewrite_sql('SELECT n.nid, n.sticky, n.created FROM {node} n WHERE n.type = "'.NEOLOGISM_CT_VOCABULARY.'" AND n.status = 1 ORDER BY n.sticky DESC, n.created DESC'), variable_get('default_nodes_main', 10));
 
   if (db_num_rows($result)) {
     $output = '';
@@ -501,7 +504,7 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
     $vocabulary_nid = $node->field_vocabulary[0]['nid'];
     $destination = "destination=". drupal_urlencode("node/$vocabulary_nid");
 
-    if (user_access('edit neologism') && $node->type == 'class') {
+    if (user_access('edit neologism') && $node->type == NEOLOGISM_CT_CLASS) {
       // Edit link only in the HTML output
       if ($teaser) {
         $links['neologism_edit_class'] = array(
@@ -512,15 +515,15 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
       }
       $links['neologism_add_subclass'] = array(
         'title' => t('Add subclass'),
-        'href' => "node/add/class/parent/$node->nid"
+        'href' => "node/add/".NEOLOGISM_CT_CLASS."/parent/$node->nid"
       );
       $links['neologism_add_property'] = array(
         'title' => t('Add property'),
-        'href' => "node/add/property/classparent/$node->nid"
+        'href' => "node/add/".NEOLOGISM_CT_PROPERTY."/classparent/$node->nid"
       );
     }
 
-    if (user_access('edit neologism') && $node->type == 'property') {
+    if (user_access('edit neologism') && $node->type == NEOLOGISM_CT_PROPERTY) {
       // Edit link only in the HTML output
       if ($teaser) {
         $links['neologism_edit_property'] = array(
@@ -531,7 +534,7 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
       }
       $links['neologism_add_subproperty'] = array(
         'title' => t('Add subproperty'),
-        'href' => "node/add/property/parent/$node->nid"
+        'href' => "node/add/".NEOLOGISM_CT_PROPERTY."/parent/$node->nid"
       );
     }
 
@@ -543,25 +546,25 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
  */
 function neologism_form_alter($form_id, &$form) {
   // Select the parent class if provided in the url of type node/add/class/parent/9
-  if ($form_id == 'class_node_form' && arg(3) == 'parent' && isset($form['field_subclassof']['nids'])) {
+  if ($form_id == NEOLOGISM_CT_CLASS.'_node_form' && arg(3) == 'parent' && isset($form['field_subclassof']['nids'])) {
     $form['field_subclassof']['nids']['#default_value'] = arg(4);
   }
   // Select the vocabulary when adding a class from a vocabulary page
-  if ($form_id == 'class_node_form' && isset($_GET['v']) && isset($form['field_vocabulary']['nids'])) {
+  if ($form_id == NEOLOGISM_CT_CLASS.'_node_form' && isset($_GET['v']) && isset($form['field_vocabulary']['nids'])) {
     $vocabulary_id = (int)$_GET['v'];
     $form['field_vocabulary']['nids']['#default_value'][0] = $vocabulary_id;
   }
 
   // Select the domain of a property if provided in the url of type node/add/property/classparent/3
-  if ($form_id == 'property_node_form' && arg(3) == 'classparent' && isset($form['field_domain']['nids'])) {
+  if ($form_id == NEOLOGISM_CT_PROPERTY.'_node_form' && arg(3) == 'classparent' && isset($form['field_domain']['nids'])) {
     $form['field_domain']['nids']['#default_value'] = arg(4);
   }
   // Select the parent class if provided in the url of type node/add/property/parent/11
-  if ($form_id == 'property_node_form' && arg(3) == 'parent' && isset($form['field_subpropertyof']['nids'])) {
+  if ($form_id == NEOLOGISM_CT_PROPERTY.'_node_form' && arg(3) == 'parent' && isset($form['field_subpropertyof']['nids'])) {
     $form['field_subpropertyof']['nids']['#default_value'] = arg(4);
   }
   // Select the vocabulary when adding a class from a vocabulary page
-  if ($form_id == 'property_node_form' && isset($_GET['v']) && isset($form['field_vocabulary']['nids'])) {
+  if ($form_id == NEOLOGISM_CT_PROPERTY.'_node_form' && isset($_GET['v']) && isset($form['field_vocabulary']['nids'])) {
     $vocabulary_id = (int)$_GET['v'];
     $form['field_vocabulary']['nids']['#default_value'][0] = $vocabulary_id;
   }
@@ -575,7 +578,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         switch ($op) {
 
             case 'load': 
-                            if ($node->type == "vocabulary" and arg(0) == TRUE and arg(1) == TRUE and arg(2) == FALSE) {
+                            if ($node->type == NEOLOGISM_CT_VOCABULARY and arg(0) == TRUE and arg(1) == TRUE and arg(2) == FALSE) {
                                 //vocabulary root, so content negotiation, provide an appropiate representation
                                 $request_uri = $_SERVER["REQUEST_URI"];
                                 $accept = $_SERVER["HTTP_ACCEPT"];
@@ -587,7 +590,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 
             case 'insert':
                             // Create a user friendly path to the vocabulary node
-                            if($node->type == 'vocabulary') {
+                            if($node->type == NEOLOGISM_CT_VOCABULARY) {
                                 path_set_alias("node/$node->nid", NEOLOGISM.'/'.check_plain($node->title));
                                 path_set_alias("node/$node->nid/".HTML, NEOLOGISM.'/'.check_plain($node->title).'/' . HTML);        
                                 path_set_alias("node/$node->nid/".RDF, NEOLOGISM.'/'.check_plain($node->title).'/' . RDF);
@@ -602,7 +605,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 
             case 'delete':
                             // Deletion of the path when deleting a vocabulary
-                            if($node->type == 'vocabulary') {
+                            if($node->type == NEOLOGISM_CT_VOCABULARY) {
                                 path_set_alias("node/$node->nid");
                                 path_set_alias("node/$node->nid/".HTML);
                                 path_set_alias("node/$node->nid/".RDF);
@@ -647,18 +650,18 @@ function neologism_export($type = 'html', $nid = 0) {
  * Get all properties in a vocabulary 
  */
 function get_all_properties($node, $domain='') {
-  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="property" '), $node->nid);
+  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" '), $node->nid);
   if ($domain)  {
   $domain_id = db_fetch_array(db_query(db_rewrite_sql('SELECT nid FROM {node} WHERE title = "%s" '), $domain));
-  // $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_property} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="property" AND t.field_domain_nid ='.$domain_id[nid] ), $node->nid);
-  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_property} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="property" AND t.field_domain_nid = %d' ), $node->nid, $domain_id[nid]);
+  // $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_'.NEOLOGISM_CT_PROPERTY.'} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" AND t.field_domain_nid ='.$domain_id[nid] ), $node->nid);
+  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_'.NEOLOGISM_CT_PROPERTY.'} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" AND t.field_domain_nid = %d' ), $node->nid, $domain_id[nid]);
   }
   $i=0;
   while ($item = db_fetch_object($properties_ids)) {
   $properies_data[$i]['id']=$item->nid;
   $properies_data[$i]['title']=$item->title;
   
-  $prop_stuff = db_fetch_array(db_query(db_rewrite_sql('SELECT field_range_nid, field_domain_nid, field_inverse_nid, field_subpropertyof_nid FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $prop_stuff = db_fetch_array(db_query(db_rewrite_sql('SELECT field_range_nid, field_domain_nid, field_inverse_nid, field_subpropertyof_nid FROM {content_type_'.NEOLOGISM_CT_PROPERTY.'} WHERE nid = %d'), $item->nid));
   /*
   $stuff=db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid IN (%d,%d,%d) '), $prop_stuff[field_range_nid],$prop_stuff[field_domain_nid],$prop_stuff[field_inverse_nid]);
   var_dump($stuff);
@@ -681,9 +684,9 @@ function get_all_properties($node, $domain='') {
   $comment_rdfs = db_fetch_array(db_query(db_rewrite_sql('SELECT field_comment_value FROM {content_field_comment} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['comment_rdfs']=$comment_rdfs[field_comment_value];
   
-  $ifp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_ifp_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $ifp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_ifp_value FROM {content_type_'.NEOLOGISM_CT_PROPERTY.'} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['ifp']=$ifp_value[field_ifp_value];
-  $fp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_fp_value FROM {content_type_property} WHERE nid = %d'), $item->nid));
+  $fp_value = db_fetch_array(db_query(db_rewrite_sql('SELECT field_fp_value FROM {content_type_'.NEOLOGISM_CT_PROPERTY.'} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['fp']=$fp_value[field_fp_value];
 
   $i++;
@@ -697,8 +700,8 @@ function get_all_properties($node, $domain='') {
  */
 function get_all_classes($node) {
   // $class_ids = db_query(db_rewrite_sql('SELECT nid FROM {content_field_vocabulary} WHERE field_vocabulary_nid = %d'), $node->nid);
-  $class_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="class" '), $node->nid);
-  // $class_ids = db_query(db_rewrite_sql('SELECT nid, field_subclassof_nid FROM {content_type_class} WHERE field_vocabulary_nid = %d'), $node->nid);
+  $class_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_CLASS.'"'), $node->nid);
+  // $class_ids = db_query(db_rewrite_sql('SELECT nid, field_subclassof_nid FROM {content_type_'.NEOLOGISM_CT_CLASS.'} WHERE field_vocabulary_nid = %d'), $node->nid);
   $i=0;
   
   while ($item = db_fetch_object($class_ids)) {
@@ -709,11 +712,11 @@ function get_all_classes($node) {
   $disjoint = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $disjoint_id[field_disjointwith_nid]));
   $class_data[$i]['disjoint']=$disjoint[title];
   
-  $subclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_subclassof_nid FROM {content_type_class} WHERE nid = %d'), $item->nid));
+  $subclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_subclassof_nid FROM {content_type_'.NEOLOGISM_CT_CLASS.'} WHERE nid = %d'), $item->nid));
   $subclass = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $subclass_id[field_subclassof_nid]));
   $class_data[$i]['subclass']=$subclass[title];
 
-  // $superclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_superclassof_nid FROM {content_type_class} WHERE nid = %d'), $item->nid));
+  // $superclass_id = db_fetch_array(db_query(db_rewrite_sql('SELECT field_superclassof_nid FROM {content_type_'.NEOLOGISM_CT_CLASS.'} WHERE nid = %d'), $item->nid));
   // $superclass = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d'), $superclass_id[field_superclassof_nid]));
   // $class_data[$i]['superclassOf']=$superclass[title];
   

@@ -23,7 +23,7 @@ function _neologism_install_create_content($content, $type_name = '<create>') {
 function _neologism_content_vocabulary() {
 $content[type]  = array (
   'name' => 'Vocabulary',
-  'type' => 'vocabulary',
+  'type' => NEOLOGISM_CT_VOCABULARY,
   'description' => '',
   'title_label' => 'Id',
   'body_label' => 'Description',
@@ -246,7 +246,7 @@ $content[fields]  = array (
 function _neologism_content_class() {
 $content[type]  = array (
   'name' => 'Class',
-  'type' => 'class',
+  'type' => NEOLOGISM_CT_CLASS,
   'description' => '',
   'title_label' => 'Id',
   'body_label' => 'Description of the class (only used in the documentation)',
@@ -312,11 +312,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'vocabulary' => true,
+      NEOLOGISM_CT_VOCABULARY => true,
       0 => 1,
-      'class' => false,
+      NEOLOGISM_CT_CLASS => false,
       'page' => false,
-      'property' => false,
+      NEOLOGISM_CT_PROPERTY => false,
     ),
     'field_name' => 'field_vocabulary',
     'field_type' => 'nodereference',
@@ -455,11 +455,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'class' => true,
+      NEOLOGISM_CT_CLASS => true,
       0 => 1,
       'page' => false,
-      'property' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_PROPERTY => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_subclassof',
     'field_type' => 'nodereference',
@@ -499,11 +499,11 @@ $content[fields]  = array (
     'multiple' => '1',
     'referenceable_types' => 
     array (
-      'class' => true,
+      NEOLOGISM_CT_CLASS => true,
       0 => 1,
       'page' => false,
-      'property' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_PROPERTY => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_disjointwith',
     'field_type' => 'nodereference',
@@ -532,7 +532,7 @@ $content[fields]  = array (
 function _neologism_content_property() {
 $content[type]  = array (
   'name' => 'Property',
-  'type' => 'property',
+  'type' => NEOLOGISM_CT_PROPERTY,
   'description' => '',
   'title_label' => 'Id',
   'body_label' => 'Description of the property (only used in the documentation)',
@@ -598,11 +598,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'vocabulary' => true,
+      NEOLOGISM_CT_VOCABULARY => true,
       0 => 1,
-      'class' => false,
+      NEOLOGISM_CT_CLASS => false,
       'page' => false,
-      'property' => false,
+      NEOLOGISM_CT_PROPERTY => false,
     ),
     'field_name' => 'field_vocabulary',
     'field_type' => 'nodereference',
@@ -697,11 +697,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'class' => true,
+      NEOLOGISM_CT_CLASS => true,
       0 => 1,
       'page' => false,
-      'property' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_PROPERTY => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_domain',
     'field_type' => 'nodereference',
@@ -744,11 +744,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'class' => true,
+      NEOLOGISM_CT_CLASS => true,
       0 => 1,
       'page' => false,
-      'property' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_PROPERTY => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_range',
     'field_type' => 'nodereference',
@@ -837,11 +837,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'property' => true,
+      NEOLOGISM_CT_PROPERTY => true,
       0 => 1,
-      'class' => false,
+      NEOLOGISM_CT_CLASS => false,
       'page' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_inverse',
     'field_type' => 'nodereference',
@@ -936,11 +936,11 @@ $content[fields]  = array (
     'multiple' => '0',
     'referenceable_types' => 
     array (
-      'property' => true,
+      NEOLOGISM_CT_PROPERTY => true,
       0 => 1,
-      'class' => false,
+      NEOLOGISM_CT_CLASS => false,
       'page' => false,
-      'vocabulary' => false,
+      NEOLOGISM_CT_VOCABULARY => false,
     ),
     'field_name' => 'field_subpropertyof',
     'field_type' => 'nodereference',
