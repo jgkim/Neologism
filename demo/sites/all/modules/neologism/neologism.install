@@ -199,8 +199,8 @@ $content[fields]  = array (
     'widget_type' => 'text',
     'label' => 'Layout',
     'weight' => '0',
-    'rows' => 1,
-    'description' => '',
+    'rows' => '2',
+    'description' => 'Do not modify, this is used to store the layout of the diagram.',
     'default_value_widget' => 
     array (
       'field_layout' => 
