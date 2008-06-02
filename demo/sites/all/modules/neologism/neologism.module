@@ -91,6 +91,14 @@ function neologism_menu($may_cache) {
             'type' => MENU_CALLBACK,
         );
         $items[] = array(
+            'path' => 'node/'. arg(1) .'/write/layout',
+            'title' => t('Write Layout'),
+            'callback' => 'neologism_write_layout',
+            'callback arguments' => array($node),
+            'access' => user_access('edit neologism'),
+            'type' => MENU_CALLBACK,
+        );
+        $items[] = array(
             'path' => 'node/'. arg(1) .'/image',
             'title' => t('Diagram Image'),
             'callback' => 'neologism_image',
@@ -352,8 +360,8 @@ function neologism_export_xml($node) {
         $prop = $propNode->addChild("rdfproperty");
         $prop->addAttribute("name", $oneprop["title"]);
         $prop->addAttribute("label", $oneprop["label"]);
-        $prop->addAttribute("domain", $oneprop["domain"]);
-        $prop->addAttribute("range", $oneprop["range"]);
+        if ($oneprop["domain"]) $prop->addAttribute("domain", $oneprop["domain"]);
+        if ($oneprop["range"]) $prop->addAttribute("range", $oneprop["range"]);
     }
 
     header("Content-Type: application/xml; charset=utf-8");
@@ -364,50 +372,49 @@ function neologism_export_xml($node) {
 /**
  * Layout of the vocabulary using REST
  *   - export by GET using simpleXML, seeAlso: http://www.php.net/simplexml
- *   - import by POST using a HTTP variable called 'layout'
  */
 function neologism_layout($node) {
-
     $name = $node->title;
 
-    $layout = $_POST['layout']; //FIXME: security issues
+		$query = "SELECT field_layout_value FROM content_type_vocabulary WHERE nid = " . $node->nid;
+		$result = db_fetch_array(db_query($query));
+		$layout = $result[field_layout_value];
+		if ($layout == NULL) {
+				$xml = simplexml_load_string('<layout/>');        
+				$classes = get_all_classes($node);
+				$y = 0;
+				foreach ($classes as $oneclass) {
+						//export all classes
+						$y = $y + 50;
+						$class = $xml->addChild("rdfclass");
+						$class->addAttribute("name", $oneclass["title"]);
+						$class->addAttribute("label", $oneclass["label"]);
+						$class->addAttribute("x", "50");
+						$class->addAttribute("y", $y);
+						$class->addAttribute("width", "100");
+						$class->addAttribute("height", "30");
+				}
+				header("Content-Type: application/xml; charset=utf-8");
+				echo $xml->asXml();
+		} else {
+				header("Content-Type: application/xml; charset=utf-8");
+				echo $layout;
+		}
+		return;
+}
 
-    if ($layout == NULL) {
-        //GET, so export
-        $query = "SELECT field_layout_value FROM content_type_vocabulary WHERE nid = " . $node->nid;
-        $result = db_fetch_array(db_query($query));
-        $layout = $result[field_layout_value];
-        if ($layout == NULL) {
-            $xml = simplexml_load_string('<layout/>');        
-            $classes = get_all_classes($node);
-            $y = 0;
-            foreach ($classes as $oneclass) {
-                //export all classes
-                $y = $y + 50;
-                $class = $xml->addChild("rdfclass");
-                $class->addAttribute("name", $oneclass["title"]);
-                $class->addAttribute("label", $oneclass["label"]);
-                $class->addAttribute("x", "50");
-                $class->addAttribute("y", $y);
-                $class->addAttribute("width", "100");
-                $class->addAttribute("height", "30");
-            }
-            header("Content-Type: application/xml; charset=utf-8");
-            echo $xml->asXml();
-        } else {
-            header("Content-Type: application/xml; charset=utf-8");
-            echo $layout;
-        }
-        return;
-    } else {
-        //POST, so import
-        $query = "UPDATE content_type_vocabulary SET field_layout_value = '" . $layout . "' WHERE nid = " . $node->nid;
-        if (db_query($query))
-            return "Layout stored";
-        else
-            return "An error occurred trying to store this layout";
-    }
-
+/**
+ * Layout of the vocabulary using REST
+ *   - import by POST using a HTTP variable called 'layout'
+ */
+function neologism_write_layout($node) {
+    if ($layout = $_POST['layout']) {
+				$success = db_query("UPDATE content_type_vocabulary SET field_layout_value = '%s' WHERE nid = %d", $layout, $node->nid);
+				if ($update)
+					return "Layout stored";
+				else
+					return "An error occurred trying to store this layout";
+		}
 }
 
 /**
@@ -423,9 +430,13 @@ function neologism_image($node) {
  * Show the overview diagram
  */
 function neologism_show_diagram($node) {
-
-    $name = $node->title;
-
+		$vocabulary = $node->title;
+		$base = base_path();
+		$swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
+		$img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
+		$edit_mode = user_access('edit neologism') ? 1 : 0;
+		$prefix = $base .'/'. NEOLOGISM .'/';
+		
     $output = <<<EXCERPT
 
     <div id="flex_diagram">
@@ -433,12 +444,12 @@ function neologism_show_diagram($node) {
         <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
             id="Neologism" width="800px" height="600px"
             codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-                <param name="movie" value="http://neologism.deri.ie/resources/Neologism.swf" />
+                <param name="movie" value="$swf" />
                 <param name="quality" value="high" />
                 <param name="bgcolor" value="#869ca7" />
-                <param name='flashVars' value='vocabulary=$name&prefix=/demo/neologism/'/>
+                <param name='flashVars' value='vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix'/>
                 <param name="allowScriptAccess" value="sameDomain" />
-                <embed src="http://neologism.deri.ie/resources/Neologism.swf" quality="high" bgcolor="#869ca7"
+                <embed src="$swf" quality="high" bgcolor="#869ca7"
                     width="800px" 
                     height="600px" 
                     name="Neologism" 
@@ -449,11 +460,11 @@ function neologism_show_diagram($node) {
                     allowScriptAccess="sameDomain"
                     type="application/x-shockwave-flash"
                     pluginspage="http://www.adobe.com/go/getflashplayer"
-                    flashVars='vocabulary=$name&prefix=/demo/neologism/'>
+                    flashVars='vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix'>
                 </embed>
         </object>
 
-        <img src="http://neologism.deri.ie/resources/images/legend.png" 
+        <img src="$img_legend" 
              alt="green arrows mean property, red inheritance"
              width="226" height="80" id="legend" />
 
