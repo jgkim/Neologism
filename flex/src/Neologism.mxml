@@ -9,6 +9,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import flash.net.sendToURL;
 			import mx.binding.utils.BindingUtils;
 			import mx.utils.URLUtil;
 			import vis.vocabulary.RDFProperty;
@@ -35,6 +36,9 @@
 			[Bindable]
 			public var prefix:String;
 			
+			[Bindable]
+			public var active:Boolean;
+			
 			[Embed(source="assets/dialog-information.png")] 
             [Bindable]
             public var IconInfo:Class; 
@@ -52,6 +56,11 @@
 				else 
 					prefix = '';
 				
+				if (Application.application.parameters.active != undefined)
+					active = Application.application.parameters.active;
+				else 
+					active = true;
+				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
 					_urlVocab = 'vocabulary.xml';
@@ -67,7 +76,10 @@
 				
 				this.vocabularyPanel.loadVocabulary(_urlVocab,_urlLayout);
 				this.vocabularyPanel.addEventListener(MouseEvent.CLICK,onMouseClickHandler);
-			}
+				
+				this.toolbar.visible = active;
+				this.vocabularyPanel.enabled = active;
+	 		}
 			
 			private function onMouseClickHandler(event:MouseEvent) : void
 			{
@@ -136,7 +148,8 @@
 	            var variables:URLVariables = new URLVariables();
 	            variables.layout = vocabularyPanel.vocabularyLayout;
 	            request.data = variables;
-	            navigateToURL(request);
+	            //navigateToURL(request);
+	            sendToURL(request);
             }
             
             public function sendImage() : void
@@ -146,7 +159,8 @@
 	            var variables:URLVariables = new URLVariables();
 	            variables.image = imgToByteArray(vocabularyPanel.vocabularyBitmap);
 	            request.data = variables;
-	            navigateToURL(request);
+	            //navigateToURL(request);
+	            sendToURL(request);
             }
             
             public function about() : void
@@ -157,7 +171,7 @@
 	</mx:Script>
 	
 	<mx:VBox width="100%" height="100%">
-		<mx:HBox width="100%" borderStyle="solid" borderThickness="1" cornerRadius="3">
+		<mx:HBox width="100%" borderStyle="solid" borderThickness="1" cornerRadius="3" id="toolbar">
 			<mx:CheckBox label="Edit Layout" 
 				id="editLayout" 
 				change="onEditLayoutChangeHandler()" 
