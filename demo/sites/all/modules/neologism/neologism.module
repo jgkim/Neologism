@@ -594,6 +594,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 path_set_alias("node/$node->nid/n3", NEOLOGISM.'/'.check_plain($node->title).'/' . N3);
                                 path_set_alias("node/$node->nid/".XML, NEOLOGISM.'/'.check_plain($node->title).'/' . XML);
                                 path_set_alias("node/$node->nid/layout", NEOLOGISM.'/'.check_plain($node->title).'/layout');
+                                path_set_alias("node/$node->nid/write/layout", NEOLOGISM.'/'.check_plain($node->title).'/write/layout');
                                 path_set_alias("node/$node->nid/diagram", NEOLOGISM.'/'.check_plain($node->title).'/diagram');
                                 path_set_alias("node/$node->nid/image", NEOLOGISM.'/'.check_plain($node->title).'/image');
                             }
@@ -608,6 +609,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 path_set_alias("node/$node->nid/".N3);
                                 path_set_alias("node/$node->nid/".XML);
                                 path_set_alias("node/$node->nid/layout");
+                                path_set_alias("node/$node->nid/write/layout");
                                 path_set_alias("node/$node->nid/diagram");
                                 path_set_alias("node/$node->nid/image");
                             }
