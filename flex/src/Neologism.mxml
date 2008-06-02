@@ -37,7 +37,7 @@
 			public var prefix:String;
 			
 			[Bindable]
-			public var active:String;
+			public var editMode:String;
 			
 			[Embed(source="assets/dialog-information.png")] 
             [Bindable]
@@ -56,10 +56,12 @@
 				else 
 					prefix = '';
 				
-				if (Application.application.parameters.active != undefined)
-					active = Application.application.parameters.active;
+				if (Application.application.parameters.editMode != undefined)
+					editMode = Application.application.parameters.editMode;
 				else 
-					active = '1';
+					editMode = '1';
+				
+				Alert.show(editMode);
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
