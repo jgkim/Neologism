@@ -274,8 +274,8 @@ $content[groups]  = array (
     array (
       'form' => 
       array (
-        'style' => 'fieldset_collapsed',
-        'description' => 'You can change the vocabulary this class belongs to. Only change this if you know what you are doing.',
+        'style' => 'fieldset',
+        'description' => 'You can change the vocabulary this class belongs to.',
       ),
       'display' => 
       array (
@@ -560,8 +560,8 @@ $content[groups]  = array (
     array (
       'form' => 
       array (
-        'style' => 'fieldset_collapsed',
-        'description' => 'You can change the vocabulary this property belongs to. Only change this if you know what you are doing.',
+        'style' => 'fieldset',
+        'description' => 'You can change the vocabulary this property belongs to.',
       ),
       'display' => 
       array (
