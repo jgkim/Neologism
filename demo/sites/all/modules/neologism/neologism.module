@@ -94,14 +94,6 @@ function neologism_menu($may_cache) {
             'type' => MENU_CALLBACK,
         );
         $items[] = array(
-            'path' => 'node/'. arg(1) .'/write/layout',
-            'title' => t('Write Layout'),
-            'callback' => 'neologism_write_layout',
-            'callback arguments' => array($node),
-            'access' => user_access('edit neologism'),
-            'type' => MENU_CALLBACK,
-        );
-        $items[] = array(
             'path' => 'node/'. arg(1) .'/image',
             'title' => t('Diagram Image'),
             'callback' => 'neologism_image',
@@ -433,12 +425,13 @@ function neologism_image($node) {
  * Show the overview diagram
  */
 function neologism_show_diagram($node) {
-		$vocabulary = $node->title;
-		$base = base_path();
-		$swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
-		$img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
-		$edit_mode = user_access('edit neologism') ? 1 : 0;
-		$prefix = $base .'/'. NEOLOGISM .'/';
+
+    $vocabulary = $node->title;
+    $base = base_path();
+    $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
+    $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
+    $edit_mode = user_access('edit neologism') ? 1 : 0;
+    $prefix = $base .'/'. NEOLOGISM .'/';
 		
     $output = <<<EXCERPT
 
@@ -597,7 +590,6 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 path_set_alias("node/$node->nid/n3", NEOLOGISM.'/'.check_plain($node->title).'/' . N3);
                                 path_set_alias("node/$node->nid/".XML, NEOLOGISM.'/'.check_plain($node->title).'/' . XML);
                                 path_set_alias("node/$node->nid/layout", NEOLOGISM.'/'.check_plain($node->title).'/layout');
-                                path_set_alias("node/$node->nid/write/layout", NEOLOGISM.'/'.check_plain($node->title).'/write/layout');
                                 path_set_alias("node/$node->nid/diagram", NEOLOGISM.'/'.check_plain($node->title).'/diagram');
                                 path_set_alias("node/$node->nid/image", NEOLOGISM.'/'.check_plain($node->title).'/image');
                             }
@@ -612,7 +604,6 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 path_set_alias("node/$node->nid/".N3);
                                 path_set_alias("node/$node->nid/".XML);
                                 path_set_alias("node/$node->nid/layout");
-                                path_set_alias("node/$node->nid/write/layout");
                                 path_set_alias("node/$node->nid/diagram");
                                 path_set_alias("node/$node->nid/image");
                             }
