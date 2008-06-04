@@ -372,7 +372,7 @@ function neologism_layout($node) {
     $layout = $_POST['layout'];
     if ($layout) {
         //POST, so write layout
-        neologism_write_layout($noe, $layout);
+        neologism_write_layout($node, $layout);
     } else {
         //GET, so read it
         $layout = neologism_get_layout($node);
