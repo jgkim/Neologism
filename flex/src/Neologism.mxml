@@ -70,6 +70,8 @@
 					token = Application.application.parameters.token;
 				else // no security token
 					token = '';
+					
+				Alert.show('Token',token);
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
