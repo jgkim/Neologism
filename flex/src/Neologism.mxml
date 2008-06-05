@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
 	layout="vertical" 
-	xmlns:oh="com.roguedevelopment.objecthandles.*" 
+	xmlns:oh="com.roguedevelopment.objecthandles.*"
 	creationComplete="init()" 
 	xmlns:popupbar="com.roguedevelopment.popupbar.*" 
 	backgroundGradientColors="[#ffffff,#eeeeec]"
-	xmlns:vdisplay="vis.vocabulary.display.*">
+	xmlns:vdisplay="vis.vocabulary.display.*" 
+	xmlns:core="com.ak33m.rpc.core.*" xmlns:xmlrpc="com.ak33m.rpc.xmlrpc.*">
 	
 	<mx:Script>
 		<![CDATA[
@@ -40,6 +41,9 @@
 			[Bindable]
 			public var editMode:String;
 			
+			[Bindable]
+			public var token:String;
+			
 			[Embed(source="assets/dialog-information.png")] 
             [Bindable]
             public var IconInfo:Class; 
@@ -61,6 +65,11 @@
 					editMode = Application.application.parameters.editMode;
 				else 
 					editMode = '1';
+					
+				if (Application.application.parameters.token != undefined)
+					token = Application.application.parameters.token;
+				else // no security token
+					token = '';
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
@@ -85,6 +94,7 @@
 					this.toolbar.visible = false;
 					//this.vocabularyPanel.enabled = false; 
 				}
+				
 	 		}
 			
 			private function onMouseClickHandler(event:MouseEvent) : void
@@ -153,8 +163,8 @@
 	            request.method = URLRequestMethod.POST;
 	            var variables:URLVariables = new URLVariables();
 	            variables.layout = vocabularyPanel.vocabularyLayout;
+	            variables.token = token;
 	            request.data = variables;
-	            //navigateToURL(request);
 	            sendToURL(request);
             }
             
@@ -164,8 +174,8 @@
 	            request.method = URLRequestMethod.POST;
 	            var variables:URLVariables = new URLVariables();
 	            variables.image = imgToByteArray(vocabularyPanel.vocabularyBitmap);
+	            variables.token = token;
 	            request.data = variables;
-	            //navigateToURL(request);
 	            sendToURL(request);
             }
             
@@ -217,6 +227,5 @@
 				borderStyle="solid" 
 				borderThickness="1">
 		</vdisplay:VocabularyCanvas>
-		
 	</mx:VBox>
 </mx:Application>
