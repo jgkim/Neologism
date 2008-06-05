@@ -388,8 +388,7 @@ function neologism_layout($node) {
  * Get layout of a vocabulary
  */
 function neologism_get_layout($node) {
-	$query = "SELECT field_layout_value FROM content_type_".NEOLOGISM_CT_VOCABULARY." WHERE nid = " . $node->nid;
-    $result = db_fetch_array(db_query($query));
+    $result = db_fetch_array(db_query("SELECT field_layout_value FROM content_type_".NEOLOGISM_CT_VOCABULARY." WHERE nid = %d", $node->nid));
     $layout = $result[field_layout_value];
     return $layout;
 }
