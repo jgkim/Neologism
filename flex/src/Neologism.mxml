@@ -70,8 +70,6 @@
 					token = Application.application.parameters.token;
 				else // no security token
 					token = '';
-					
-				Alert.show('Token',token);
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
@@ -82,8 +80,8 @@
 				} else {
 					_urlVocab = URLUtil.getFullURL(host,prefix+vocabulary+'/xml');
 					_urlLayout = URLUtil.getFullURL(host,prefix+vocabulary+'/layout');
-					_urlDiagramWrite = URLUtil.getFullURL(host,prefix+vocabulary+'/write/image');
-					_urlLayoutWrite = URLUtil.getFullURL(host,prefix+vocabulary+'/write/layout');
+					_urlDiagramWrite = URLUtil.getFullURL(host,prefix+vocabulary+'/image');
+					_urlLayoutWrite = URLUtil.getFullURL(host,prefix+vocabulary+'/layout');
 				}
 				
 				this.vocabularyPanel.loadVocabulary(_urlVocab,_urlLayout);
