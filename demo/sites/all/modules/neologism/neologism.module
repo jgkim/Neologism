@@ -418,11 +418,8 @@ function neologism_generate_layout($node) {
  * Write the layout of a vocabulary
  */
 function neologism_write_layout($node, $layout) {
-    $success = db_query("UPDATE content_type_".NEOLOGISM_CT_VOCABULARY." SET field_layout_value = '%s' WHERE nid = %d", $layout, $node->nid);
-    if ($update)
-        return "Layout stored";
-    else
-        return "An error occurred trying to store this layout";
+    db_query("UPDATE content_type_".NEOLOGISM_CT_VOCABULARY." SET field_layout_value = '%s' WHERE nid = %d", $layout, $node->nid);
+    content_clear_type_cache();
 }
 
 /**
