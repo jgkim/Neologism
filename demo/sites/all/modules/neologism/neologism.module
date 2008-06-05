@@ -369,9 +369,9 @@ function neologism_export_xml($node) {
  */
 function neologism_layout($node) {
     $name = $node->title;
-    $layout = $_POST['layout'];
-    if ($layout) {
+    if (isset($_POST['layout']) && drupal_valid_token($_POST['token'])) {
         //POST, so write layout
+        $layout = $_POST['layout'];
         neologism_write_layout($node, $layout);
     } else {
         //GET, so read it
@@ -439,50 +439,51 @@ function neologism_image($node) {
  * Show the overview diagram
  */
 function neologism_show_diagram($node) {
-
-    $vocabulary = $node->title;
-    $base = base_path();
-    $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
-    $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
-    $edit_mode = user_access('edit neologism') ? 1 : 0;
-    $prefix = $base . NEOLOGISM .'/';
+  $vocabulary = $node->title;
+  $base = base_path();
+  $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
+  $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
+  $edit_mode = user_access('edit neologism') ? 1 : 0;
+  $prefix = $base .'/'. NEOLOGISM .'/';
+  $token = drupal_get_token();
+  $flex_params = "vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix&token=$token";
 		
-    $output = <<<EXCERPT
+	$output = <<<EXCERPT
 
-    <div id="flex_diagram">
+<div id="flex_diagram">
 
-        <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-            id="Neologism" width="800px" height="600px"
-            codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-                <param name="movie" value="$swf" />
-                <param name="quality" value="high" />
-                <param name="bgcolor" value="#869ca7" />
-                <param name='flashVars' value='vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix'/>
-                <param name="allowScriptAccess" value="sameDomain" />
-                <embed src="$swf" quality="high" bgcolor="#869ca7"
-                    width="800px" 
-                    height="600px" 
-                    name="Neologism" 
-                    align="middle"
-                    play="true"
-                    loop="false"
-                    quality="high"
-                    allowScriptAccess="sameDomain"
-                    type="application/x-shockwave-flash"
-                    pluginspage="http://www.adobe.com/go/getflashplayer"
-                    flashVars='vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix'>
-                </embed>
-        </object>
+		<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+				id="Neologism" width="800px" height="600px"
+				codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
+						<param name="movie" value="$swf" />
+						<param name="quality" value="high" />
+						<param name="bgcolor" value="#869ca7" />
+						<param name='flashVars' value='$flex_params'/>
+						<param name="allowScriptAccess" value="sameDomain" />
+						<embed src="$swf" quality="high" bgcolor="#869ca7"
+								width="800px" 
+								height="600px" 
+								name="Neologism" 
+								align="middle"
+								play="true"
+								loop="false"
+								quality="high"
+								allowScriptAccess="sameDomain"
+								type="application/x-shockwave-flash"
+								pluginspage="http://www.adobe.com/go/getflashplayer"
+								flashVars='$flex_params'>
+						</embed>
+		</object>
 
-        <img src="$img_legend" 
-             alt="green arrows mean property, red inheritance"
-             width="226" height="80" id="legend" />
+		<img src="$img_legend" 
+				 alt="green arrows mean property, red inheritance"
+				 width="226" height="80" id="legend" />
 
-    </div>
+</div>
 
 EXCERPT;
 
-    return $output;
+  return $output;
 }
 
 /**
