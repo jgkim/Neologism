@@ -137,7 +137,7 @@ function neologism_export_html($node) {
     //var_dump($node);
 
     $output = '';
-    drupal_set_title('Vocabulary '. $node->title);
+    drupal_set_title('Vocabulary '. check_plain($node->title));
 
     // Last update date         
     $output .= '<div id="last_update" class="neologism field"><div class="field-label-inline-first">Last update:&nbsp;</div> ' . format_date($node->changed, 'large') . ' </div>';
@@ -158,10 +158,10 @@ function neologism_export_html($node) {
     }
     
     // Abstract
-    $output .= '<div id="abstract" class="neologism field"><div class="field-label-inline-first">Abstract:&nbsp;</div> ' . $node->field_abstract[0]['value'] . ' </div>';
+    $output .= '<div id="abstract" class="neologism field"><div class="field-label-inline-first">Abstract:&nbsp;</div> ' . check_plain($node->field_abstract[0]['value']) . ' </div>';
 
     // Free text (body)
-    $output .= '<p id="last_update" class="neologism">' . $node->body . ' </p>';
+    $output .= '<p id="last_update" class="neologism">' . check_markup($node->body) . ' </p>';
 
     // Links to add term to the vocabulary. TODO: manage the multi vocabulary situation, and create a /parent path
     if (user_access('edit neologism')) {
@@ -169,14 +169,16 @@ function neologism_export_html($node) {
     }
     
     //Vocabulary at glance
-    $output .= '<h2 id="sec_glance" class="neologism">' . $node->title . ' at a glance</h2>';
+    $output .= '<h2 id="sec_glance" class="neologism">' . check_plain($node->title) . ' at a glance</h2>';
     $output .= '<div id="atglance">';
 
+  // TODO: loop through the classes and properties and populate the atglance and complete reference
+  // the current fashion is not optimized as we need to read each class/prop twice
   // Display the Classes
   if ($classes) {
       $output .= '<p><strong>Classes:</strong> ';
       foreach ($classes as $class) {
-          $output .= '<a href="#' . $class['title'] . '" title="class ' . $node->title . ':'. $class['title'] . '">' . $class['title'] . '</a> | ';
+          $output .= '<a href="#' . $class['title'] . '" title="class ' . check_plain($node->title) . ':'. check_plain($class['title']) . '">' . check_plain($class['title']) . '</a> | ';
       }
       $output .= '</p>';
   }
@@ -185,22 +187,22 @@ function neologism_export_html($node) {
   if ($properties) {
       $output .= '<p><strong>Properties:</strong> ';
       foreach ($properties as $property) {
-          $output .= '<a href="#' . $property['title'] . '" title="property ' . $node->title . ':'. $property['title'] . '">' . $property['title'] . '</a> | ';
+          $output .= '<a href="#' . $property['title'] . '" title="property ' . check_plain($node->title) . ':'. check_plain($property['title']) . '">' . check_plain($property['title']) . '</a> | ';
       }
       $output .= '</p>';
   }
     $output .= '</div>';
 
     //Display complete reference
-    $output .= '<h2 id="sec_reference" class="neologism">' . $node->title . ' classes and properties</h2>';
+    $output .= '<h2 id="sec_reference" class="neologism">' . check_plain($node->title) . ' classes and properties</h2>';
   if ($classes) {
       foreach ($classes as $class) {
-          $output .= node_view(node_load($class['id']), 1, $node->title);
+          $output .= node_view(node_load($class['id']), 1, check_plain($node->title));
       }
   }
   if ($properties) {
       foreach ($properties as $property) {
-          $output .= node_view(node_load($property['id']), 1, $node->title);
+          $output .= node_view(node_load($property['id']), 1, check_plain($node->title));
       }
     }
     $output .= theme('pager', NULL, variable_get('default_nodes_main', 10));
@@ -288,7 +290,6 @@ function neologism_get_rdf_model($node, $uri, $document) {
  * Output the RDF/XML version of the vocabulary specified as input
  */
 function neologism_export_rdf($node) {
-    
     include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
     include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
 
