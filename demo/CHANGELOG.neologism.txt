@@ -1,0 +1,10 @@
+
+Neologism x.x, 2008-06-xx
+-------------------------
+- upgrade to Drupal 5.7
+- fix XSS in 
+
+Neologism 0.21, 2008-06-xx
+-------------------------
+- 
+
