@@ -4,8 +4,8 @@ description = Allows users to upload and attach files to content.
 package = Core - optional
 version = VERSION
 
-; Information added by drupal.org packaging script on 2008-01-10
-version = "5.6"
+; Information added by drupal.org packaging script on 2008-01-29
+version = "5.7"
 project = "drupal"
-datestamp = "1200003604"
+datestamp = "1201565404"
 

@@ -1,10 +1,18 @@
 
-Neologism x.x, 2008-06-xx
+Neologism 0.21, 2008-06-01
 -------------------------
 - upgrade to Drupal 5.7
-- fix XSS in 
+- prevent CSRF by using Drupal FAPI token in the Flex viewer
+- fix XSS in HTML export
+- set the vocabulary field to be expanded by default
 
-Neologism 0.21, 2008-06-xx
+Neologism 0.2, 2008-06-01
 -------------------------
-- 
+- some changes to the CCK fields defintions, mainly involving renaming for consistency across the content types.
+- add commented directives in settings.php and .htaccess to increase memory and execution time
+- change the content type names as constant as opposed to being hard coded to 'neologism', which could lead to some conflict with other content types.
+
+Neologism 0.1, 2008-06-01
+-------------------------
+- initial release
 
