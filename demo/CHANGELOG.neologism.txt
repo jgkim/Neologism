@@ -1,6 +1,5 @@
-
-Neologism 0.21, 2008-06-01
--------------------------
+Neologism 0.21, 2008-06-17
+--------------------------
 - upgrade to Drupal 5.7
 - prevent CSRF by using Drupal FAPI token in the Flex viewer
 - fix XSS in HTML export
@@ -15,4 +14,3 @@ Neologism 0.2, 2008-06-01
 Neologism 0.1, 2008-06-01
 -------------------------
 - initial release
-
