@@ -7,7 +7,7 @@
 	</classes>
 	<properties>
 		<rdfproperty name="plays" label="plays" domain="Bowler" range="Game"/>
-		<rdfproperty name="hasPlayer" label="has player" domain="Game" range="Bowler"/>
-		<rdfproperty name="testBroken" label="testBroken" domain="testt" range="Game"/>
+		<!--<rdfproperty name="hasPlayer" label="has player" domain="Game" range="Bowler"/>
+		<rdfproperty name="testBroken" label="testBroken" domain="testt" range="Game"/>-->
 	</properties>
 </vocabulary>

@@ -87,22 +87,22 @@ package vis.vocabulary.display
 		
 		private function paintGrid() : void
 		{
-			graphics.beginFill(0xffffff, 1);
-			graphics.drawRect(0,0,width,height);
-			graphics.endFill();
+			this.graphics.beginFill(0xffffff, 1);
+			this.graphics.drawRect(0,0,width,height);
+			this.graphics.endFill();
 			
-			graphics.lineStyle(GRID_STYLE[0],GRID_STYLE[1],GRID_STYLE[2]);
+			this.graphics.lineStyle(GRID_STYLE[0],GRID_STYLE[1],GRID_STYLE[2]);
 			
 			var startGridX:Number = screen.x + _gridSpaceing - screen.x % _gridSpaceing;
 			var startGridY:Number = screen.y + _gridSpaceing - screen.y % _gridSpaceing;
 			for (var i:Number=startGridX; i<= screen.x + screen.width; i+= _gridSpaceing) {
-				graphics.moveTo(i,screen.y);
-				graphics.lineTo(i,screen.y + screen.height);
+				this.graphics.moveTo(i,screen.y);
+				this.graphics.lineTo(i,screen.y + screen.height);
 			}
 			
 			for (i = startGridY; i<= screen.y + screen.height; i+= _gridSpaceing) {
-				graphics.moveTo(screen.x,i);
-				graphics.lineTo(screen.x + screen.width,i);
+				this.graphics.moveTo(screen.x,i);
+				this.graphics.lineTo(screen.x + screen.width,i);
 			}
 		}
 		
@@ -113,6 +113,13 @@ package vis.vocabulary.display
 			}
 		}
 		
+		private function toLocal(p:Point) : Point 
+		{
+			if (p == null)
+				return p;
+			return contentToLocal(p);
+		}
+		
 		private function drawArc(arc:RDFArc) : void 
 		{
 			var d:RDFObjectHandles = arc.domain.handle;
@@ -121,10 +128,15 @@ package vis.vocabulary.display
 			var p2:Point = r.arcInPoint(d);
 			var arrhead:Array = [];	
 			
+			// local coordinates
+			var l_p1:Point = toLocal(p1);
+			var l_p2:Point = toLocal(p2);
+			var l_p:Point = null;
+			
 			if (arc.type == RDFArc.RDFS_PROPERTY) {
 				var label:RDFPropertyLabel = arc.label;
 				
-				graphics.lineStyle(PROPERTY_STYLE[0],PROPERTY_STYLE[1],PROPERTY_STYLE[2]);
+				this.graphics.lineStyle(PROPERTY_STYLE[0],PROPERTY_STYLE[1],PROPERTY_STYLE[2]);
 				
 				var cw:Number = 1;
 				var p:Point = null;
@@ -133,6 +145,8 @@ package vis.vocabulary.display
 					var arr:Array = d.arcOnItself();
 					p1 = arr[0];
 					p2 = arr[1];
+					l_p1 = toLocal(p1);
+					l_p2 = toLocal(p2);
 					dev = arc.index * _arcDeviation;
 				} else {
 					if (p1 == null || p2 == null)
@@ -142,43 +156,40 @@ package vis.vocabulary.display
 				}
 				
 				p = Utils.middlePerpendicularPoint2(p1,p2,dev,cw);
-				var lx:Number = p.x;
-				var ly:Number = p.y;
+				l_p = toLocal(p);
 				
-				graphics.moveTo(p1.x,p1.y);
-				graphics.curveTo(lx,ly,p2.x,p2.y);
+				this.graphics.moveTo(l_p1.x,l_p1.y);
+				this.graphics.curveTo(l_p.x,l_p.y,l_p2.x,l_p2.y);
 				
-				label.x = lx - label.width / 2;
-				label.y = ly - label.height / 2;
+				label.x = p.x - label.width / 2;
+				label.y = p.y - label.height / 2;
 				
-				arrhead = Utils.arrowHeads2(p2,p);
+				arrhead = Utils.arrowHeads2(l_p2,l_p);
 				
 			} else if (arc.type == RDFArc.RDFS_SUBBCLASSOF) {
-				graphics.lineStyle(SUBCLASS_STYLE[0],SUBCLASS_STYLE[1],SUBCLASS_STYLE[2]);
+				this.graphics.lineStyle(SUBCLASS_STYLE[0],SUBCLASS_STYLE[1],SUBCLASS_STYLE[2]);
 				
 				if (p1 == null || p2 == null)
 					return;
 					
-				graphics.moveTo(p1.x,p1.y);
-				graphics.lineTo(p2.x,p2.y);
+				this.graphics.moveTo(l_p1.x,l_p1.y);
+				this.graphics.lineTo(l_p2.x,l_p2.y);
 				
-				arrhead = Utils.arrowHeads2(p2,p1);
+				arrhead = Utils.arrowHeads2(l_p2,l_p1);
 			}
 			
 			// arrow head
-			graphics.moveTo(arrhead[0].x,arrhead[0].y);
-			graphics.lineTo(p2.x,p2.y);
-			graphics.lineTo(arrhead[1].x,arrhead[1].y);
+			this.graphics.moveTo(arrhead[0].x,arrhead[0].y);
+			this.graphics.lineTo(l_p2.x,l_p2.y);
+			this.graphics.lineTo(arrhead[1].x,arrhead[1].y);
 		}
 		
 		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
 		{
 			super.updateDisplayList(unscaledWidth, unscaledHeight);
-			
-			graphics.clear();
+			this.graphics.clear();
 			this.paintGrid();
-			
-			drawArcs();
+			this.drawArcs();
 		}
 		
 		public function addRdfClass(rdfName:String,rdfLabel:String,external:Boolean) : RDFNode

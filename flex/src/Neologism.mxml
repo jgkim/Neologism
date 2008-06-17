@@ -88,11 +88,9 @@
 				this.vocabularyPanel.addEventListener(MouseEvent.CLICK,onMouseClickHandler);
 				
 				if (editMode=='1') {
-					this.toolbar.visible = true;
-					//this.vocabularyPanel.enabled = true;
+					this.saveLayout.visible = true;
 				} else {
-					this.toolbar.visible = false;
-					//this.vocabularyPanel.enabled = false; 
+					this.saveLayout.visible = false;
 				}
 				
 	 		}
@@ -212,7 +210,7 @@
 				liveDragging="true"
 				change="changeGrid()"/>
 			<mx:Button label="About" click="about()"/>
-			<mx:Button label="Save Layout"
+			<mx:Button id="saveLayout" label="Save Layout"
 				click="onSavelayout()"
 				visible="true"
 				/>
@@ -225,7 +223,8 @@
 				height="100%"  
 				cornerRadius="3"
 				borderStyle="solid" 
-				borderThickness="1">
+				borderThickness="2">
 		</vdisplay:VocabularyCanvas>
+		
 	</mx:VBox>
 </mx:Application>
