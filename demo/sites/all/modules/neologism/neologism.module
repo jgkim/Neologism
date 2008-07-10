@@ -629,27 +629,6 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Neologism export
- */
-function neologism_export($type = 'html', $nid = 0) {
-  $type = drupal_strtolower($type);
-  $node_result = db_query(db_rewrite_sql('SELECT n.nid, n.title, b.parent FROM {node} n INNER JOIN {book} b ON n.vid = b.vid WHERE n.nid = %d'), $nid);
-  if (db_num_rows($node_result) > 0) {
-      $node = db_fetch_object($node_result);
-  }
-  $depth = count(book_location($node)) + 1;
-  $export_function = 'book_export_'. $type;
-
-  if (function_exists($export_function)) {
-    print call_user_func($export_function, $nid, $depth);
-  }
-  else {
-    drupal_set_message(t('Unknown export format.'));
-    drupal_not_found();
-  }
-}
-
-/**
  * Get all properties in a vocabulary 
  */
 function get_all_properties($node, $domain='') {
