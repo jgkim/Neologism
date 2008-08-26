@@ -579,6 +579,13 @@ function neologism_form_alter($form_id, &$form) {
  * Implementation of hook_nodeapi().
  */
 function neologism_nodeapi(&$node, $op, $teaser, $page) {
+  // Redirect to the vocabulary page when viewing a class or a property.
+  if ($op == 'view' && !$teaser && isset($node->field_vocabulary[0]['nid']) &&
+      ($node->type == NEOLOGISM_CT_CLASS || $node->type == NEOLOGISM_CT_PROPERTY)) {
+    drupal_goto('node/'. $node->field_vocabulary[0]['nid']);
+  }
+
+
     if (module_exists('path')) {
         switch ($op) {
 
