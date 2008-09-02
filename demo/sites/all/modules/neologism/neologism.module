@@ -17,6 +17,13 @@ define("NEOLOGISM_CT_CLASS", "neo_class");
 define("NEOLOGISM_CT_PROPERTY", "neo_property");
 
 /**
+ * Implementation of hook_init().
+ */
+function neologism_init() {
+  drupal_add_js(drupal_get_path('module', 'neologism') . "/neologism.js");
+}
+
+/**
  * Implementation of hook_perm().
  */
 function neologism_perm() {
