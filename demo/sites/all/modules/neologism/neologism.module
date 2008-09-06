@@ -448,7 +448,7 @@ function neologism_show_diagram($node) {
   $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
   $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
   $edit_mode = user_access('edit neologism') ? 1 : 0;
-  $prefix = $base .'/'. NEOLOGISM .'/';
+  $prefix = $base . NEOLOGISM .'/';
   $token = drupal_get_token();
   $flex_params = "vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix&token=$token";
 		
