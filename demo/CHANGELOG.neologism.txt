@@ -1,16 +1,22 @@
+Neologism 0.22, 2008-09-22
+--------------------------
+- redirect the user to the vocabulary page when a new class or property has been created.
+- the class/property label is copied to the id field via jQuery as it is very often the same.
+- minor fix in the viewer where no element was displayed when Neologism was installed on the root of the server.
+
 Neologism 0.21, 2008-06-17
 --------------------------
-- upgrade to Drupal 5.7
-- prevent CSRF by using Drupal FAPI token in the Flex viewer
-- fix XSS in HTML export
-- set the vocabulary field to be expanded by default
+- upgrade to Drupal 5.7.
+- prevent CSRF by using Drupal FAPI token in the Flex viewer.
+- fix XSS in HTML export.
+- set the vocabulary field to be expanded by default.
 
 Neologism 0.2, 2008-06-01
 -------------------------
-- some changes to the CCK fields defintions, mainly involving renaming for consistency across the content types.
-- add commented directives in settings.php and .htaccess to increase memory and execution time
+- some changes to the CCK fields definitions, mainly involving renaming for consistency across the content types.
+- add commented directives in settings.php and .htaccess to increase memory and execution time.
 - change the content type names as constant as opposed to being hard coded to 'neologism', which could lead to some conflict with other content types.
 
 Neologism 0.1, 2008-06-01
 -------------------------
-- initial release
+- initial release.
