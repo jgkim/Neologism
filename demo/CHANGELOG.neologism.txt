@@ -1,3 +1,8 @@
+Neologism 0.xx, 2008-xx-xx
+--------------------------
+- hide the layout in the cck vocabulary content type definition.
+- update Drupal core to 6.6.
+
 Neologism 0.32, 2008-09-23
 --------------------------
 - add some usability improvement in the forms: remove or hide some non used core fieldsets, and fix the weights of the property form.
