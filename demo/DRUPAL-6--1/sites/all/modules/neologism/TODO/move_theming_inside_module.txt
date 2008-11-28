@@ -1,1 +1,0 @@
-theming is done in the theme folder right now, do it in the module instead using themeing functions.
