@@ -1,5 +1,5 @@
 <?php
-// $Id: xmlrpc.inc,v 1.47.2.2 2008/04/14 18:01:19 dries Exp $
+// $Id: xmlrpc.inc,v 1.47.2.4 2008/10/15 14:04:06 dries Exp $
 
 /**
  * @file
@@ -342,7 +342,7 @@ EOD;
 }
 
 
-function xmlrpc_error($code = NULL, $message = NULL) {
+function xmlrpc_error($code = NULL, $message = NULL, $reset = FALSE) {
   static $xmlrpc_error;
   if (isset($code)) {
     $xmlrpc_error = new stdClass();
@@ -350,6 +350,9 @@ function xmlrpc_error($code = NULL, $message = NULL) {
     $xmlrpc_error->code = $code;
     $xmlrpc_error->message = $message;
     module_invoke('system', 'check_http_request');
+  }
+  elseif ($reset) {
+    $xmlrpc_error = NULL;
   }
   return $xmlrpc_error;
 }
@@ -381,13 +384,13 @@ function xmlrpc_date($time) {
   $xmlrpc_date->is_date = TRUE;
   // $time can be a PHP timestamp or an ISO one
   if (is_numeric($time)) {
-    $xmlrpc_date->year = date('Y', $time);
-    $xmlrpc_date->month = date('m', $time);
-    $xmlrpc_date->day = date('d', $time);
-    $xmlrpc_date->hour = date('H', $time);
-    $xmlrpc_date->minute = date('i', $time);
-    $xmlrpc_date->second = date('s', $time);
-    $xmlrpc_date->iso8601 = date('Ymd\TH:i:s', $time);
+    $xmlrpc_date->year = gmdate('Y', $time);
+    $xmlrpc_date->month = gmdate('m', $time);
+    $xmlrpc_date->day = gmdate('d', $time);
+    $xmlrpc_date->hour = gmdate('H', $time);
+    $xmlrpc_date->minute = gmdate('i', $time);
+    $xmlrpc_date->second = gmdate('s', $time);
+    $xmlrpc_date->iso8601 = gmdate('Ymd\TH:i:s', $time);
   }
   else {
     $xmlrpc_date->iso8601 = $time;
@@ -427,6 +430,7 @@ function xmlrpc_base64_get_xml($xmlrpc_base64) {
 function _xmlrpc() {
   $args = func_get_args();
   $url = array_shift($args);
+  xmlrpc_clear_error();
   if (is_array($args[0])) {
     $method = 'system.multicall';
     $multicall_args = array();
@@ -474,4 +478,11 @@ function xmlrpc_errno() {
 function xmlrpc_error_msg() {
   $error = xmlrpc_error();
   return ($error != NULL ? $error->message : NULL);
+}
+
+/**
+ * Clears any previous error.
+ */
+function xmlrpc_clear_error() {
+  xmlrpc_error(NULL, NULL, TRUE);
 }

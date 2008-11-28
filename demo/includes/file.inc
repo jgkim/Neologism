@@ -1,5 +1,5 @@
 <?php
-// $Id: file.inc,v 1.121.2.3 2008/08/13 23:59:12 drumm Exp $
+// $Id: file.inc,v 1.121.2.5 2008/10/20 09:42:31 goba Exp $
 
 /**
  * @file
@@ -792,7 +792,9 @@ function file_set_status(&$file, $status) {
  * @param $headers An array of http headers to send along with file.
  */
 function file_transfer($source, $headers) {
-  ob_end_clean();
+  if (ob_get_level()) {
+    ob_end_clean();
+  }
 
   foreach ($headers as $header) {
     // To prevent HTTP header injection, we delete new lines that are
@@ -884,7 +886,7 @@ function file_scan_directory($dir, $mask, $nomask = array('.', '..', 'CVS'), $ca
   $files = array();
 
   if (is_dir($dir) && $handle = opendir($dir)) {
-    while (false !== ($file = readdir($handle))) {
+    while (FALSE !== ($file = readdir($handle))) {
       if (!in_array($file, $nomask) && $file[0] != '.') {
         if (is_dir("$dir/$file") && $recurse) {
           // Give priority to files in this folder by merging them in after any subdirectory files.

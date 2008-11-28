@@ -4,9 +4,3 @@ description = Manages the display of online help.
 package = Core - optional
 version = VERSION
 core = 6.x
-
-; Information added by drupal.org packaging script on 2008-08-14
-version = "6.4"
-project = "drupal"
-datestamp = "1218672610"
-

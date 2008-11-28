@@ -1,5 +1,5 @@
 <?php
-// $Id: form.inc,v 1.265.2.10 2008/08/13 23:59:12 drumm Exp $
+// $Id: form.inc,v 1.265.2.13 2008/10/16 12:43:08 goba Exp $
 
 /**
  * @defgroup forms Form builder functions
@@ -782,12 +782,17 @@ function form_execute_handlers($type, &$form, &$form_state) {
  *   element where the #parents array starts with 'foo'.
  * @param $message
  *   The error message to present to the user.
+ * @param $reset
+ *   Reset the form errors static cache.
  * @return
  *   Never use the return value of this function, use form_get_errors and
  *   form_get_error instead.
  */
-function form_set_error($name = NULL, $message = '') {
+function form_set_error($name = NULL, $message = '', $reset = FALSE) {
   static $form = array();
+  if ($reset) {
+    $form = array();
+  }
   if (isset($name) && !isset($form[$name])) {
     $form[$name] = $message;
     if ($message) {
@@ -934,7 +939,7 @@ function form_builder($form_id, $form, &$form_state) {
 
   // If some callback set #cache, we need to flip a static flag so later it
   // can be found.
-  if (isset($form['#cache'])) {
+  if (!empty($form['#cache'])) {
     $cache = $form['#cache'];
   }
   // We are on the top form, we can copy back #cache if it's set.
@@ -2008,7 +2013,7 @@ function theme_textfield($element) {
   $extra = '';
   $output = '';
 
-  if ($element['#autocomplete_path']) {
+  if ($element['#autocomplete_path'] && menu_valid_path(array('link_path' => $element['#autocomplete_path']))) {
     drupal_add_js('misc/autocomplete.js');
     $class[] = 'form-autocomplete';
     $extra =  '<input class="autocomplete" type="hidden" id="'. $element['#id'] .'-autocomplete" value="'. check_url(url($element['#autocomplete_path'], array('absolute' => TRUE))) .'" disabled="disabled" />';

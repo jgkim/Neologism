@@ -1,5 +1,5 @@
 <?php
-// $Id: translation.module,v 1.23 2008/01/28 11:38:58 goba Exp $
+// $Id: translation.module,v 1.23.2.2 2008/10/16 11:57:52 goba Exp $
 
 /**
  * @file
@@ -165,13 +165,15 @@ function translation_link($type, $node = NULL, $teaser = FALSE) {
     // Do not show link to the same node.
     unset($translations[$node->language]);
     $languages = language_list();
-    foreach ($translations as $language => $translation) {
-      $links["node_translation_$language"] = array(
-        'title' => $languages[$language]->native,
-        'href' => "node/$translation->nid",
-        'language' => $languages[$language],
-        'attributes' => array('title' => $translation->title, 'class' => 'translation-link')
-      );
+    foreach ($languages as $langcode => $language) {
+      if (isset($translations[$langcode])) {
+        $links["node_translation_$langcode"] = array(
+          'title' => $language->native,
+          'href' => 'node/'. $translations[$langcode]->nid,
+          'language' => $language,
+          'attributes' => array('title' => $translations[$langcode]->title, 'class' => 'translation-link')
+        );
+      }
     }
   }
   return $links;
@@ -242,8 +244,8 @@ function translation_nodeapi(&$node, $op, $teaser, $page) {
  */
 function translation_remove_from_set($node) {
   if (isset($node->tnid)) {
-    if (db_result(db_query('SELECT COUNT(*) FROM {node} WHERE tnid = %d', $node->tnid)) <= 2) {
-      // There would only be one node left in the set: remove the set altogether.
+    if (db_result(db_query('SELECT COUNT(*) FROM {node} WHERE tnid = %d', $node->tnid)) == 1) {
+      // There is only one node left in the set: remove the set altogether.
       db_query('UPDATE {node} SET tnid = 0, translate = 0 WHERE tnid = %d', $node->tnid);
     }
     else {

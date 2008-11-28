@@ -1,5 +1,5 @@
 <?php
-// $Id: install.php,v 1.113.2.5 2008/07/18 07:17:44 dries Exp $
+// $Id: install.php,v 1.113.2.7 2008/10/22 16:31:37 goba Exp $
 
 require_once './includes/install.inc';
 
@@ -90,7 +90,7 @@ function install_main() {
 
   // Locale selection
   if (!empty($_GET['locale'])) {
-    $install_locale = preg_replace('/[^a-zA-Z_0-9]/', '', $_GET['locale']);
+    $install_locale = preg_replace('/[^a-zA-Z_0-9\-]/', '', $_GET['locale']);
   }
   elseif (($install_locale = install_select_locale($profile)) !== FALSE) {
     install_goto("install.php?profile=$profile&locale=$install_locale");
@@ -838,7 +838,7 @@ function _install_module_batch($module, $module_name, &$context) {
   // steps.
   module_enable(array($module));
   $context['results'][] = $module;
-  $context['message'] = 'Installed '. $module_name .' module.';
+  $context['message'] = st('Installed %module module.', array('%module' => $module_name));
 }
 
 /**
