@@ -1,0 +1,50 @@
+// $Id: UPGRADE.txt,v 1.10 2008/01/06 03:12:31 yched Exp $
+
+================================================================
+UPDATING FROM VERSION 4.7 to 6.x
+================================================================
+
+THERE IS NO DIRECT UPGRADE PATH FROM 4.7 TO 6.x!! FIRST UPGRADE
+YOUR DATABASE FROM 4.7 TO THE LATEST 5.x VERSION, THEN UPGRADE
+TO 6.x.
+
+ALWAYS BACKUP YOUR DATABASE BEFORE UPGRADING!
+
+1) While 4.7 is still installed, upload the latest 4.7 version of
+   all the CCK files, go to update.php, and run all possible
+   updates for the Content module and all field modules.
+
+2) Install Drupal version 5. Once it is running, upload and install
+   the latest 5.x versions of all CCK modules, go to update.php and
+   run all possible updates.
+
+3) Install Drupal version 6. Once it is running, upload and install
+   the latest 6.x versions of all CCK modules, go to update.php and
+   run all possible updates.
+
+Your database should now be ready to run in CCK version 6.x
+
+================================================================
+UPDATING FROM VERSION 5.x to 6.x
+================================================================
+
+YOU MUST RUN ALL POSSIBLE UPDATES TO YOUR DATABASE IN 5.x USING 
+THE LATEST 5.x CODE, BEFORE UPGRADING FROM 5.x to 6.x.
+
+ALWAYS BACKUP YOUR DATABASE BEFORE UPGRADING!
+
+1) Before upgrading to 6.x, upload the latest 5.x versions of all 
+   CCK modules, go to update.php and run all possible updates.
+
+2) Install Drupal version 6. Once it is running, upload and install
+   the latest 6.x versions of all CCK modules, go to update.php and
+   run all possible updates.
+
+Your database should now be ready to run in CCK version 6.x
+
+================================================================
+
+These steps are necessary because of significant changes in the 
+database structure between the 4.7 and 6.x versions. These changes
+make it extremely difficult to create an automatic upgrade path that 
+will work reliably in every possible situation.

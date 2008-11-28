@@ -1,0 +1,564 @@
+$content[type]  = array (
+  'name' => 'Property',
+  'type' => NEOLOGISM_CT_PROPERTY,
+  'description' => '',
+  'title_label' => 'Id',
+  'body_label' => 'Description of the property (only used in the documentation)',
+  'min_word_count' => '0',
+  'help' => '',
+  'node_options' => 
+  array (
+    'status' => true,
+    'promote' => false,
+    'sticky' => false,
+    'revision' => false,
+  ),
+  'old_type' => 'neo_property',
+  'orig_type' => '',
+  'module' => 'node',
+  'custom' => '1',
+  'modified' => '1',
+  'locked' => '0',
+  'comment' => '0',
+);
+$content[groups]  = array (
+  0 => 
+  array (
+    'label' => 'Vocabulary',
+    'settings' => 
+    array (
+      'form' => 
+      array (
+        'style' => 'fieldset_collapsible',
+        'description' => 'You can change the vocabulary this property belongs to.',
+      ),
+      'display' => 
+      array (
+        'description' => '',
+        'teaser' => 
+        array (
+          'format' => 'fieldset',
+        ),
+        'full' => 
+        array (
+          'format' => 'fieldset',
+        ),
+        'label' => 'above',
+      ),
+    ),
+    'weight' => '-10',
+    'group_name' => 'group_vocabulary',
+  ),
+);
+$content[fields]  = array (
+  0 => 
+  array (
+    'label' => 'Label',
+    'field_name' => 'field_label',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'change' => 'Change basic information',
+    'weight' => '-4',
+    'rows' => '1',
+    'size' => 60,
+    'description' => 'This will be used for rdfs:label ',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => NULL,
+    'group' => false,
+    'required' => 1,
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'text',
+    'widget_module' => 'text',
+    'columns' => 
+    array (
+      'value' => 
+      array (
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  1 => 
+  array (
+    'label' => 'Domain',
+    'field_name' => 'field_domain',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'change' => 'Change basic information',
+    'weight' => '-3',
+    'description' => 'Select the class for the rdfs:domain of this property.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_domain' => 
+      array (
+        'nid' => 
+        array (
+          'nid' => '',
+        ),
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      NEOLOGISM_CT_CLASS => NEOLOGISM_CT_CLASS,
+      0 => 1,
+      'page' => false,
+      NEOLOGISM_CT_PROPERTY => 0,
+      NEOLOGISM_CT_VOCABULARY => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'nodereference',
+    'widget_module' => 'nodereference',
+    'columns' => 
+    array (
+      'nid' => 
+      array (
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => false,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  2 => 
+  array (
+    'label' => 'Range',
+    'field_name' => 'field_range',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'change' => 'Change basic information',
+    'weight' => '-2',
+    'description' => 'Select the class for the rdfs:range of this property.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_range' => 
+      array (
+        'nid' => 
+        array (
+          'nid' => '',
+        ),
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      NEOLOGISM_CT_CLASS => NEOLOGISM_CT_CLASS,
+      0 => 1,
+      'page' => false,
+      NEOLOGISM_CT_PROPERTY => 0,
+      NEOLOGISM_CT_VOCABULARY => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'nodereference',
+    'widget_module' => 'nodereference',
+    'columns' => 
+    array (
+      'nid' => 
+      array (
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => false,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'label' => 'Comment',
+    'field_name' => 'field_comment',
+    'type' => 'text',
+    'widget_type' => 'text_textfield',
+    'change' => 'Change basic information',
+    'weight' => '-1',
+    'rows' => '1',
+    'size' => 60,
+    'description' => 'This will be used for rdfs:comment',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_comment' => 
+      array (
+        0 => 
+        array (
+          'value' => '',
+          '_error_element' => 'default_value_widget][field_comment][0][value',
+        ),
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'text',
+    'widget_module' => 'text',
+    'columns' => 
+    array (
+      'value' => 
+      array (
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  4 => 
+  array (
+    'label' => 'Vocabulary',
+    'field_name' => 'field_vocabulary',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'change' => 'Change basic information',
+    'weight' => '-10',
+    'description' => 'Specify the vocabulary this class belongs to.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_vocabulary' => 
+      array (
+        'nid' => 
+        array (
+          'nid' => '',
+        ),
+      ),
+    ),
+    'group' => 'group_vocabulary',
+    'required' => 1,
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      NEOLOGISM_CT_VOCABULARY => NEOLOGISM_CT_VOCABULARY,
+      0 => 1,
+      NEOLOGISM_CT_CLASS => 0,
+      'page' => false,
+      NEOLOGISM_CT_PROPERTY => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'nodereference',
+    'widget_module' => 'nodereference',
+    'columns' => 
+    array (
+      'nid' => 
+      array (
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => false,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'hidden',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  5 => 
+  array (
+    'label' => 'Inverse',
+    'field_name' => 'field_inverse',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'change' => 'Change basic information',
+    'weight' => '0',
+    'description' => 'Select the inverse of this property. Your new property will have a statement expressing that it is a owl:inverseOf the selected property.
+
+',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_inverse' => 
+      array (
+        'nid' => 
+        array (
+          'nid' => '',
+        ),
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      NEOLOGISM_CT_PROPERTY => NEOLOGISM_CT_PROPERTY,
+      0 => 1,
+      NEOLOGISM_CT_CLASS => 0,
+      'page' => false,
+      NEOLOGISM_CT_VOCABULARY => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'nodereference',
+    'widget_module' => 'nodereference',
+    'columns' => 
+    array (
+      'nid' => 
+      array (
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => false,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+  6 => 
+  array (
+    'label' => 'Functional Property',
+    'field_name' => 'field_fp',
+    'type' => 'text',
+    'widget_type' => 'optionwidgets_onoff',
+    'change' => 'Change basic information',
+    'weight' => '4',
+    'description' => 'Check this box, if your property is an FP, i.e. when you use this property in a statement, then the subject of the statement uniquely determines its object.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_fp' => 
+      array (
+        'value' => false,
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '|
+1|Functional Property',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'text',
+    'widget_module' => 'optionwidgets',
+    'columns' => 
+    array (
+      'value' => 
+      array (
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+  ),
+  7 => 
+  array (
+    'label' => 'Inverse Functional Property',
+    'field_name' => 'field_ifp',
+    'type' => 'text',
+    'widget_type' => 'optionwidgets_onoff',
+    'change' => 'Change basic information',
+    'weight' => '5',
+    'description' => 'Check this box, if your property is an IFP, i.e. the object of a statment that uses your property uniquely determines its subject.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_ifp' => 
+      array (
+        'value' => false,
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '|
+1|Inverse Functional Property',
+    'allowed_values_php' => '',
+    'op' => 'Save field settings',
+    'module' => 'text',
+    'widget_module' => 'optionwidgets',
+    'columns' => 
+    array (
+      'value' => 
+      array (
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+  ),
+  8 => 
+  array (
+    'label' => 'Superproperty',
+    'field_name' => 'field_subpropertyof',
+    'type' => 'nodereference',
+    'widget_type' => 'nodereference_select',
+    'change' => 'Change basic information',
+    'weight' => '6',
+    'description' => 'Select the superproperty of this property. Your new property will have a statement expressing that it is a rdfs:subPropertyOf the selected property.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_subpropertyof' => 
+      array (
+        'nid' => 
+        array (
+          'nid' => '',
+        ),
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '0',
+    'referenceable_types' => 
+    array (
+      NEOLOGISM_CT_PROPERTY => NEOLOGISM_CT_PROPERTY,
+      0 => 1,
+      NEOLOGISM_CT_CLASS => 0,
+      'page' => false,
+      NEOLOGISM_CT_VOCABULARY => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'nodereference',
+    'widget_module' => 'nodereference',
+    'columns' => 
+    array (
+      'nid' => 
+      array (
+        'type' => 'int',
+        'unsigned' => true,
+        'not null' => false,
+      ),
+    ),
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'inline',
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+      ),
+    ),
+  ),
+);
