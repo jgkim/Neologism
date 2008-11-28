@@ -1,40 +1,41 @@
 Neologism 0.xx, 2008-xx-xx
 --------------------------
-- hide the layout in the cck vocabulary content type definition.
-- update Drupal core to 6.6.
+- Hide the layout in the cck vocabulary content type definition.
+- Update Drupal core to 6.6.
+- Remove 'neologism' from the path and allow the user to specify a custom path in the URL path settings fieldset when creating/editing a vocabulary.
 
 Neologism 0.32, 2008-09-23
 --------------------------
-- add some usability improvement in the forms: remove or hide some non used core fieldsets, and fix the weights of the property form.
+- Add some usability improvement in the forms: remove or hide some non used core fieldsets, and fix the weights of the property form.
 
 Neologism 0.31, 2008-09-23
 --------------------------
-- adjust the order of the class and property fields.
+- Adjust the order of the class and property fields.
 
 Neologism 0.3, 2008-09-22
 --------------------------
-- upgrade to Drupal 6.4
-- clean URLs are now enabled automatically during installation as long as the server supports it.
+- Upgrade to Drupal 6.4
+- Clean URLs are now enabled automatically during installation as long as the server supports it.
 
 Neologism 0.22, 2008-09-22
 --------------------------
-- redirect the user to the vocabulary page when a new class or property has been created.
-- the class/property label is copied to the id field via jQuery as it is very often the same.
-- minor fix in the viewer where no element was displayed when Neologism was installed on the root of the server.
+- Redirect the user to the vocabulary page when a new class or property has been created.
+- The class/property label is copied to the id field via jQuery as it is very often the same.
+- Minor fix in the viewer where no element was displayed when Neologism was installed on the root of the server.
 
 Neologism 0.21, 2008-06-17
 --------------------------
-- upgrade to Drupal 5.7.
-- prevent CSRF by using Drupal FAPI token in the Flex viewer.
-- fix XSS in HTML export.
-- set the vocabulary field to be expanded by default.
+- Upgrade to Drupal 5.7.
+- Prevent CSRF by using Drupal FAPI token in the Flex viewer.
+- Fix XSS in HTML export.
+- Set the vocabulary field to be expanded by default.
 
 Neologism 0.2, 2008-06-01
 -------------------------
-- some changes to the CCK fields definitions, mainly involving renaming for consistency across the content types.
-- add commented directives in settings.php and .htaccess to increase memory and execution time.
-- change the content type names as constant as opposed to being hard coded to 'neologism', which could lead to some conflict with other content types.
+- Some changes to the CCK fields definitions, mainly involving renaming for consistency across the content types.
+- Add commented directives in settings.php and .htaccess to increase memory and execution time.
+- Change the content type names as constant as opposed to being hard coded to 'neologism', which could lead to some conflict with other content types.
 
 Neologism 0.1, 2008-06-01
 -------------------------
-- initial release.
+- Initial release.

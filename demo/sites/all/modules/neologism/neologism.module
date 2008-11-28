@@ -457,14 +457,14 @@ function neologism_image($node) {
  * Show the overview diagram
  */
 function neologism_show_diagram($node) {
-  $vocabulary = $node->title;
   $base = base_path();
   $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
   $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
-  $edit_mode = user_access('edit neologism') ? 1 : 0;
-  $prefix = $base . NEOLOGISM .'/';
+  $edit_mode = user_access('edit neologism');
+  $prefix = $base . $node->path . '/';
   $token = drupal_get_token();
-  $flex_params = "vocabulary=$vocabulary&editMode=$edit_mode&prefix=$prefix&token=$token";
+  // TODO The vocabulary parameter is not used anymore and could be removed from the flex viewer.
+  $flex_params = "vocabulary=&editMode=$edit_mode&prefix=$prefix&token=$token";
 		
 	$output = <<<EXCERPT
 
@@ -640,21 +640,21 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                             break;
 
             case 'insert':
-                            // Create a user friendly path to the vocabulary node
+                            // Create a user friendly alias to the vocabulary node
                             if($node->type == NEOLOGISM_CT_VOCABULARY) {
-                                path_set_alias("node/$node->nid", NEOLOGISM.'/'.check_plain($node->title));
-                                path_set_alias("node/$node->nid/".HTML, NEOLOGISM.'/'.check_plain($node->title).'/' . HTML);        
-                                path_set_alias("node/$node->nid/".RDF, NEOLOGISM.'/'.check_plain($node->title).'/' . RDF);
-                                path_set_alias("node/$node->nid/n3", NEOLOGISM.'/'.check_plain($node->title).'/' . N3);
-                                path_set_alias("node/$node->nid/".XML, NEOLOGISM.'/'.check_plain($node->title).'/' . XML);
-                                path_set_alias("node/$node->nid/layout", NEOLOGISM.'/'.check_plain($node->title).'/layout');
-                                path_set_alias("node/$node->nid/diagram", NEOLOGISM.'/'.check_plain($node->title).'/diagram');
-                                path_set_alias("node/$node->nid/image", NEOLOGISM.'/'.check_plain($node->title).'/image');
+                              _neologism_set_aliases($node);
+                            }
+                            break;
+
+            case 'update':
+                            if($node->type == NEOLOGISM_CT_VOCABULARY) {
+                              _neologism_unset_aliases($node);
+                              _neologism_set_aliases($node);
                             }
                             break;
 
             case 'delete':
-                            // Deletion of the path when deleting a vocabulary
+                            // Deletion of the aliases when deleting a vocabulary
                             if($node->type == NEOLOGISM_CT_VOCABULARY) {
                                 path_set_alias("node/$node->nid");
                                 path_set_alias("node/$node->nid/".HTML);
@@ -673,6 +673,30 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         }
     }
 }
+
+function _neologism_set_aliases($node) {
+	$path = $node->path ? $node->path : check_plain($node->title);  
+	path_set_alias("node/$node->nid", $path);
+	path_set_alias("node/$node->nid/" . HTML, $path . '/' . HTML);        
+	path_set_alias("node/$node->nid/" . RDF, $path . '/' . RDF);
+	path_set_alias("node/$node->nid/" . N3, $path . '/' . N3);
+	path_set_alias("node/$node->nid/" . XML, $path . '/' . XML);
+	path_set_alias("node/$node->nid/layout", $path . '/layout');
+	path_set_alias("node/$node->nid/diagram", $path . '/diagram');
+	path_set_alias("node/$node->nid/image", $path . '/image');
+}
+function _neologism_unset_aliases($node) {
+	$path = $node->path ? $node->path : check_plain($node->title);  
+	path_set_alias("node/$node->nid");
+	path_set_alias("node/$node->nid/" . HTML);
+	path_set_alias("node/$node->nid/" . RDF);
+	path_set_alias("node/$node->nid/" . N3);
+	path_set_alias("node/$node->nid/" . XML);
+	path_set_alias("node/$node->nid/layout");
+	path_set_alias("node/$node->nid/diagram");
+	path_set_alias("node/$node->nid/image");
+}
+
 
 /**
  * Get all properties in a vocabulary 
