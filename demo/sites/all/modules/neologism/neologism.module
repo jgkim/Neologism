@@ -265,7 +265,7 @@ function neologism_get_rdf_model($node, $uri, $document) {
     foreach ($classes as $oneclass) {
         $classresource = new Resource($uri . $oneclass["title"]);
         $model->add(new Statement($classresource, new Resource($ns["rdf"], "type"), new Resource($ns["rdfs"], "Class")));
-        $model->add(new Statement($classresource, new Resource($ns["rdfs"], "isDefinedBy"), $ontology));
+        $model->add(new Statement($classresource, new Resource($ns["rdfs"], "isDefinedBy"), $doc));
         $model->add(new Statement($classresource, new Resource($ns["rdfs"], "label"), new Literal($oneclass["label"])));
         if ($oneclass["comment_rdfs"] != NULL)
             $model->add(new Statement($classresource, new Resource($ns["rdfs"], "comment"), new Literal($oneclass["comment_rdfs"])));
@@ -290,7 +290,7 @@ function neologism_get_rdf_model($node, $uri, $document) {
 		if ($oneprop["fp"] == true) {
 			$ifp_uri="http://www.w3.org/2002/07/owl#FunctionalProperty";
             $model->add(new Statement($propresource, new Resource($ns["rdf"], "type"), new Resource($ifp_uri))); 	}
-        $model->add(new Statement($propresource, new Resource($ns["rdfs"], "isDefinedBy"), $ontology));
+        $model->add(new Statement($propresource, new Resource($ns["rdfs"], "isDefinedBy"), $doc));
         $model->add(new Statement($propresource, new Resource($ns["rdfs"], "label"), new Literal($oneprop["label"])));
         if ($oneprop["comment_rdfs"] != NULL)
             $model->add(new Statement($propresource, new Resource($ns["rdfs"], "comment"), new Literal($oneprop["comment_rdfs"])));
