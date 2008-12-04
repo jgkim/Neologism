@@ -1,4 +1,4 @@
-Neologism 0.xx, 2008-xx-xx
+Neologism 0.33, 2008-12-04
 --------------------------
 - Hide the layout in the cck vocabulary content type definition.
 - Update Drupal core to 6.6.
