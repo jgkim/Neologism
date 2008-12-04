@@ -1,0 +1,18 @@
+How to release a new version of Neologism
+=========================================
+
+# edit CHANGELOG.neologism.txt and sites/all/modules/neologism/neologism.info in order to update the version number that is being released.
+# commit the changes to svn:
+svn ci -m 'preparing release 0.33'
+
+# create a tag for this release
+svn copy https://neologism.googlecode.com/svn/trunk/demo https://neologism.googlecode.com/svn/tags/DRUPAL-6--1-0.33 -m 'tagging the 0.33 release'
+
+# export the Neologism files from svn
+svn export https://neologism.googlecode.com/svn/tags/DRUPAL-6--1-0.33/ neologism-0.33
+
+# make the zip file and make sure the .htaccess file gets in too!
+
+# try the new package and upload it to googlecode
+
+# switch back the repository to the dev version by editing CHANGELOG.neologism.txt and sites/all/modules/neologism/neologism.info
