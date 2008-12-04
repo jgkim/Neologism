@@ -10,4 +10,4 @@ dependencies[] = text
 dependencies[] = optionwidgets
 package = RDF
 core = 6.x
-version = "6.x-0.33"
+version = "6.x-0.33-dev"
