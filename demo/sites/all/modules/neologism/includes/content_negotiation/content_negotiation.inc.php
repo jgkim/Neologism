@@ -1,20 +1,19 @@
 <?php
-
-/********************************************************************************
-*										*
-*	Version: content_negotiation.inc.php v1.2.0 2007-12-05			*
-*	Copyright: (c) 2006-2007 ptlis						*
-*	Licence: GNU Lesser General Public License v2.1				*
-*	The current version of this library can be sourced from:		*
-*		http://ptlis.net/source/php-content-negotiation/		*
-*	Contact the author of this library at:					*
-*		ptlis@ptlis.net							*
-*										*
-*	This class requires PHP 5.x (it has been tested on 5.0.x - 5.2		*
-*	with error reporting set to E_ALL | E_STRICT without problems)		*
-*	but should be trivially modifiable to work on PHP 4.x			*
-*										*
-********************************************************************************/
+/****************************************************************************
+	*																		*
+	*	Version: content_negotiation.inc.php v1.3.0 2008-11-01				*
+	*	Copyright: (c) 2006-2008 ptlis										*
+	*	Licence: GNU Lesser General Public License v2.1						*
+	*	The current version of this library can be sourced from:			*
+	*		http://ptlis.net/source/php-content-negotiation/				*
+	*	Contact the author of this library at:								*
+	*		ptlis@ptlis.net													*
+	*																		*
+	*	This class requires PHP 5.x (it has been tested on 5.0.x - 5.2		*
+	*	with error reporting set to E_ALL | E_STRICT without problems)		*
+	*	but should be trivially modifiable to work on PHP 4.x				*
+	*																		*
+	***************************************************************************/
 
 define('WILDCARD_DEFAULT',  -1);
 define('WILDCARD_TYPE', 0);
@@ -23,99 +22,153 @@ define('WILDCARD_NONE', 2);
 
 class content_negotiation {
 	// generic private function called by all other public ones
-	static private function generic_negotiation($header, $return_type, $content_match, $mime_negotiation=false) {
-		if(is_array($content_match) && count($content_match) > 0) {
-			$app_vals_provided	= true;
-			$content_match_count	= count($content_match['type']);
-			for($i = 0; $i < $content_match_count; $i++) {			// Set default values (and make all lower case)
-				$content_match['type'][$i] = strtolower($content_match['type'][$i]);
-				$content_match['q_value'][$i] = 0;
-				$content_match['specificness'][$i] = WILDCARD_DEFAULT;
+	static private function generic_negotiation($header, $return_type, array $app_types, $mime_negotiation=false) {
+		$header		= strtolower($header);
+		$matches	= null;
+
+
+		// First perform initial parse of header
+
+		// Mime types are a special case due to the possibility of subtypes
+		if($mime_negotiation) {
+			if(!preg_match_all('/([a-z\-\+\*]+)\/([a-z\-\+\*]+)\s*;?\s*q?=?(0\.\d{1,5}|1\.0|[01])?,*/i', $header, $matches)) {
+				return false;
+			}
+
+			// Normalise generated data structure
+			for($i = 0; $i < count($matches[0]); $i++) {
+				$header_types['type'][$i]	= $matches[1][$i] . '/' . $matches[2][$i];
+				if($matches[3][$i] != null) {
+					$header_types['q_value'][$i]	= $matches[3][$i];
+				}
+				else {
+					$header_types['q_value'][$i]	= 1;
+				}
+				$header_types['mime_type'][$i]		= $matches[1][$i];
+				$header_types['mime_subtype'][$i]	= $matches[2][$i];
+			}
+		}
+
+		// Charset, Language and Encoding can be handled together
+		else {
+			if(!preg_match_all('/([a-z\-0-9\*]+)\s*;?\s*q?=?(0\.\d{1,5}|1\.0|[01])?,*/i', $header, $matches)) {
+				return false;
+			}
+
+			// Normalise generated data structure
+			for($i = 0; $i < count($matches[0]); $i++) {
+				$header_types['type'][$i]	= $matches[1][$i];
+				if($matches[2][$i] != null) {
+					$header_types['q_value'][$i]	= $matches[2][$i];
+				}
+				else {
+					$header_types['q_value'][$i]	= 1;
+				}
+			}
+		}
+
+
+		// Normalise application provided data structure
+		if(is_array($app_types) && count($app_types) > 0) {
+			$app_vals_provided		= true;
+			for($i = 0; $i < count($app_types['type']); $i++) {			// Set default values (and make all lower case)
+				$app_types['type'][$i]			= strtolower($app_types['type'][$i]);
+				$app_types['q_value'][$i]		= 0;
+				$app_types['specificness'][$i]	= WILDCARD_DEFAULT;
+				if($mime_negotiation) {
+					$type_parts	= explode('/', $app_types['type'][$i]);
+					$app_types['mime_type'][$i]		= $type_parts[0];
+					$app_types['mime_subtype'][$i]	= $type_parts[1];
+				}
 			}
 		}
 		else {
 			$app_vals_provided			= false;
-			$content_match['type']			= array();
-			$content_match['q_value']		= array();
+			$app_types['type']			= array();
+			$app_types['q_value']		= array();
 		}
 
-		$accept_list = explode(",", strtolower(str_replace(' ', null, $header)));
-		$accept_list_count = count($accept_list);
 
-		foreach($accept_list as $accept_value) {
-			$accept_value_parts = explode(";", $accept_value);
-			if($mime_negotiation) {					// Special case for wildcard rules
-				$type_array = explode('/', $accept_value_parts[0]);
-			}
 
-			if($app_vals_provided && (($mime_negotiation && $type_array[0] === '*' && $type_array[1] === '*') || (!$mime_negotiation && $accept_value_parts[0] === '*'))) {	// App values are provided, and there's a wildcard for type & subtype (wildcards only used if app values are provided)
-				for($array_position = 0; $array_position < $content_match_count; $array_position++) {
-					if($content_match['specificness'][$array_position] === WILDCARD_DEFAULT) {	// Only store new value if the current value is defualt (type wildcard has least precidence)
-						$content_match['specificness'][$array_position] = WILDCARD_TYPE;
-						if(isset($accept_value_parts[1])) {
-							$content_match['q_value'][$array_position]	= content_negotiation::parse_q($accept_value_parts[1], $content_match);
-						}
-						else {
-							$content_match['q_value'][$array_position]	= 1;
+		/*	Iterate through the types found in the header applying the
+			appropriate q values. */
+		for($i = 0; $i < count($header_types['type']); $i++) {
+			/*	If the application provided no types datastructure then simply
+				move the data for non wildcard types from the header
+				datastructure to the app types datastructure. */
+			if(!$app_vals_provided) {
+				// Do not copy if we find wildcard values
+				if($mime_negotiation && ($header_types['mime_type'][$i] == '*' || ($header_types['mime_subtype'][$i] == '*'))
+						|| !$mime_negotiation && $header_types['type'][$i] == '*') {
+					continue;
+				}
+
+				$app_types['type'][$i]		= $header_types['type'][$i];
+				$app_types['q_value'][$i]	= $header_types['q_value'][$i];
+			}
+			
+			/*	If the application provided an $app_types value then we need
+				To iterate through the $header_types array setting the q values
+				as appropriate depending on rules of specificness (exact matches
+				of types override more general matches of wildcards). */
+			else {
+				// Attempt to find a match for the current type in the
+				// $app_types array
+				$key	= array_search($header_types['type'][$i], $app_types['type']);
+
+				// The search returned a key
+				if($key !== false) {
+					$app_types['specificness'][$key]	= WILDCARD_NONE;
+					$app_types['q_value'][$key]			= $header_types['q_value'][$i];
+				}
+				
+				/*	If mime negotiation is being performed and both the type &
+				 	subtype are wildcards then iterate through $app_types
+					updating the q values of all types with a specificness of
+					WILDCARD_DEFAULT, and updating their specificness to
+					WILDCARD_TYPE. */
+				else if($mime_negotiation && $header_types['mime_type'][$i] == '*' && $header_types['mime_subtype'][$i] == '*'
+						|| (!$mime_negotiation && $header_types['type'][$i] == '*')) {
+					for($j = 0; $j < count($app_types['type']); $j++) {
+						if($app_types['specificness'][$j] == WILDCARD_DEFAULT) {
+							$app_types['specificness'][$j]	= WILDCARD_TYPE;
+							$app_types['q_value'][$j]		= $header_types['q_value'][$i];
 						}
 					}
 				}
-			}
-			else if($app_vals_provided && $mime_negotiation && $type_array[1] === '*') {											// App values are provided, and there's a wildcard for subtype (wildcards only used if app values are provided)
-				for($array_position = 0; $array_position < $content_match_count; $array_position++) {
-					if(preg_match('/^' . $type_array[0] . '\/[a-zA-z\+\-]/', $content_match['type'][$array_position]) && $content_match['specificn=ess'][$array_position] <= WILDCARD_TYPE) {
-						$content_match['specificness'][$array_position] = WILDCARD_SUBTYPE;
-						if(isset($accept_value_parts[1])) {
-							$content_match['q_value'][$array_position]	= content_negotiation::parse_q($accept_value_parts[1], $content_match);
+				
+				/*	If mime negotiation is being performed and the subtype is a
+					wildcard then iterate through $app_types updating the q
+					values of all types with a specificness of less or equal to
+					WILDCARD_TYPE and updating their specificness. */
+				else if($mime_negotiation && $header_types['mime_subtype'] == '*') {
+					for($j = 0; $j < count($app_types['type']); $j++) {
+						if($app_types['specificness'][$j] <= WILDCARD_TYPE) {
+							$app_types['specificness'][$j]	= WILDCARD_SUBTYPE;
+							$app_types['q_value'][$j]		= $header_types['q_value'][$i];
 						}
-						else {
-							$content_match['q_value'][$array_position]	= 1;
-						}
-					}
-				}
-			}
-			else if($app_vals_provided) {																	// App values are provided, but this type is not a wildcard
-				$array_position = array_search($accept_value_parts[0], $content_match['type']);
-				if(is_numeric($array_position)) {
-					$content_match['specificness'][$array_position] = WILDCARD_NONE;
-					if(isset($accept_value_parts[1])) {
-						$content_match['q_value'][$array_position]	= content_negotiation::parse_q($accept_value_parts[1], $content_match);
-					}
-					else {
-						$content_match['q_value'][$array_position]	= 1;
-					}
-				}
-			}
-			else {																				// No app values are provided, ignore wildcards
-				if(($mime_negotiation && $type_array[0] !== '*' && $type_array[1] !== '*') || (!$mime_negotiation && $accept_value_parts[0] !== '*')) {
-					array_push($content_match['type'], $accept_value_parts[0]);
-					if(isset($accept_value_parts[1])) {
-						array_push($content_match['q_value'], content_negotiation::parse_q($accept_value_parts[1], $content_match));
-					}
-					else {
-						array_push($content_match['q_value'], 1);
 					}
 				}
 			}
 		}
 
 		if($app_vals_provided) {
-			array_multisort($content_match['q_value'], SORT_DESC, SORT_NUMERIC,
-					$content_match['app_preference'], SORT_DESC, SORT_STRING,
-					$content_match['type'],
-					$content_match['specificness']);
+			array_multisort($app_types['q_value'], SORT_DESC, SORT_NUMERIC,
+					$app_types['app_preference'], SORT_DESC, SORT_STRING,
+					$app_types['type'],
+					$app_types['specificness']);
 		}
 		else {
-			array_multisort($content_match['q_value'], SORT_DESC, SORT_NUMERIC,
-					$content_match['type']);
+			array_multisort($app_types['q_value'], SORT_DESC, SORT_NUMERIC,
+					$app_types['type']);
 		}
 
 		switch($return_type) {
 			case 'all':
-				return $content_match;
+				return $app_types;
 				break;
 			case 'best':
-				return $content_match['type'][0];
+				return $app_types['type'][0];
 				break;
 			default:
 				return false;
@@ -124,117 +177,91 @@ class content_negotiation {
 	}
 
 
-	// Parses q value from string
-	static private function parse_q($q_string, &$content_match) {
-		if(preg_match('/q=(0\.\d{1,5}|1\.0|[01])/i', $q_string, $matches)) {
-			return $matches[1]; 
-		} else {	// On unparsable q value default to 1
-			return 1;
-		}
-	}
-
-
 	// return only the preferred mime-type
-	static public function mime_best_negotiation($content_match=null) {
+	static public function mime_best_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT'])) {
-			$header = $_SERVER['HTTP_ACCEPT'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT'], 'best', $app_types, true);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'best', $content_match, true);
 	}
 
 
 	// return the whole array of mime-types
-	static public function mime_all_negotiation($content_match=null) {
+	static public function mime_all_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT'])) {
-			$header = $_SERVER['HTTP_ACCEPT'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT'], 'all', $app_types, true);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'all', $content_match, true);
 	}
 
 
 	// return only the preferred charset
-	static public function charset_best_negotiation($content_match=null) {
+	static public function charset_best_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_CHARSET'])) {
-			$header = $_SERVER['HTTP_ACCEPT_CHARSET'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_CHARSET'], 'best', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'best', $content_match);
 	}
 
 
 	// return the whole array of charsets
-	static public function charset_all_negotiation($content_match=null) {
+	static public function charset_all_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_CHARSET'])) {
-			$header = $_SERVER['HTTP_ACCEPT_CHARSET'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_CHARSET'], 'all', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'all', $content_match);
 	}
 
 
 	// return only the preferred encoding-type
-	static public function encoding_best_negotiation($content_match=null) {
+	static public function encoding_best_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_ENCODING'])) {
-			$header = $_SERVER['HTTP_ACCEPT_ENCODING'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_ENCODING'], 'best', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'best', $content_match);
 	}
 
 
 	// return the whole array of encoding-types
-	static public function encoding_all_negotiation($content_match=null) {
+	static public function encoding_all_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_ENCODING'])) {
-			$header = $_SERVER['HTTP_ACCEPT_ENCODING'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_ENCODING'], 'all', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'all', $content_match);
 	}
 
 
 	// return only the preferred language
-	static public function language_best_negotiation($content_match=null) {
+	static public function language_best_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-			$header = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_LANGUAGE'], 'best', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'best', $content_match);
 	}
 
 
 	// return the whole array of language
-	static public function language_all_negotiation($content_match=null) {
+	static public function language_all_negotiation(array $app_types=array()) {
 		if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-			$header = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			return content_negotiation::generic_negotiation($_SERVER['HTTP_ACCEPT_LANGUAGE'], 'all', $app_types);
 		}
 		else {
 			return false;
 		}
-
-		return content_negotiation::generic_negotiation($header, 'all', $content_match);
 	}
 }
 
