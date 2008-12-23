@@ -635,6 +635,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
                                 $accept = $_SERVER["HTTP_ACCEPT"];
                                 $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);                         
                                 header("HTTP/1.1 303");
+                                header("Vary: Accept");  
                                 header("Location: " . $redirect_uri);    
                             }
                             break;
