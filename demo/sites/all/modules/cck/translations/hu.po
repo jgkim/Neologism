@@ -1,0 +1,353 @@
+# Hungarian translation of cck (6.x-2.0-rc10)
+# Copyright (c) 2008 by the Hungarian translation team
+# Generated from files:
+#  content.module,v 1.301.2.68 2008/10/08 13:29:37 karens
+#  content.install,v 1.85.2.23 2008/10/08 13:29:37 karens
+#  content.info,v 1.6 2007/07/04 23:46:29 yched
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: cck (6.x-2.0-rc10)\n"
+"POT-Creation-Date: 2008-10-31 12:16-0500\n"
+"PO-Revision-Date: 2008-10-26 12:54-0500\n"
+"Language-Team: Hungarian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: content.module:427
+msgid "This field is required."
+msgstr "Ezt a mezőt ki kell tölteni."
+
+#: content.module:431
+msgid "!title: !required"
+msgstr "!title: !required"
+
+#: content.module:2160
+msgid "Language"
+msgstr "Nyelv"
+
+#: content.module:1794
+msgid "Search"
+msgstr "Keresés"
+
+#: content.module:2167
+msgid "Menu settings"
+msgstr "Menü beállítások"
+
+#: content.module:1781,1784
+msgid "RSS"
+msgstr "RSS"
+
+#: content.module:2174
+msgid "Taxonomy"
+msgstr "Taxonómia"
+
+#: content.module:2181
+msgid "File attachments"
+msgstr "Csatolt fájlok"
+
+#: content.module:1768
+msgid "Basic"
+msgstr "Alap"
+
+#: content.module:434
+msgid "Order"
+msgstr "Sorrend"
+
+#: content.module:21
+msgid ""
+"The content module, a required component of the Content Construction "
+"Kit (CCK), allows administrators to associate custom fields with "
+"content types. In Drupal, content types are used to define the "
+"characteristics of a post, including the title and description of the "
+"fields displayed on its add and edit pages. Using the content module "
+"(and the other helper modules included in CCK), custom fields beyond "
+"the default \"Title\" and \"Body\" may be added. CCK features are "
+"accessible through tabs on the <a href=\"@content-types\">content "
+"types administration page</a>. (See the <a href=\"@node-help\">node "
+"module help page</a> for more information about content types.)"
+msgstr ""
+"A content modul, amely egy szükséges eleme a Content Construction "
+"Kitnek (CCK), lehetővé teszi az adminisztrátorok számára, hogy "
+"egyedi mezőket rendeljenek a tartalomtípusokhoz. A Drupalban a "
+"tartalomtípus határozza meg az oldalak jellemzőit, beleértve a "
+"megjelenített mezők címét és leírását a feltöltő és "
+"szerkesztő oldalakon. A content modult (és az egyéb, CCK-ba "
+"ágyazott segítő modulokat) használva egyedi mezőket lehet adni az "
+"alapértelmezett „Cím” és „Törzs” mezők mellé. A CCK "
+"lehetőségei a <a href=\"@content-types\">tartalomtípusok "
+"adminisztrációja oldalon</a> lévő füleken elérhetők el. "
+"(További információk a tartalomtípusokról a <a "
+"href=\"@node-help\">node modul súgó oldalán</a>.)"
+
+#: content.module:22
+msgid ""
+"When adding a custom field to a content type, you determine its type "
+"(whether it will contain text, numbers, or references to other "
+"objects) and how it will be displayed (either as a text field or area, "
+"a select box, checkbox, radio button, or autocompleting field). A "
+"field may have multiple values (i.e., a \"person\" may have multiple "
+"e-mail addresses) or a single value (i.e., an \"employee\" has a "
+"single employee identification number). As you add and edit fields, "
+"CCK automatically adjusts the structure of the database as necessary. "
+"CCK also provides a number of other features, including intelligent "
+"caching for your custom data, an import and export facility for "
+"content type definitions, and integration with other contributed "
+"modules."
+msgstr ""
+"Egy egyedi mező tartalom típushoz adásakor meghatározható annak "
+"típusa (attól függően, hogy mit fog tartalmazni, szöveget, "
+"számot, vagy hivatkozást egyéb objektumokhoz), illetve hogyan fog "
+"megjelenni (szöveges mező vagy terület, legördülő menü, "
+"jelölő vagy kiválasztó négyzet, avagy automatikusan kiegészülő "
+"mező). Egy mezőnek lehet több értéke is (például egy "
+"„személy”-nek lehet több email címe), illetve csak egyetlen "
+"értéke (például egy „dolgozó”-nak csak egy dolgozói "
+"azonosítója van). A mező hozzáadásakor és szerkesztésekor a CCK "
+"automatikusan elkészíti az adat tárolásához szükséges "
+"szerkezetet az adatbázisban. A CCK számos egyéb lehetőséget "
+"biztosít, például az egyedi adatok intelligens gyorstárazását, a "
+"tartalomtípus meghatározások importálását és exportálását, "
+"valamint együttműködést egyéb közösségi modulokkal."
+
+#: content.module:23
+msgid ""
+"Custom field types are provided by a set of optional modules included "
+"with CCK (each module provides a different type). The <a "
+"href=\"@modules\">modules page</a> allows you to enable or disable CCK "
+"components. A default installation of CCK includes:"
+msgstr ""
+"Az egyedi mező típusokat a CCK-ba ágyazott egyéb, kiegészítő "
+"modulok biztosítják (minden modul más típust tesz elérhetővé). "
+"A <a href=\"@modules\">modulok oldal</a> segítségével lehet be-, "
+"illetve kikapcsolni a CCK összetevőit. Egy alapértelmezett "
+"telepítés esetén a CCK az alábbiakat tartalmazza:"
+
+#: content.module:25
+msgid ""
+"<em>number</em>, which adds numeric field types, in integer, decimal "
+"or floating point form. You may define a set of allowed inputs, or "
+"specify an allowable range of values. A variety of common formats for "
+"displaying numeric data are available."
+msgstr ""
+"<em>szám</em>, amely egy numerikus mezőtípust ad, egész, "
+"decimális, vagy lebegőpontos formában. Beállítható a megengedett "
+"értékek csoportja, vagy megadható az elfogadott érték "
+"tartományok köre. Elérhető számos közös formátum a számok "
+"megjelenítéséhez."
+
+#: content.module:26
+msgid ""
+"<em>text</em>, which adds text field types. A text field may contain "
+"plain text only, or optionally, may use Drupal's input format filters "
+"to securely manage rich text input. Text input fields may be either a "
+"single line (text field), multiple lines (text area), or for greater "
+"input control, a select box, checkbox, or radio buttons. If desired, "
+"CCK can validate the input to a set of allowed values."
+msgstr ""
+"<em>szöveg</em>, amely szöveges mezőtípus ad. A szöveges mező "
+"tartalmazhat csak sima szöveget, vagy beállíthatóan lehet "
+"használni a Drupal bemeneti formátum szűrőit is a szövegek "
+"biztonságos kezeléséhez. A szöveges mezők lehetnek egy vagy több "
+"sorosak, illetve nagyobb bemeneti ellenőrzéshez legördülő menü, "
+"jelölő vagy kiválasztó négyzet. Ha szükséges, a CCK tudja "
+"ellenőrizni a bevitelt a megengedett értékek alapján."
+
+#: content.module:27
+msgid ""
+"<em>nodereference</em>, which creates custom references between Drupal "
+"nodes. By adding a <em>nodereference</em> field and two different "
+"content types, for instance, you can easily create complex "
+"parent/child relationships between data (multiple \"employee\" nodes "
+"may contain a <em>nodereference</em> field linking to an \"employer\" "
+"node)."
+msgstr ""
+"<em>tartalomlhivatkozás</em>, amely egyedi hivatkozásokat hoz létre "
+"a Drupal oldalak között. Két különböző tartalomtípus között "
+"egy <em>tartalomhivatkozás</em> mező hozzáadásával könnyedén "
+"létrehozható összetett szülő-gyermek kapcsolat az adatok között "
+"(több „dolgozó” oldal tartalmaz egy <em>tartalomhivatkozás</em> "
+"mezőt, hivatkozva a „munkaadó” oldalra."
+
+#: content.module:28
+msgid ""
+"<em>userreference</em>, which creates custom references to your sites' "
+"user accounts. By adding a <em>userreference</em> field, you can "
+"create complex relationships between your site's users and posts. To "
+"track user involvement in a post beyond Drupal's standard <em>Authored "
+"by</em> field, for instance, add a <em>userreference</em> field named "
+"\"Edited by\" to a content type to store a link to an editor's user "
+"account page."
+msgstr ""
+"<em>felhasználó hivatkozás</em>, amely egyedi hivatkozásokat hoz "
+"létre a honlap felhasználóihoz. Egy <em>felhasználó "
+"hivatkozás</em> mező hozzáadásával létrehozható összetett "
+"szülő-gyermek kapcsolat a felhasználók és az oldalak között. A "
+"tartalom típushoz egy „Szerkesztette” <em>felhasználó "
+"hivatkozás</em> mezőt adva egy hivatkozás keletkezik a szerkesztő "
+"felhasználó profiljához, így követni lehet a felhasználó "
+"részvételét a tartalomban a Drupal alapértelmezett <em>Írta</em> "
+"mezőjén kívül is."
+
+#: content.module:29
+msgid ""
+"<em>fieldgroup</em>, which creates collapsible fieldsets to hold a "
+"group of related fields. A fieldset may either be open or closed by "
+"default. The order of your fieldsets, and the order of fields within a "
+"fieldset, is managed via a drag-and-drop interface provided by content "
+"module."
+msgstr ""
+"<em>mezőcsoport</em>, amely egy összecsukható mezőkészletet hoz "
+"létre, és egy csoportba foglalja az összetartozó mezőket. A "
+"mezőkészlet alapértelmezése lehet nyitott, vagy zárt is. A "
+"mezőcsoportok sorrendje, valamint a csoportokon belüli mezők "
+"sorrendje fogd-és-vidd módszerrel állítható be a content "
+"modulban."
+
+#: content.module:31
+msgid ""
+"For more information, see the online handbook entry for <a "
+"href=\"@handbook-cck\">CCK</a> or the <a href=\"@project-cck\">CCK "
+"project page</a>."
+msgstr ""
+"További információ a beállítási és testreszabási kézikönyv "
+"<a href=\"@handbook-cck\">CCK</a> oldalán, vagy a <a "
+"href=\"@project-cck\">CCK projekt oldalán</a> érhető el."
+
+#: content.module:1797
+msgid "Search Index"
+msgstr "Keresés index"
+
+#: content.module:1801
+msgid "Search Result"
+msgstr "Keresés eredménye"
+
+#: content.module:2146,2153
+msgid "Node module form."
+msgstr "Node modul űrlapja."
+
+#: content.module:2161
+msgid "Locale module form."
+msgstr "Locale modul űrlapja."
+
+#: content.module:2168
+msgid "Menu module form."
+msgstr "Menu modul űrlapja."
+
+#: content.module:2175
+msgid "Taxonomy module form."
+msgstr "Taxonomy modul űrlapja."
+
+#: content.module:2182
+msgid "Upload module form."
+msgstr "Upload modul űrlapja."
+
+#: content.module:530
+msgid "Updating field type %type with module %module."
+msgstr "%type mezőtípus módosítása %module modulnál."
+
+#: content.module:537
+msgid "Updating widget type %type with module %module."
+msgstr "%type felületi elemtípus módosítása %module modulnál."
+
+#: content.module:63
+msgid "Use PHP input for field settings (dangerous - grant with care)"
+msgstr ""
+"PHP alapú bevitel használata a mező beállításaihoz. (Veszélyes "
+"&ndash; engedélyezésével körültekintően kell eljárni!)"
+
+#: content.module:113
+msgid "Display fields"
+msgstr "Mezők megjelenítése"
+
+#: content.module:144
+msgid "Remove field"
+msgstr "Mező törlése"
+
+#: content.install:232
+msgid ""
+"Updates for CCK-related modules are not run until the modules are "
+"enabled on the <a href=\"@admin-modules-path\">administer modules "
+"page</a>. When you enable them, you'll need to return to <a "
+"href=\"@update-php\">update.php</a> and run the remaining updates."
+msgstr ""
+"A CCK-hoz kapcsolódó frissítések addig nem futnak, amíg a modulok "
+"nincsenek engedélyezve a <a href=\"@admin-modules-path\">modulok "
+"adminisztrációs oldalán</a>. Az engedélyezés után vissza kell "
+"térni az <a href=\"@update-php\">update.php</a> oldalra és a "
+"maradék frissítéseket le kell futtatni."
+
+#: content.install:235
+msgid ""
+"!module.module has updates but cannot be updated because "
+"content.module is not enabled.<br />If and when content.module is "
+"enabled, you will need to re-run the update script. You will continue "
+"to see this message until the module is enabled and updates are run."
+msgstr ""
+"!module modulnak vannak frissítései, de nem lehet frissíteni mert a "
+"content modul nincs engedélyezve.<br />Ha a content modul "
+"engedélyezetté válik, akkor újra kell futtatni a frissítési "
+"programot. Folyamatosan ez az üzenet fog megjelenni, amíg a modul "
+"nem engedélyezett, és a frissítések futnak."
+
+#: content.install:240
+msgid ""
+"!module.module has updates and is available in the modules folder but "
+"is not enabled.<br />If and when it is enabled, you will need to "
+"re-run the update script. You will continue to see this message until "
+"the module is enabled and updates are run."
+msgstr ""
+"!module modulnak vannak frissítései, mely elérhető a modul "
+"könytárában, de az nem engedélyezett.<br />Ha a modul "
+"engedélyezetté válik, akkor újra kell futtatni a frissítési "
+"programot. Folyamatosan ez az üzenet fog megjelenni, amíg a modul "
+"nem engedélyezett, és a frissítések futnak."
+
+#: content.install:247
+msgid ""
+"Some updates are still pending. Please return to <a "
+"href=\"@update-php\">update.php</a> and run the remaining updates."
+msgstr ""
+"Néhány frissítés még függőben van. Vissza kell térni az <a "
+"href=\"@update-php\">update.php</a> oldalra és a fennmaradó "
+"frissítéseket le kell futtatni."
+
+#: content.install:248
+msgid "Some updates are still pending.<br/>Please re-run the update script."
+msgstr ""
+"Néhány frissítés még függőben van.<br/>A frissítő programot "
+"újra kell futtatni."
+
+#: content.install:10
+msgid "CCK - No Views integration"
+msgstr "CCK - Views-illesztés nélkül"
+
+#: content.install:11
+msgid ""
+"CCK integration with Views module requires Views 6.x-2.0-rc2 or "
+"greater."
+msgstr ""
+"CCK-Views illesztéssel, mely annak 6.x-2.0-rc2 vagy újabb "
+"verzióját igényli."
+
+#: content.info:0
+msgid "Allows administrators to define new content types."
+msgstr ""
+"Lehetőséget ad az adminisztrátorok számára új tartalomtípusok "
+"meghatározására."
+
+#: content.install:10
+msgid "CCK - No Views integration"
+msgstr "CCK - Views-illesztés nélkül"
+
+#: content.install:11
+msgid ""
+"CCK integration with Views module requires Views 6.x-2.0-rc2 or "
+"greater."
+msgstr ""
+"CCK-Views illesztéssel, mely annak 6.x-2.0-rc2 vagy újabb "
+"verzióját igényli."
+
+
