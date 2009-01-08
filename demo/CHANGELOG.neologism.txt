@@ -1,6 +1,7 @@
-Neologism 0.xx, 2008-xx-xx
+Neologism 0.34, 2009-01-08
 --------------------------
 - #55 fix some postgresql incompatibility issues. Neologism is now working on Postgresql.
+- upgrade to Drupal 6.8 and CCK 2.1.
 
 Neologism 0.33, 2008-12-04
 --------------------------
