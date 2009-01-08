@@ -1,6 +1,6 @@
 Neologism 0.xx, 2008-xx-xx
 --------------------------
-
+- #55 fix some postgresql incompatibility issues. Neologism is now working on Postgresql.
 
 Neologism 0.33, 2008-12-04
 --------------------------

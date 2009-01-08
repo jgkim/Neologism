@@ -703,11 +703,11 @@ function _neologism_unset_aliases($node) {
  * Get all properties in a vocabulary 
  */
 function get_all_properties($node, $domain='') {
-  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" '), $node->nid);
+  $properties_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
   if ($domain)  {
-  $domain_id = db_fetch_array(db_query(db_rewrite_sql('SELECT nid FROM {node} WHERE title = "%s" '), $domain));
+  $domain_id = db_fetch_array(db_query(db_rewrite_sql("SELECT nid FROM {node} WHERE title = '%s'"), $domain));
   // $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_'.NEOLOGISM_CT_PROPERTY.'} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" AND t.field_domain_nid ='.$domain_id[nid] ), $node->nid);
-  $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_'.NEOLOGISM_CT_PROPERTY.'} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" AND t.field_domain_nid = %d' ), $node->nid, $domain_id[nid]);
+  $properties_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_".NEOLOGISM_CT_PROPERTY."} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s' AND t.field_domain_nid = %d" ), $node->nid, NEOLOGISM_CT_PROPERTY, $domain_id[nid]);
   }
   $i=0;
   while ($item = db_fetch_object($properties_ids)) {
@@ -753,7 +753,7 @@ function get_all_properties($node, $domain='') {
  */
 function get_all_classes($node) {
   // $class_ids = db_query(db_rewrite_sql('SELECT nid FROM {content_field_vocabulary} WHERE field_vocabulary_nid = %d'), $node->nid);
-  $class_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_CLASS.'"'), $node->nid);
+  $class_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS);
   // $class_ids = db_query(db_rewrite_sql('SELECT nid, field_subclassof_nid FROM {content_type_'.NEOLOGISM_CT_CLASS.'} WHERE field_vocabulary_nid = %d'), $node->nid);
   $i=0;
   
