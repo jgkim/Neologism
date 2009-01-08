@@ -150,8 +150,6 @@ function neologism_export_html($node) {
     $classes = get_all_classes($node);
     $properties = get_all_properties($node);
 
-    //var_dump($node);
-
     $output = '';
     drupal_set_title('Vocabulary '. check_plain($node->title));
 
@@ -166,7 +164,6 @@ function neologism_export_html($node) {
 
     foreach($node->field_authors as $author) {
       $author = user_load($author);
-      //var_dump($author);
       $output .= '<div class="field-item"><div class="field-label-inline'. $first_class .'">Authors:&nbsp;</div>';
       $output .= l($author->name, 'user/'. $author->uid);
       $output .= '</div>';
@@ -569,7 +566,7 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
 /**
  * Implementation of hook_form_alter().
  */
-//TODO check the new forma_alter
+//TODO check the new form_alter
 function neologism_form_alter(&$form, &$form_state, $form_id) {
   // Select the vocabulary when adding a class or a property from a vocabulary page
   if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_CT_PROPERTY.'_node_form') 
@@ -706,7 +703,6 @@ function get_all_properties($node, $domain='') {
   $properties_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
   if ($domain)  {
   $domain_id = db_fetch_array(db_query(db_rewrite_sql("SELECT nid FROM {node} WHERE title = '%s'"), $domain));
-  // $properties_ids = db_query(db_rewrite_sql('SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_'.NEOLOGISM_CT_PROPERTY.'} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type="'.NEOLOGISM_CT_PROPERTY.'" AND t.field_domain_nid ='.$domain_id[nid] ), $node->nid);
   $properties_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid INNER JOIN {content_type_".NEOLOGISM_CT_PROPERTY."} t ON c.nid=t.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s' AND t.field_domain_nid = %d" ), $node->nid, NEOLOGISM_CT_PROPERTY, $domain_id[nid]);
   }
   $i=0;
@@ -715,12 +711,7 @@ function get_all_properties($node, $domain='') {
   $properies_data[$i]['title']=$item->title;
   
   $prop_stuff = db_fetch_array(db_query(db_rewrite_sql('SELECT field_range_nid, field_domain_nid, field_inverse_nid, field_subpropertyof_nid FROM {content_type_'.NEOLOGISM_CT_PROPERTY.'} WHERE nid = %d'), $item->nid));
-  /*
-  $stuff=db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid IN (%d,%d,%d) '), $prop_stuff[field_range_nid],$prop_stuff[field_domain_nid],$prop_stuff[field_inverse_nid]);
-  var_dump($stuff);
-  while ($stuff_item = db_fetch_array($stuff) ) {
-     var_dump($stuff_item);
-  } */
+
   $range = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d '), $prop_stuff[field_range_nid]));
   $properies_data[$i]['range']=$range[title];
   $domain = db_fetch_array(db_query(db_rewrite_sql('SELECT title FROM {node} WHERE nid = %d '), $prop_stuff[field_domain_nid]));
@@ -733,7 +724,7 @@ function get_all_properties($node, $domain='') {
   $label = db_fetch_array(db_query(db_rewrite_sql('SELECT field_label_value FROM {content_field_label} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['label']=$label[field_label_value];
 
-// TODO fix the name of the field in the CCK definition to be consistent with the one used for classes
+  // TODO fix the name of the field in the CCK definition to be consistent with the one used for classes
   $comment_rdfs = db_fetch_array(db_query(db_rewrite_sql('SELECT field_comment_value FROM {content_field_comment} WHERE nid = %d'), $item->nid));
   $properies_data[$i]['comment_rdfs']=$comment_rdfs[field_comment_value];
   
@@ -744,7 +735,7 @@ function get_all_properties($node, $domain='') {
 
   $i++;
   }
-  // var_dump($properies_data);
+
   return $properies_data;
 }
 
@@ -752,9 +743,7 @@ function get_all_properties($node, $domain='') {
  * Get all classes in a vocabulary
  */
 function get_all_classes($node) {
-  // $class_ids = db_query(db_rewrite_sql('SELECT nid FROM {content_field_vocabulary} WHERE field_vocabulary_nid = %d'), $node->nid);
   $class_ids = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS);
-  // $class_ids = db_query(db_rewrite_sql('SELECT nid, field_subclassof_nid FROM {content_type_'.NEOLOGISM_CT_CLASS.'} WHERE field_vocabulary_nid = %d'), $node->nid);
   $i=0;
   
   while ($item = db_fetch_object($class_ids)) {
