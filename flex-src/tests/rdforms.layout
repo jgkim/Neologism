@@ -1,0 +1,12 @@
+<layout>
+  <rdfclass name="RDForm" x="628" y="8" width="109" height="30"/>
+  <rdfclass name="CRUDOperation" x="261.05" y="64.6" width="204" height="30"/>
+  <rdfclass name="CRUDOperationDELETE" x="18" y="115" width="210" height="30"/>
+  <rdfclass name="CRUDOperationUPDATE" x="16" y="66" width="206" height="30"/>
+  <rdfclass name="CRUDOperationCREATE" x="15" y="15" width="207" height="30"/>
+  <rdfclass name="Field" x="318" y="208" width="230" height="28"/>
+  <rdfclass name="UpdateableField" x="401" y="425" width="248" height="30"/>
+  <rdfclass name="FieldValue" x="12" y="431" width="323" height="30"/>
+  <rdfclass name="FieldKey" x="18" y="351" width="161" height="28"/>
+  <rdfclass name="ImmutableField" x="503" y="323" width="242" height="28"/>
+</layout>

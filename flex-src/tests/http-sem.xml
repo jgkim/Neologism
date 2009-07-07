@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<vocabulary><classes><rdfclass name="TimBLGenericResource" label="TimBL's generic resource"/><rdfclass name="TimeInvariantResource" label="A time-invariante resource"/><rdfclass name="FixedResource" label="A fixed resource"/></classes><properties><rdfproperty name="hasTemporalPart" label="has temporal part"/><rdfproperty name="isEncodedAs" label="is encoded as" domain="TimeInvariantResource" range="FixedResource"/></properties></vocabulary>

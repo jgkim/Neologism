@@ -1,0 +1,6 @@
+<layout>
+  <rdfclass name="RDVocabulary" x="302" y="149" width="274" height="30"/>
+  <rdfclass name="XRDVocabulary" x="50" y="100" width="186" height="30"/>
+  <rdfclass name="POWDERVocabulary" x="50" y="150" width="185" height="30"/>
+  <rdfclass name="VoiDVocabulary" x="50" y="196" width="182" height="30"/>
+</layout>

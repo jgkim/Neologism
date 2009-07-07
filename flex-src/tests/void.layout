@@ -1,0 +1,5 @@
+<layout>
+  <rdfclass name="Dataset" x="78" y="170" width="100" height="30"/>
+  <rdfclass name="Linkset" x="565.6" y="81" width="100" height="30"/>
+  <rdfclass name="TechnicalFeature" x="536" y="364" width="100" height="30"/>
+</layout>

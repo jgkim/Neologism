@@ -1,0 +1,7 @@
+<layout>
+  <rdfclass name="Bowler" x="50" y="50" width="100" height="30"/>
+  <rdfclass name="Game" x="399" y="244" width="100" height="30"/>
+  <rdfclass name="LeagueGame" x="527" y="332" width="121" height="30"/>
+  <rdfclass name="Team" x="81" y="407" width="100" height="30"/>
+  <rdfclass name="Tournament" x="302" y="376" width="100" height="30"/>
+</layout>
