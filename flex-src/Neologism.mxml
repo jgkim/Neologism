@@ -75,6 +75,13 @@
 				if (host == '') {
 					_urlVocab = 'vocabulary.xml';
 					_urlLayout = 'layout.xml';
+					
+					/*
+					var casename:String = "c1";
+					_urlVocab = casename + '.xml';
+					_urlLayout = casename + '.layout';
+					*/
+
 					_urlDiagramWrite = '';
 					_urlLayoutWrite = '';
 				} else {
@@ -179,7 +186,7 @@
             
             public function about() : void
             {
-            	Alert.show('Thank you for using the Neologism Simple Vocbulary Visualizer. \n Cosmin Basca (c) March 2008, \n cosmin.basca@deri.org \n www.deri.ie','About NeoSViz',Alert.OK, this, null, IconInfo, Alert.OK);
+            	Alert.show('Thank you for using the Neologism Simple Vocbulary Visualizer. \n Cosmin Basca (c) March 2008, \n cosmin.basca@deri.org \n www.deri.ie','About NeoSViz v1.1',Alert.OK, this, null, IconInfo, Alert.OK);
             }
 		]]>
 	</mx:Script>
@@ -189,6 +196,9 @@
 			<mx:CheckBox label="Edit Layout" 
 				id="editLayout" 
 				change="onEditLayoutChangeHandler()" 
+				selected="true"/>
+			<mx:CheckBox label="Show Properties" 
+				id="showProperties" 
 				selected="true"/>
 			<mx:Label text="Zoom:" height="100%"/>
 			<mx:HSlider height="100%" 

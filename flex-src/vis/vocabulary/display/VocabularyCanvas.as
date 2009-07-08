@@ -122,66 +122,84 @@ package vis.vocabulary.display
 		
 		private function drawArc(arc:RDFArc) : void 
 		{
-			var d:RDFObjectHandles = arc.domain.handle;
-			var r:RDFObjectHandles = arc.range.handle;
-			var p1:Point = d.arcInPoint(r);
-			var p2:Point = r.arcInPoint(d);
-			var arrhead:Array = [];	
-			
-			// local coordinates
-			var l_p1:Point = toLocal(p1);
-			var l_p2:Point = toLocal(p2);
-			var l_p:Point = null;
-			
-			if (arc.type == RDFArc.RDFS_PROPERTY) {
-				var label:RDFPropertyLabel = arc.label;
-				
-				this.graphics.lineStyle(PROPERTY_STYLE[0],PROPERTY_STYLE[1],PROPERTY_STYLE[2]);
-				
-				var cw:Number = 1;
-				var p:Point = null;
-				var dev:Number = _arcDeviation;
-				if (d == r) {
-					var arr:Array = d.arcOnItself();
-					p1 = arr[0];
-					p2 = arr[1];
-					l_p1 = toLocal(p1);
-					l_p2 = toLocal(p2);
-					dev = arc.index * _arcDeviation;
-				} else {
-					if (p1 == null || p2 == null)
-						return;
-					cw = (arc.index % 2 == 0) ? -1 : 1;
-					dev = (int(arc.index/2)+1) * _arcDeviation;
+			/*
+			for each (var arc:RDFArc in _arcs) {
+				if( arc.domain != null || arc.range == null )
+				{
+					trace("arc.domain.rdfName = " + arc.domain.rdfName + " and arc.range = null");
+				}			
+				if( arc.domain == null || arc.range != null )
+				{
+					trace("arc.domain = null and arc.range.rdfName = " + arc.range.rdfName);
 				}
-				
-				p = Utils.middlePerpendicularPoint2(p1,p2,dev,cw);
-				l_p = toLocal(p);
-				
-				this.graphics.moveTo(l_p1.x,l_p1.y);
-				this.graphics.curveTo(l_p.x,l_p.y,l_p2.x,l_p2.y);
-				
-				label.x = p.x - label.width / 2;
-				label.y = p.y - label.height / 2;
-				
-				arrhead = Utils.arrowHeads2(l_p2,l_p);
-				
-			} else if (arc.type == RDFArc.RDFS_SUBBCLASSOF) {
-				this.graphics.lineStyle(SUBCLASS_STYLE[0],SUBCLASS_STYLE[1],SUBCLASS_STYLE[2]);
-				
-				if (p1 == null || p2 == null)
-					return;
-					
-				this.graphics.moveTo(l_p1.x,l_p1.y);
-				this.graphics.lineTo(l_p2.x,l_p2.y);
-				
-				arrhead = Utils.arrowHeads2(l_p2,l_p1);
 			}
 			
-			// arrow head
-			this.graphics.moveTo(arrhead[0].x,arrhead[0].y);
-			this.graphics.lineTo(l_p2.x,l_p2.y);
-			this.graphics.lineTo(arrhead[1].x,arrhead[1].y);
+			if( arc.domain != null || arc.range != null )
+			{
+			*/
+				//trace("--------------- arc.domain.rdfName = " + arc.domain.rdfName + " and arc.range.rdfName = " + arc.range.rdfName);
+				
+				var d:RDFObjectHandles = arc.domain.handle;
+				var r:RDFObjectHandles = arc.range.handle;
+				var p1:Point = d.arcInPoint(r);
+				var p2:Point = r.arcInPoint(d);
+				var arrhead:Array = [];	
+				
+				// local coordinates
+				var l_p1:Point = toLocal(p1);
+				var l_p2:Point = toLocal(p2);
+				var l_p:Point = null;
+				
+				if (arc.type == RDFArc.RDFS_PROPERTY) {
+					var label:RDFPropertyLabel = arc.label;
+					
+					this.graphics.lineStyle(PROPERTY_STYLE[0],PROPERTY_STYLE[1],PROPERTY_STYLE[2]);
+					
+					var cw:Number = 1;
+					var p:Point = null;
+					var dev:Number = _arcDeviation;
+					if (d == r) {
+						var arr:Array = d.arcOnItself();
+						p1 = arr[0];
+						p2 = arr[1];
+						l_p1 = toLocal(p1);
+						l_p2 = toLocal(p2);
+						dev = arc.index * _arcDeviation;
+					} else {
+						if (p1 == null || p2 == null)
+							return;
+						cw = (arc.index % 2 == 0) ? -1 : 1;
+						dev = (int(arc.index/2)+1) * _arcDeviation;
+					}
+					
+					p = Utils.middlePerpendicularPoint2(p1,p2,dev,cw);
+					l_p = toLocal(p);
+					
+					this.graphics.moveTo(l_p1.x,l_p1.y);
+					this.graphics.curveTo(l_p.x,l_p.y,l_p2.x,l_p2.y);
+					
+					label.x = p.x - label.width / 2;
+					label.y = p.y - label.height / 2;
+					
+					arrhead = Utils.arrowHeads2(l_p2,l_p);
+					
+				} else if (arc.type == RDFArc.RDFS_SUBBCLASSOF) {
+					this.graphics.lineStyle(SUBCLASS_STYLE[0],SUBCLASS_STYLE[1],SUBCLASS_STYLE[2]);
+					
+					if (p1 == null || p2 == null)
+						return;
+						
+					this.graphics.moveTo(l_p1.x,l_p1.y);
+					this.graphics.lineTo(l_p2.x,l_p2.y);
+					
+					arrhead = Utils.arrowHeads2(l_p2,l_p1);
+				}
+				
+				// arrow head
+				this.graphics.moveTo(arrhead[0].x,arrhead[0].y);
+				this.graphics.lineTo(l_p2.x,l_p2.y);
+				this.graphics.lineTo(arrhead[1].x,arrhead[1].y);
+			//}
 		}
 		
 		override protected function updateDisplayList(unscaledWidth:Number, unscaledHeight:Number):void
@@ -258,11 +276,16 @@ package vis.vocabulary.display
 			var arc_bins:Object = {};
 			var rdf_superClasses:Object = {};
 			
+			// added by guidocecilio
+			var dummyClassName:String = "Dummy Class";
+			var dummyClassNumber:Number = 0;
+			
 			trace('==== Get Classes ====');
 			for each (var rdfClass:XML in vocabulary.classes.rdfclass) {
             	rdf_cls = String(rdfClass.@name);
             	_classes[rdf_cls] = this.addRdfClass(rdf_cls,rdfClass.@label,false);
             	_class_names.push(rdf_cls);
+            	
             	// subclassof 
             	if (rdfClass.@subclass != undefined) {
             		rdf_superClasses[rdf_cls] = String(rdfClass.@subclass).split(',');
@@ -272,6 +295,14 @@ package vis.vocabulary.display
             
             for (rdf_cd in rdf_superClasses) {
             	for each(rdf_cr in rdf_superClasses[rdf_cd]) {
+    				// added by guidocecilio - 07 July 2009
+    				// check if there is a real class, if doesn't then create a dummy class
+    				if( _classes[rdf_cr] == null ) {
+    					dummyClassNumber++;
+    					// where rdf_cr is the name of the class and dummyClassName + dummyClassNumber.toString() the label
+    					_classes[rdf_cr] = this.addRdfClass(rdf_cr, dummyClassName + dummyClassNumber.toString(), false);
+    				}
+    				
     				rdf_arc = new RDFArc(null,_classes[rdf_cd],_classes[rdf_cr],RDFArc.RDFS_SUBBCLASSOF);
     				_arcs.push(rdf_arc);
             	}
@@ -285,6 +316,7 @@ package vis.vocabulary.display
             		_properties[rdf_prop].domain = _class_names;
             	else 
             		_properties[rdf_prop].domain = String(rdfProperty.@domain).split(',');
+            	
             	// scan for new classes
             	for each(rdf_cls in _properties[rdf_prop].domain) {
             		if (_class_names.indexOf(rdf_cls) == -1) {
@@ -292,10 +324,13 @@ package vis.vocabulary.display
             		}  
             	}
             	
+            	//comment by guidocecilio
+            	// if property range == undefined 
             	if (rdfProperty.@range == undefined)
             		_properties[rdf_prop].range = _class_names;
             	else 
             		_properties[rdf_prop].range = String(rdfProperty.@range).split(',');
+            	
             	// scan for new classes
             	for each(rdf_cls in _properties[rdf_prop].range) {
             		if (_class_names.indexOf(rdf_cls) == -1) {
