@@ -1,0 +1,5 @@
+TO USE WITH CAUTION this is likely to crash your browser.
+
+from http://srvgal65.deri.ie/neologism2/birf/
+
+find out why it is not loading. hint, it is trying to draw an arc from all classes to all classes because no domain/range is defined?
