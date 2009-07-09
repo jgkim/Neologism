@@ -5,6 +5,8 @@ package vis.vocabulary.display
 	import flash.events.MouseEvent;
 	import flash.geom.Point;
 	import flash.geom.Rectangle;
+	import flash.trace.Trace;
+	import mx.containers.Canvas;
 
 	public class RDFObjectHandles extends ObjectHandles
 	{
@@ -84,5 +86,34 @@ package vis.vocabulary.display
 		public function arcOnItself() : Array {
 			return Utils.arcOnRect(paddRectangle);
 		}
+		
+		// added by guidocecilio - 09 July 2009
+		// added a mouse listener to prevent the nodes overflow
+		// this fix the problem when the user move a class node outside the left and the top margin
+		override protected function onMouseMove(event:MouseEvent) : void
+		{
+			trace(event);
+			
+			if( !visible ) { return; }
+			
+			if( !event.buttonDown )
+			{
+				setMouseCursor( event.stageX, event.stageY );
+				return;
+			}
+			
+			if( this.parent is Canvas ) {
+				var parentCanvas:Canvas = parent as Canvas;
+				trace(parentCanvas.name + ", x = "  + parentCanvas.x + ", width = " + parentCanvas.width);
+				trace(this.name + ", x = "  + this.x + ", width = " + this.width + ", y = " + this.y + ", height = " + this.height);
+				
+				super.onMouseMove(event);
+				
+				if( this.x < 0 ) this.x = 0;
+				if( this.y < 0 ) this.y = 0;
+			}
+		}
+		
+		
 	}
 }
