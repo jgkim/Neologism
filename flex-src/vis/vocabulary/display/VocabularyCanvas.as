@@ -43,6 +43,7 @@ package vis.vocabulary.display
 		private var _classes:Object;
 		private var _arcs:Array;
 		
+		
 		public function VocabularyCanvas()
 		{
 			super();
@@ -88,14 +89,14 @@ package vis.vocabulary.display
 		private function paintGrid() : void
 		{
 			this.graphics.beginFill(0xffffff, 1);
-			this.graphics.drawRect(0,0,width,height);
+			this.graphics.drawRect(0, 0, this.width, this.height);
 			this.graphics.endFill();
 			
-			this.graphics.lineStyle(GRID_STYLE[0],GRID_STYLE[1],GRID_STYLE[2]);
+			this.graphics.lineStyle(GRID_STYLE[0], GRID_STYLE[1], GRID_STYLE[2]);
 			
 			var startGridX:Number = screen.x + _gridSpaceing - screen.x % _gridSpaceing;
 			var startGridY:Number = screen.y + _gridSpaceing - screen.y % _gridSpaceing;
-			for (var i:Number=startGridX; i<= screen.x + screen.width; i+= _gridSpaceing) {
+			for (var i:Number=startGridX; i <= screen.x + screen.width; i+= _gridSpaceing) {
 				this.graphics.moveTo(i,screen.y);
 				this.graphics.lineTo(i,screen.y + screen.height);
 			}
@@ -104,6 +105,7 @@ package vis.vocabulary.display
 				this.graphics.moveTo(screen.x,i);
 				this.graphics.lineTo(screen.x + screen.width,i);
 			}
+
 		}
 		
 		protected function drawArcs() : void
@@ -299,6 +301,7 @@ package vis.vocabulary.display
     				// check if there is a real class, if doesn't then create a dummy class
     				if( _classes[rdf_cr] == null ) {
     					dummyClassNumber++;
+    					
     					// where rdf_cr is the name of the class and dummyClassName + dummyClassNumber.toString() the label
     					_classes[rdf_cr] = this.addRdfClass(rdf_cr, dummyClassName + dummyClassNumber.toString(), false);
     				}

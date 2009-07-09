@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <mx:Application xmlns:mx="http://www.adobe.com/2006/mxml" 
-	layout="vertical" 
+	layout="absolute" 
 	xmlns:oh="com.roguedevelopment.objecthandles.*"
 	creationComplete="init()" 
 	xmlns:popupbar="com.roguedevelopment.popupbar.*" 
@@ -76,11 +76,11 @@
 					_urlVocab = 'vocabulary.xml';
 					_urlLayout = 'layout.xml';
 					
-					/*
-					var casename:String = "c1";
-					_urlVocab = casename + '.xml';
-					_urlLayout = casename + '.layout';
-					*/
+					
+					//var casename:String = "c1";
+					//_urlVocab = casename + '.xml';
+					//_urlLayout = casename + '.layout';
+					
 
 					_urlDiagramWrite = '';
 					_urlLayoutWrite = '';
@@ -186,55 +186,55 @@
             
             public function about() : void
             {
-            	Alert.show('Thank you for using the Neologism Simple Vocbulary Visualizer. \n Cosmin Basca (c) March 2008, \n cosmin.basca@deri.org \n www.deri.ie','About NeoSViz v1.1',Alert.OK, this, null, IconInfo, Alert.OK);
+            	Alert.show('Thank you for using the Neologism Simple Vocbulary Visualizer. \n Cosmin Basca (c) March 2008, \n cosmin.basca@deri.org \n www.deri.ie','About NeoSViz v1.2',Alert.OK, this, null, IconInfo, Alert.OK);
             }
 		]]>
 	</mx:Script>
-	
-	<mx:VBox width="100%" height="100%">
-		<mx:HBox width="100%" borderStyle="solid" borderThickness="1" cornerRadius="3" id="toolbar">
-			<mx:CheckBox label="Edit Layout" 
-				id="editLayout" 
-				change="onEditLayoutChangeHandler()" 
-				selected="true"/>
-			<mx:CheckBox label="Show Properties" 
-				id="showProperties" 
-				selected="true"/>
-			<mx:Label text="Zoom:" height="100%"/>
-			<mx:HSlider height="100%" 
-				minimum="1.0" 
-				maximum="8.0" 
-				enabled="true" 
-				id="zoom" 
-				allowTrackClick="false" 
-				snapInterval="0.1" 
-				change="onZoom()" 
-				liveDragging="true"/>
-			<mx:Label text="Grid Size" height="100%"/>
-			<mx:HSlider height="100%" 
-				minimum="5" 
-				maximum="45" 
-				value="{vocabularyPanel.gridSpacing}"
-				snapInterval="2" 
-				id="gridSize"
-				liveDragging="true"
-				change="changeGrid()"/>
-			<mx:Button label="About" click="about()"/>
-			<mx:Button id="saveLayout" label="Save Layout"
-				click="onSavelayout()"
-				visible="true"
-				/>
-		</mx:HBox>
-	
-		<vdisplay:VocabularyCanvas
-				id="vocabularyPanel" 
-				label="Vocabulary Preview" 
-				width="100%" 
-				height="100%"  
-				cornerRadius="3"
-				borderStyle="solid" 
-				borderThickness="2">
-		</vdisplay:VocabularyCanvas>
-		
-	</mx:VBox>
+	<mx:Panel width="100%" height="100%" layout="absolute" x="0" y="0">
+		<mx:VBox width="100%" height="100%">
+			<mx:HBox width="100%" borderStyle="solid" borderThickness="1" id="toolbar" top="0">
+				<mx:CheckBox label="Edit Layout" 
+					id="editLayout" 
+					change="onEditLayoutChangeHandler()" 
+					selected="true"/>
+				<mx:CheckBox label="Show Properties" 
+					id="showProperties" 
+					selected="true"/>
+				<mx:Label text="Zoom:" height="100%"/>
+				<mx:HSlider height="100%" 
+					minimum="1.0" 
+					maximum="8.0" 
+					enabled="true" 
+					id="zoom" 
+					allowTrackClick="false" 
+					snapInterval="0.1" 
+					change="onZoom()" 
+					liveDragging="true"/>
+				<mx:Label text="Grid Size" height="100%"/>
+				<mx:HSlider height="100%" 
+					minimum="5" 
+					maximum="45" 
+					value="{vocabularyPanel.gridSpacing}"
+					snapInterval="2" 
+					id="gridSize"
+					liveDragging="true"
+					change="changeGrid()"/>
+				<mx:Button label="About" click="about()"/>
+				<mx:Button id="saveLayout" label="Save Layout"
+					click="onSavelayout()"
+					visible="true"
+					/>
+			</mx:HBox>
+			
+			<vdisplay:VocabularyCanvas
+					id="vocabularyPanel" 
+					label="Vocabulary Preview" 
+					width="100%" 
+					height="100%"  
+					borderStyle="solid" 
+					borderThickness="1">
+			</vdisplay:VocabularyCanvas>
+			
+		</mx:VBox>
+	</mx:Panel>
 </mx:Application>
