@@ -73,15 +73,13 @@
 				
 				host = URLUtil.getServerNameWithPort(Application.application.url);
 				if (host == '') {
-					_urlVocab = 'vocabulary.xml';
-					_urlLayout = 'layout.xml';
+					//_urlVocab = 'vocabulary.xml';
+					//_urlLayout = 'layout.xml';
 					
+					var casename:String = "c1";					
+					_urlVocab = casename + '.xml';
+					_urlLayout = casename + '.layout';
 					
-					//var casename:String = "c1";
-					//_urlVocab = casename + '.xml';
-					//_urlLayout = casename + '.layout';
-					
-
 					_urlDiagramWrite = '';
 					_urlLayoutWrite = '';
 				} else {

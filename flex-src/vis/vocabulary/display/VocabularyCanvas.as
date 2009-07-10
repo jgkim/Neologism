@@ -152,6 +152,8 @@ package vis.vocabulary.display
 				var l_p2:Point = toLocal(p2);
 				var l_p:Point = null;
 				
+				
+				
 				if (arc.type == RDFArc.RDFS_PROPERTY) {
 					var label:RDFPropertyLabel = arc.label;
 					
@@ -279,57 +281,44 @@ package vis.vocabulary.display
 			var rdf_superClasses:Object = {};
 			
 			// added by guidocecilio
-			var dummyClassName:String = "Dummy Class";
-			var dummyClassNumber:Number = 0;
+			var externalClassPrefix:String = "External Class";
+			var externalClassNumber:Number = 0;
 			
 			trace('==== Get Classes ====');
 			for each (var rdfClass:XML in vocabulary.classes.rdfclass) {
             	rdf_cls = String(rdfClass.@name);
-            	_classes[rdf_cls] = this.addRdfClass(rdf_cls,rdfClass.@label,false);
+            	
+            	_classes[rdf_cls] = this.addRdfClass(rdf_cls, rdfClass.@label, false);
             	_class_names.push(rdf_cls);
             	
             	// subclassof 
-            	if (rdfClass.@subclass != undefined) {
-            		rdf_superClasses[rdf_cls] = String(rdfClass.@subclass).split(',');
+            	if( rdfClass.@subclass != undefined ) {
+            		// add to superclasses with subclass name index the list of superclasses 
+            		rdf_superClasses[rdf_cls] = String(rdfClass.@subclass).split(','); // this should be String(rdfClass.@subclassof).split(',');  
             	}
+            	
             	trace('CLASS : '+rdf_cls+' - '+_classes[rdf_cls]);
             }
-            
-            for (rdf_cd in rdf_superClasses) {
-            	for each(rdf_cr in rdf_superClasses[rdf_cd]) {
-    				// added by guidocecilio - 07 July 2009
-    				// check if there is a real class, if doesn't then create a dummy class
-    				if( _classes[rdf_cr] == null ) {
-    					dummyClassNumber++;
-    					
-    					// where rdf_cr is the name of the class and dummyClassName + dummyClassNumber.toString() the label
-    					_classes[rdf_cr] = this.addRdfClass(rdf_cr, dummyClassName + dummyClassNumber.toString(), false);
-    				}
-    				
-    				rdf_arc = new RDFArc(null,_classes[rdf_cd],_classes[rdf_cr],RDFArc.RDFS_SUBBCLASSOF);
-    				_arcs.push(rdf_arc);
-            	}
-    		}
             
             trace('==== Get Properties ====');
             for each (var rdfProperty:XML in vocabulary.properties.rdfproperty) {
             	rdf_prop = String(rdfProperty.@name);
-            	_properties[rdf_prop] = new RDFProperty(rdf_prop,rdfProperty.@label);
+            	_properties[rdf_prop] = new RDFProperty(rdf_prop, rdfProperty.@label);
+            	
             	if (rdfProperty.@domain == undefined)
             		_properties[rdf_prop].domain = _class_names;
             	else 
             		_properties[rdf_prop].domain = String(rdfProperty.@domain).split(',');
             	
             	// scan for new classes
-            	for each(rdf_cls in _properties[rdf_prop].domain) {
-            		if (_class_names.indexOf(rdf_cls) == -1) {
-            			_classes[rdf_cls] = this.addRdfClass(rdf_cls,rdf_cls,true);
+            	for each( rdf_cls in _properties[rdf_prop].domain ) {
+            		if( _class_names.indexOf(rdf_cls) == -1 ) {
+            			_class_names.push(rdf_cls);
+            			_classes[rdf_cls] = this.addRdfClass(rdf_cls, rdf_cls, true);
             		}  
             	}
             	
-            	//comment by guidocecilio
-            	// if property range == undefined 
-            	if (rdfProperty.@range == undefined)
+            	if( rdfProperty.@range == undefined )
             		_properties[rdf_prop].range = _class_names;
             	else 
             		_properties[rdf_prop].range = String(rdfProperty.@range).split(',');
@@ -337,12 +326,32 @@ package vis.vocabulary.display
             	// scan for new classes
             	for each(rdf_cls in _properties[rdf_prop].range) {
             		if (_class_names.indexOf(rdf_cls) == -1) {
+            			_class_names.push(rdf_cls);
             			_classes[rdf_cls] = this.addRdfClass(rdf_cls,rdf_cls,true);
             		}  
             	}
-            	
             	trace('PROP : '+rdf_prop+' | '+_properties[rdf_prop].domain+' | '+_properties[rdf_prop].range);
             }
+            
+            // comment by guidocecilio - 10 July 2009
+            // create arcs between each class and superclass
+            for( var rdf_extendedClass:Object in rdf_superClasses) {
+            	for each(var rdf_superClass:Object in rdf_superClasses[rdf_extendedClass]) {
+    				// added by guidocecilio - 07 July 2009
+    				// check if there is a real class, if doesn't then create a dummy class
+    				if( _classes[rdf_superClass] == null ) {
+    					externalClassNumber++;
+    					// where rdf_cr is the name of the class and dummyClassName + dummyClassNumber.toString() the label
+    					// so add an external class
+    					//_classes[rdf_superClass] = this.addRdfClass(rdf_superClass.toString(), 
+    						//externalClassPrefix + externalClassNumber.toString() + rdf_superClass.toString(), true);
+    					_classes[rdf_superClass] = this.addRdfClass(rdf_superClass.toString(), rdf_superClass.toString(), true);	
+    				}
+    				
+    				rdf_arc = new RDFArc(null,_classes[rdf_extendedClass], _classes[rdf_superClass], RDFArc.RDFS_SUBBCLASSOF);
+    				_arcs.push(rdf_arc);
+        		}
+    		}	
             
             trace('==== Init ARC Bins ====');
             for (rdf_cd in _classes) {
