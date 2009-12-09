@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+         xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+         xmlns:owl="http://www.w3.org/2002/07/owl#"
+         xmlns:doap="http://usefulinc.com/ns/doap#" 
+         xmlns:foaf="http://xmlns.com/foaf/0.1/" 
+         xmlns:admin="http://webns.net/mvcb/" 
+         xml:lang="en">
+
+  <foaf:Document rdf:about="http://neologis.deri.ie/resources/doap.rdf">
+    <rdfs:label>Neologism's DOAP document</rdfs:label>
+    <foaf:primaryTopic rdf:resource="http://neologism.deri.ie/doap#neologism"/>
+  </foaf:Document>
+
+  <doap:Project rdf:about="http://neologism.deri.ie/doap#neologism">
+
+    <doap:name>Neologism</doap:name>
+    <doap:description>Easy Vocabulary Publishing</doap:description>
+    <doap:homepage rdf:resource="http://neologism.deri.ie/"/>
+    <doap:created>2008-03-08</doap:created>
+
+    <owl:sameAs rdf:resource="http://mmlab.deri.ie/neologism/doap#neologism" />
+
+    <doap:programming-language>php</doap:programming-language>
+    <doap:license rdf:resource="http://usefulinc.com/doap/licenses/gpl"/>
+
+    <doap:developer>
+      <foaf:Person rdf:about="http://www.deri.ie/fileadmin/scripts/foaf.php?id=243#me">
+        <foaf:name>Cosmin Basca</foaf:name>
+        <foaf:mbox_sha1sum>9270d533ca34867772f1f8bd88d200750834cb81</foaf:mbox_sha1sum>
+        <foaf:homepage rdf:resource="http://www.deri.ie/about/team/member/cosmin_basca/" />
+        <rdfs:seeAlso rdf:resource="http://www.deri.ie/fileadmin/scripts/foaf.php?id=243"/>
+      </foaf:Person>
+    </doap:developer>
+
+    <doap:developer>
+      <foaf:Person rdf:about="http://www.deri.ie/fileadmin/scripts/foaf.php?id=305#me">
+        <foaf:name>Stéphane Corlosquet</foaf:name>
+        <foaf:nick>scor</foaf:nick>
+        <foaf:mbox_sha1sum>ec4755462cdda21224fa63f27c5553d1cc875891</foaf:mbox_sha1sum>
+        <foaf:homepage rdf:resource="http://openspring.net/" />
+        <rdfs:seeAlso rdf:resource="http://www.deri.ie/fileadmin/scripts/foaf.php?id=305"/>
+      </foaf:Person>
+    </doap:developer>
+
+    <doap:developer>
+      <foaf:Person rdf:about="http://richard.cyganiak.de/foaf.rdf#cygri">
+        <foaf:name>Richard Cyganiak</foaf:name>
+        <foaf:nick>cygri</foaf:nick>
+        <foaf:mbox_sha1sum>bb3df3cf988e2d5fc234840d9dc9d4a6eaf822bd</foaf:mbox_sha1sum>
+        <foaf:homepage rdf:resource="http://richard.cyganiak.de/" />
+        <foaf:weblog rdf:resource="http://dowhatimean.net/" />
+        <rdfs:seeAlso rdf:resource="http://richard.cyganiak.de/foaf.rdf" />
+      </foaf:Person>
+    </doap:developer>
+
+    <doap:developer>
+      <foaf:Person rdf:about="http://www.wikier.org/foaf#wikier">
+        <foaf:name>Sergio Fernández</foaf:name>
+        <foaf:nick>Wikier</foaf:nick>
+        <foaf:mbox_sha1sum>d0fd987214f56f70b4c47fb96795f348691f93ab</foaf:mbox_sha1sum>
+        <foaf:homepage rdf:resource="http://www.wikier.org/" />
+        <rdfs:seeAlso rdf:resource="http://www.wikier.org/foaf.rdf"/>
+      </foaf:Person>
+    </doap:developer>
+
+    <doap:developer>
+      <foaf:Person rdf:about="http://www.deri.ie/fileadmin/scripts/foaf.php?id=309#me">
+        <foaf:name>Thomas Schandl</foaf:name>
+        <foaf:nick>thosch</foaf:nick>
+        <foaf:mbox_sha1sum>25da8e9ca992e56ed97a7abb5bc01f09435431e7</foaf:mbox_sha1sum>
+        <foaf:homepage rdf:resource="http://www.wikier.org/" />
+        <rdfs:seeAlso rdf:resource="http://www.deri.ie/fileadmin/scripts/foaf.php?id=309"/>
+      </foaf:Person>
+    </doap:developer>
+
+  </doap:Project>
+
+</rdf:RDF>
+

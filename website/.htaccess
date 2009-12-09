@@ -1,0 +1,4 @@
+
+RewriteEngine On
+RewriteRule ^doap$ /neologism/resources/doap.rdf [R=303,L,QSA]
+

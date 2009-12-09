@@ -1,0 +1,4 @@
+#neologism's robots.txt
+
+User-agent: *
+Disallow: /stats/
