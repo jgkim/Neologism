@@ -117,7 +117,7 @@ function neologism_profile_tasks(&$task, $url) {
   $modules_list = array(
     'sparql',
     'evoc', 
-    'ext', 'evocreference', 'mxcheckboxselect',
+    'evocreference', 'mxcheckboxselect',
     //'neologism'
   );
   
