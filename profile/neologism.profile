@@ -45,7 +45,7 @@ function neologism_profile_modules() {
 function neologism_profile_details() {
   return array(
     'name' => 'Neologism',
-    'description' => 'Neologism is a tool to easily create and publish RDF vocabularies.'
+    'description' => 'Neologism is a pre-packaged web site that lets users easily create and publish RDF vocabularies.'
   );
 }
 
@@ -117,7 +117,7 @@ function neologism_profile_tasks(&$task, $url) {
   $modules_list = array(
     'sparql',
     'evoc', 
-    'evocreference', 'mxcheckboxselect',
+    'evocreference', 'ext', 'mxcheckboxselect',
     //'neologism'
   );
   
