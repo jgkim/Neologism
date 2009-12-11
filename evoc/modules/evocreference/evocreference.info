@@ -1,0 +1,9 @@
+; $Id: evocreference.info,v 2.0.0.0 2009/10/30 16:00:50 guidocecilio Exp $
+name = Evoc Reference
+description = Defines a field type for referencing an RDF class or property from a node.
+dependencies[] = content
+dependencies[] = text
+dependencies[] = optionwidgets
+dependencies[] = evoc
+package = CCK
+core = 6.x

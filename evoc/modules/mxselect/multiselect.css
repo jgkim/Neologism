@@ -1,0 +1,64 @@
+select.multiselect_unsel {
+  width: 250px;
+}
+select.multiselect_sel {
+  width: 250px;
+}
+/* LABELS ABOVE FIELDS */
+#multiselect_labels {
+	font-weight: bold;
+	color: #999;
+	width: 575px;
+}
+#multiselect_labels #label_unselected {
+	float: left;
+}
+#multiselect_labels #label_selected {
+	float: right;
+	margin-right: 145px;
+}
+/* FIELDS */
+#multiselect_available {
+	float: left;
+}
+/* BUTTONS */
+ul#multiselect_btns {
+  list-style: none;
+  margin: 10px 10px 0px 20px;
+	padding: 0px;
+	float: left;
+}
+li.multiselect_add, li.multiselect_remove {
+	background: none;
+  height: 38px;
+  overflow: hidden;
+	width: 33px;
+	margin: 0px;
+	padding: 0px;
+}
+li.multiselect_add {
+	margin-bottom: 15px;
+}
+.multiselect_add a {
+  display: block;
+  height: 38px;
+  text-indent: -9999px;
+  background: url(images/add.png) no-repeat;
+  background-position: 0 0;
+}
+.multiselect_remove a {
+  display: block;
+  height: 38px;
+  text-indent: -9999px;
+  background: url(images/remove.png) no-repeat;
+  background-position: 0 0;
+}
+.multiselect_add a:hover {background-position: -33px 0px;}
+.multiselect_add a:active {background-position: -66px 0px;}
+.multiselect_remove a:hover {background-position: -33px 0px;}
+.multiselect_remove a:active {background-position: -66px 0px;}
+/* FIELD DESCRIPTION */
+.multiselect .description {
+	display: block;
+	clear: both;
+}

@@ -1,0 +1,20 @@
+; $Id:
+name = Neologism
+description = Allows users to easily publish their own vocabulary online.
+dependencies[] = path
+dependencies[] = content
+dependencies[] = content_copy
+dependencies[] = fieldgroup
+dependencies[] = nodereference
+dependencies[] = userreference
+dependencies[] = text
+dependencies[] = optionwidgets
+dependencies[] = rdf
+dependencies[] = sparql
+dependencies[] = evoc
+dependencies[] = evocreference
+dependencies[] = ext
+dependencies[] = mxcheckboxselect
+package = RDF
+core = 6.x
+version = "6.x-1.x-dev"

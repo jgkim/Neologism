@@ -1,0 +1,685 @@
+/* $Id:  $ */
+
+h2.neologism {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  font-size: 2em;
+}
+
+#atglance {  
+  border: 1px dotted;
+  
+  padding: 0.8em;
+}
+
+#atglance p {
+  text-align: left;
+}
+
+div#atglance > p {
+  margin: 0;
+  padding: 0;
+}
+
+div.linkontop {
+  float: right; 
+  margin: 0;
+}
+.neologism_terms_links {
+  font-size: 0.8em;
+}
+
+img#legend {
+  float: right;
+  margin: 3em 2em 2em auto;
+}
+
+#add_terms_link a {
+  padding-right : 4px;
+}
+
+/* treeview objects and classes */
+#class-tree {
+  margin: 10px 0 0 0;
+}
+
+#object-property-tree {
+  margin: 10px 0 0 0;
+}
+
+.class-samevoc {
+    background-image: url(images/icons/class_samevoc.gif) !important;
+}
+
+.class-diffvoc {
+    background-image: url(images/icons/class_diffvoc.gif) !important;
+}
+
+.property-samevoc {
+    background-image: url(images/icons/property_samevoc.gif) !important;
+}
+
+.property-diffvoc {
+    background-image: url(images/icons/property_diffvoc.gif) !important;
+}
+
+.icon-expand-all {
+    background-image: url(images/icons/expand-all.gif) !important;
+}
+.icon-collapse-all {
+    background-image: url(images/icons/collapse-all.gif) !important;
+}
+
+.complete .x-tree-node-anchor span {
+  text-decoration: line-through;
+  color: #777;
+}
+
+.locked-for-edition .x-tree-node-anchor span {
+  text-decoration: overline;
+  color: #ff0000; 
+}
+
+.currentvoc .x-tree-node-anchor span {
+  font-weight: bold;
+}
+
+.match-search .x-tree-node-anchor span {
+  font-weight: bold;
+}
+
+
+#vocabulary-view {
+  margin: 0px 0px 0px 0px;
+  padding: 0px;
+}
+
+#vocabulary-view h1 {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+#vocabulary-view h2 {
+  font-size: 20px;
+  /*margin-bottom: 10px;*/
+}
+
+#vocabulary-view h3 {
+  font-size: 17px;
+  font-stretch: normal;
+  font-weight: bold;
+  /*margin-bottom: 10px;*/
+}
+
+#vocabulary-view #abstract {
+  border-top: #000000 solid 1px; 
+  border-bottom: #000000 solid 1px;
+  margin-top: 30px;
+  padding: 10px 0px 10px 0px;
+}
+
+#vocabulary-view #abstract .title {
+  font-size: 18px;
+  margin-bottom: 3px;
+}
+
+#vocabulary-view #description {
+  font-size: 12px;
+  margin: 30px 0px 0px 0px;
+}
+
+#vocabulary-view #last-update {
+  margin: 10px 0px 10px 0px;
+}
+
+#vocabulary-view #last-update #last-update-value{
+  margin: 0px 0px 0px 20px;
+}
+
+#vocabulary-view #authors {
+  margin: 10px 0px 10px 0px;
+}
+
+#vocabulary-view #authors #author-value{
+  margin: 0px 0px 0px 20px;
+}
+
+#namespace {
+  margin: 10px 0px 10px 0px;
+}
+
+#namespace #namespace-value {
+	margin: 0px 0px 0px 20px; 
+}
+
+.block {
+  display: block;
+}
+
+/* class view */
+#classview {
+  margin: 10px 0px 25px 0px;
+  padding: 0px;
+  display: block;
+  border-bottom: #ccc solid 2px;
+}
+
+#classview h3 {
+  font-size: 14px;
+  margin: 0px 0px 3px 0px;
+}
+
+#classview .abstract {
+  font-size: 12px;
+  margin: 0px 0px 0px 0px;
+  text-align: justify;
+}
+
+#classview .abstract em {
+  font-style: italic;
+}
+
+#classview .properties-block {
+  display: block;
+  margin: 10px 0px 0px 0px;
+  /*background-color: #add;*/
+}
+
+#classview .row {
+  /*background-color: #ff0000;*/
+  clear: both;
+  display: block;
+}
+
+#classview .properties-block .row .column-title {
+  width: 100px;
+  float: left;
+  /*background-color: #00ff00;*/
+}
+
+#classview .properties-block .row .column-values {
+  margin-left: 100px;
+  /*background-color: #0000ff;*/
+}
+
+#classview .description {
+  font-size: 12px;
+  margin: 10px 0px 15px 0px;
+  text-align: justify;
+}
+
+#classview .links {
+  margin-top: 5px;
+  font-size: 12px;  
+}
+
+
+.icon-n3 {
+    background-image: url(images/icons/n3.gif) !important;
+}
+
+.icon-rdf {
+    background-image: url(images/icons/rdf_w3c_icon.48.gif) !important;
+}
+
+#icons img, .icon {
+  float: right; /* LTR */
+  padding: 0px 0px 0px 5px;
+}
+
+#vocabulary-view #diagram {
+  margin: 30px 0px 10px 0px;
+}
+
+/* field_superclass2_id */
+#field_superclass2_id {
+  margin: 0px 0px 15px 0px;
+}
+
+#field_superclass2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_superclass2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_superclass2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_superclass2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_superclass2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_superclass2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_superclass2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_superclass2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_superclass2_id input {
+  margin: 3px 0 0 0;
+}
+
+
+/************* field_disjointwith2_id *************/
+
+#field_disjointwith2_id {
+  margin: 0px 0px 15px 0px;
+}
+
+#field_disjointwith2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_disjointwith2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_disjointwith2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_disjointwith2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_disjointwith2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_disjointwith2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_disjointwith2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_disjointwith2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_disjointwith2_id input {
+  margin: 3px 0 0 0;
+}
+
+/* field_superproperty2_id */
+#field_superproperty2_id {
+  margin: 0px 0px 15px 0px;
+}
+
+#field_superproperty2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_superproperty2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_superproperty2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_superproperty2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_superproperty2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_superproperty2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_superproperty2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_superproperty2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_superproperty2_id input {
+  margin: 3px 0 0 0;
+}
+
+/***** field_range2_id *****/
+#field_range2_id {
+  margin: 0px 0px 15px 0px;
+}
+
+#field_range2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_range2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_range2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_range2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_range2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_range2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_range2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_range2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_range2_id input {
+  margin: 3px 0 0 0;
+}
+
+/***** field_domain2_id *****/
+#field_domain2_id {
+  margin: 0px 0px 15px 0px;
+}
+
+#field_domain2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_domain2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_domain2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_domain2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_domain2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_domain2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_domain2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_domain2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_domain2_id input {
+  margin: 3px 0 0 0;
+}
+
+/***** class tree *****/
+#class-tree {
+  margin-top: 15px;
+  padding: 0;
+}
+
+#class-tree ul {
+  padding: 0;
+  margin: 3px 0 7px 0;
+  overflow:hidden;
+}
+
+#class-tree ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+
+#class-tree ul li {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#class-tree ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#class-tree ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: 2px;
+  left: 3px;
+}
+
+/* object-property-tree */
+#object-property-tree {
+  margin-top: 15px;
+  padding: 0;
+}
+
+#object-property-tree ul {
+  padding: 0;
+  margin: 3px 0 7px 0;
+  overflow:hidden;
+}
+
+#object-property-tree ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+
+#object-property-tree ul li {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#object-property-tree ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#object-property-tree ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: 2px;
+  left: 3px;
+}
+
+/* temporal classes */
+.vocabulary-view {
+  margin: 10px 0px 25px 0px;
+  padding: 0px;
+  display: block;
+  border-bottom: #ccc solid 2px;
+}
+
+.vocabulary-view h2 {
+  font-size: 17px;
+  margin: 0px 0px 5px 0px;
+}
+
+.vocabulary-view .authors {
+  font-size: 12px;
+  margin: 0px 0px 5px 0px;
+}
+
+.vocabulary-view .authors h3 {
+  display: inline;
+  /*float: left;*/
+}
+
+.vocabulary-view .authors .value {
+  font-size: 12px;
+  margin: 0px 0px 0px 3px;
+}
+
+.vocabulary-view .abstract {
+  display:block;
+  margin: 7px 0 10px 0px;
+  /*padding: 10px 0px 10px 0px;*/
+}
+
+.vocabulary-view .abstract h3 {
+  font-size: 12px;
+  margin: 0px 0px 3px 0px;
+}
+
+

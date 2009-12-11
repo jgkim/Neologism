@@ -1,0 +1,335 @@
+<?php
+// $Id: mxcheckboxselect.module,v 1.0.0.0 2009/08/28 17:27:49 guidocecilio Exp $
+
+/**
+ * @file
+ * Allows users to select multiple items in an easier way than the normal node-reference widget.
+ */
+
+
+define(WIDGET_NAME, 'mxcheckbox_select');
+
+/**
+ * Implementation of hook_help().
+ */
+function mxcheckboxselect_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/help#mxcheckboxselect':
+      $output = '<p>'. t('Provides a CCK widget for editing evocreference fields that allows users to select from a list of options in a left box and have them visually moved into the right box when options are chosen.') .'</p>';
+      break;
+  }
+  return $output;
+}
+
+function mxcheckboxselect_init() {
+  ext_load_library();
+  
+}
+
+function mxcheckboxselect_menu() {
+  $items['mxcheckboxselection/json/getfullclasstree'] = array(
+    'title' => 'Neologism AJAX gateway',
+    'description' => 'Neologism Ajax Gateway.',
+    'page callback' => 'mxcheckboxselect_get_full_classes_tree',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+    'file' => 'mxcheckboxselect.gateway.php'
+  );
+
+  return $items;
+
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function mxcheckboxselect_form_alter(&$form, $form_state, $form_id) {
+  // Provide additional help for the field settings form.
+  if ($form_id == 'content_field_edit_form' && isset($form['widget'])) {
+    $widget_type = $form['#field']['widget']['type'];
+    $field_type = $form['#field']['type'];
+    $label = $form['#field']['widget']['label'];
+
+    $output = '<p>'. t('Create a list of options as a list in <strong>Allowed values list</strong> or as an array in PHP code. These values will be the same for %field in all content types.', array('%field' => $label)) .'</p>';
+
+    if (in_array($widget_type, array(WIDGET_NAME))) {
+      $form['field']['multiple']['#default_value'] = 1; // Default to the selection of "Unlimited" "Number of values".
+    }
+  }
+  
+  // add the validation handler to any form that containt a mxcheckboxselect widget
+  if ( isset($form['#field_info']) ) {
+    foreach ( $form['#field_info'] as $field_name => $value ) {
+      if ( ($value['type'] == 'evocreference') && ($value['widget']['type'] == WIDGET_NAME) ) {
+        // add behaviour to pass the convertJsArrayToPhpArray for each field in the form 
+        // remember that $form['#id'] != $form_id 
+        $form['#attributes']['onsubmit'] = 'return EvocWidget.onsubmitCreateInputFields("'.$form['#id'].'");';  
+      }
+    }    
+  }
+  
+  
+  // add the validation handler to both content type
+  /*
+  if( $form_id == NEOLOGISM_CT_CLASS.'_node_form' )
+  {
+     $form['#attributes']['onsubmit'] = 'return EvocWidget.onsubmitCreateInputFields("'.$form['#id'].'");';
+  }
+  */
+}
+
+/**
+ * Implementation of hook_widget_info().
+ * This specifies the label and that it is a widget for the different field types.
+ */
+function mxcheckboxselect_widget_info() {
+  return array(
+    WIDGET_NAME => array(
+      'label' => t('MXCheckboxSelect on a tree'),
+      'field types' => array('evocreference'),
+      'multiple values' => CONTENT_HANDLE_MODULE,
+      'callbacks' => array(
+        'default value' => CONTENT_CALLBACK_DEFAULT,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of FAPI hook_elements().
+ *
+ * Any FAPI callbacks needed for individual widgets can be declared here,
+ * and the element will be passed to those callbacks for processing.
+ */
+function mxcheckboxselect_elements() {
+  return array(
+    WIDGET_NAME => array(
+      '#input' => TRUE,
+      '#columns' => array('name'), '#delta' => 0,
+      '#process' => array('mxcheckboxselect_process'),
+    )
+  );
+}
+ 
+/**
+ * Implementation of hook_widget().
+ *
+ * hook_widget is a CCK hook
+ *
+ * Attach a single form element to the form. It will be built out and
+ * validated in the callback(s) listed in hook_elements. We build it
+ * out in the callbacks rather than here in hook_widget so it can be
+ * plugged into any module that can provide it with valid
+ * $field information.
+ *
+ * Content module will set the weight, field name and delta values
+ * for each form element. This is a change from earlier CCK versions
+ * where the widget managed its own multiple values.
+ *
+ * If there are multiple values for this field, the content module will
+ * call this function as many times as needed.
+ *
+ * @param $form
+ *   the entire form array, $form['#node'] holds node information
+ * @param $form_state
+ *   the form_state, $form_state['values'] holds the form values.
+ * @param $field
+ *   the field array
+ * @param $delta
+ *   the order of this item in the array of subelements (0, 1, 2, etc)
+ *
+ * @return
+ *   the form item for a single element for this field
+ */
+function mxcheckboxselect_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+  switch ($field['widget']['type']) {
+    case WIDGET_NAME:
+      $element = array(
+        '#type' => WIDGET_NAME, 
+        //'#default_value' => !empty($items) ? $items : array(),
+        '#default_value' => $items,
+        //'#value_callback' => 'mxcheckboxselect_value',
+      );
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Value for a nodereference autocomplete element.
+ *
+ * Substitute in the node title for the node nid.
+ */
+/*
+function mxcheckboxselect_value($element, $edit = FALSE) {
+  //$field_key  = $element['#columns'][0];
+  //if (!empty($element['#default_value'][$field_key])) {
+    //$nid = $element['#default_value'][$field_key];
+    //$element[$field_key]['#options'];
+    //$value = db_result(db_query(db_rewrite_sql('SELECT n.title FROM {node} n WHERE n.nid = %d'), $nid));
+    //$value .= ' [nid:'. $nid .']';
+    //return array($field_key => $value);
+    //return array($field_key => $nid);
+  //}
+  //return array($field_key => NULL);
+}
+*/
+
+
+/**
+ * Process an individual element.
+ *
+ * Build the form element. When creating a form using FAPI #process,
+ * note that $element['#value'] is already set.
+ *
+ * The $fields array is in $form['#field_info'][$element['#field_name']].
+ * 
+ * All the transformation to save the field's value are executed in the hook_validate (mxcheckboxselect_validate)
+ * we might use the hook_value (mxcheckboxselect_value) but is only important to transform the data at validation
+ * time. 
+ */
+function mxcheckboxselect_process($element, $edit, $form_state, $form) {
+  // Insert Javascript and CSS for this widget.
+  $path = drupal_get_path('module', 'mxcheckboxselect');
+  drupal_add_js($path.'/mxcheckboxselect.js');
+  
+  $field_name = $element['#field_name'];
+  $field = $form['#field_info'][$field_name];
+  $field_key  = $element['#columns'][0];
+  
+  $selected_values = Array();
+  // if there is some values sent in the request hold it. remember that values come as $field_name + '_values'
+  if ( !empty($element['#post'][$field_name.'_values']) ) {
+    $selected_values = $element['#post'][$field_name.'_values'];
+  }
+  else if (!empty($element['#default_value']) ) {
+    foreach ( $element['#default_value'] as $key => $value ) { 
+      // be sure there is not a bad default value.
+      $tvalue = trim($value[$field_key]);
+      if ( !empty($tvalue) ) {  
+        $selected_values[] = $tvalue;
+      }
+    }
+  }
+
+  //editing_value is aditional information for the widget, somethime this information
+  //is used when a node is being edited and we need to handle that value in the list of values
+  
+  $editing_value = !empty($element['#mxcbs_behaviour']['editing_value']) ? $element['#mxcbs_behaviour']['editing_value'] : NULL;
+
+  $url = !empty($element['#mxcbs_behaviour']['url_gateway']) ? $element['#mxcbs_behaviour']['url_gateway'] : 'neologism/json/fulltree';   
+  $opts = array('absolute' => TRUE);
+  $json_url = url($url, $opts);
+  //create the variable into the namespace neologism
+  // eg: Drupal.settings.neologism.json_url
+  $obj_to_render_id = $field_name.'_id';
+  // the setting is sending to the client in the form of parameter => Array(field_name => values )
+  // because the widget could be used for more that one field in the same request and there would be 
+  // many instance of the widget and we need to know all information about each one using the keyed array
+  drupal_add_js( 
+    array(
+      'neologism' => array(
+        // the url of the gateway that create the tree's data 
+        'json_url' => Array($field_name => $json_url),
+        // this hold the object where the tree will be rendered
+        'field_id' => Array($field_name => $obj_to_render_id),
+        // this hold the field values
+        'field_values' => Array($field_name => json_encode($selected_values)), //Array()),
+        'editing_value' => Array($field_name => $editing_value),
+      )
+    ), 'setting');
+
+  $js = '';
+  if( !empty($element['#mxcbs_behaviour']['handler']) ) {
+    $js = '
+      Ext.onReady( function() {
+        Ext.QuickTips.init();
+        '.$element['#mxcbs_behaviour']['handler'].'("'.$field_name.'");
+      });
+    ';  
+  } else { // add default behaviour
+    $js = '
+      Ext.onReady( function() {
+        Ext.QuickTips.init();
+        EvocWidget.createStandardClassSelecctionWidget("'.$field_name.'");
+      });
+    ';
+  }
+  drupal_add_js($js, 'inline');
+  
+  // Call methods to create prefix. (ie the non-selected table, etc)
+  $prefix = '<div class="form-item">';
+  if( !isset($element['#mxcbs_behaviour']['owntitle']) || !$element['#mxcbs_behaviour']['owntitle'] ) {
+    $prefix .= '<label for="edit-title">'. t($element['#title']) .':';
+    if ($field['required']) {
+      $prefix .= '<span class="form-required" title="'. t('This field is required.') .'"> * </span>';
+    }
+    $prefix .= "</label>\n";
+  }
+
+  $prefix .= "<div id=\"".$obj_to_render_id."\"></div>\n";
+ 
+  $element[$field_key] = array(
+    '#type' => 'hidden',
+    '#description' => $element['#description'],
+    '#prefix' => $prefix,
+    '#suffix' => "\n</div>\n",
+  );
+
+  if (empty($element['#element_validate'])) {
+    $element['#element_validate'] = array();
+  }
+  array_unshift($element['#element_validate'], 'mxcheckboxselect_validate');
+  
+  return $element;
+}
+
+/**
+ * Validate the value of superclass2 field and convert/normalise value to evoc_term format
+ * 
+ * @param object $element
+ * @param object $form_state
+ * @return 
+ */
+function mxcheckboxselect_validate($element, &$form_state) {
+  $field_key = $element['#columns'][0];
+  $field_name = $element['#field_name'];
+ 
+  $term = array();
+  // we are creating the parameters dynamically in the client. That's why there come in
+  // $element['#post'][$field_name.'_values'] so we need to transform it to keep compability with other widgets
+  if ( !empty($element['#post'][$field_name.'_values']) ) {
+    foreach ( $element['#post'][$field_name.'_values'] as $value) {
+      $term[] = array($field_key => $value);
+    }  
+  }
+  
+  form_set_value($element, $term, $form_state);
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function mxcheckboxselect_theme() {
+  return array(
+    WIDGET_NAME => array(
+      'arguments' => array('element' => NULL),
+    )
+  );
+}
+
+/**
+ * FAPI theme for an individual elements.
+ *
+ * The textfield or select is already rendered by the
+ * textfield or select themes and the html output
+ * lives in $element['#children']. Override this theme to
+ * make custom changes to the output.
+ *
+ * $element['#field_name'] contains the field name
+ * $element['#delta]  is the position of this element in the group
+ */
+function theme_mxcheckbox_select($element) {
+  return $element['#children'];
+}

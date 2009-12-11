@@ -1,0 +1,263 @@
+<?php
+// $Id: evoc.install,v 2.0.0.0 2009/09/17 12:53:17 guidocecilio Exp $
+
+/**
+ * Implementation of hook_schema().
+ * 
+ * Define two tables one for classes and other for properties
+ */
+function evoc_schema() {
+  $schema['evoc_rdf_classes'] = array(
+    'fields' => array(
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE),
+      'id' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE),
+      'label' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+      'comment' => array('type' => 'text', 'not null' => TRUE),
+      'superclasses' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0)
+    ),
+    'primary key' => array(
+      'prefix',
+      'id',
+    ),
+  );
+ 
+  $schema['evoc_rdf_properties'] = array(
+    'fields' => array(
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE),
+      'id' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE),
+      'label' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+      'comment' => array('type' => 'text', 'not null' => TRUE),
+      'superproperties' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'domains' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
+      'ranges' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0)
+    ),
+    'primary key' => array(
+      'prefix',
+      'id',
+    ),
+  );
+  
+  $schema['evoc_rdf_superclasses'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => 'TRUE','size' => 'normal', 'not null' => TRUE),
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'superclass' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['evoc_rdf_superproperties'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => TRUE,'size' => 'normal', 'not null' => TRUE),
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'superproperty' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['evoc_rdf_propertiesdomains'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => TRUE,'size' => 'normal', 'not null' => TRUE),
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'rdf_domain' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['evoc_rdf_propertiesranges'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => TRUE,'size' => 'normal', 'not null' => TRUE),
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'rdf_range' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['evoc_sparql_endpoints'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => TRUE, 'size' => 'normal', 'not null' => TRUE),
+      'name' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE, 'description' => 'Endpoint name or project name.'),
+      'enabled' => array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'description' => 'describe when the endpoint is enabled.'),
+      'status' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE, 'description' => 'endpoint status'),
+      'endpoint' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+      'webform' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+      'comment' => array('type' => 'text', 'not null' => TRUE),
+      'data_exposed' => array('type' => 'text', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function evoc_install() {
+  drupal_install_schema('evoc');
+  
+  // default sparql endpoint
+  $endpoint = array(
+    'name' => 'SPARQLer',
+    'enabled' => TRUE,
+    'status' => 'alive',
+    'endpoint' => 'http://www.sparql.org/sparql',
+    'webform' => 'http://www.sparql.org/sparql.html',
+    'comment' => 'based on ARQ and Joseki',
+    'data_exposed' => '"any" — "general purpose SPARQL service"'
+  );
+  
+  $result = db_query("insert into {evoc_sparql_endpoints} (name, enabled, status, endpoint, webform, comment, data_exposed) values ('%s', '%d', '%s', '%s', '%s', '%s', '%s')", 
+    $endpoint['name'], $endpoint['enabled'], $endpoint['status'], $endpoint['endpoint'], $endpoint['webform'], $endpoint['comment'], $endpoint['data_exposed']);
+  if( !result ) {
+    drupal_set_message( t('There is some problem installing the default sparql endpoint into table {evoc_sparql_endpoints}.'), 'error' );  
+    exit();
+  }
+  
+  // retrive the default id  
+  $result = db_fetch_object( db_query('select id from {evoc_sparql_endpoints} where name = "%s"', $endpoint['name']) ); 
+  variable_set('evoc_sparqlendpoint', $result->id);
+   
+  module_load_include('module', 'evoc', 'evoc');
+  evoc_import_vocabulary('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf', FALSE);
+  evoc_import_vocabulary('http://www.w3.org/2000/01/rdf-schema#', 'rdfs', FALSE);
+  evoc_import_vocabulary('http://purl.org/dc/elements/1.1/', 'dc', FALSE);
+  evoc_import_vocabulary('http://xmlns.com/foaf/0.1/','foaf', FALSE);
+  evoc_import_vocabulary('http://www.w3.org/2002/07/owl#','owl', FALSE);
+  
+  drupal_set_message( t('Evoc successfully installed and useful vocabularies were imported successful....') );
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function evoc_uninstall() {
+  // remove the imported vocabularies
+  evoc_remove_vocabulary('rdf');
+  evoc_remove_vocabulary('rdfs');
+  evoc_remove_vocabulary('dc');
+  evoc_remove_vocabulary('foaf');
+  evoc_remove_vocabulary('owl');
+  
+  variable_del('evoc_sparqlendpoint');
+  drupal_uninstall_schema('evoc');
+  drupal_set_message( t('Evoc successfully uninstalled.') );
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function evoc_enable() {
+  drupal_set_message( t('Evoc is now enabled.') );
+}
+
+/**
+ * Implementation of hook_disable().
+ */
+function evoc_disable() {
+  drupal_set_message( t('Evoc is now disabled.'));
+}
+
+
+/**
+ * Implementation of hook_update_N.
+ *
+ * Rename columns to avoid reserved word conflicts (specifically with MySQL 5.1)
+ */
+function evoc_update_6001() {
+  $ret = array();
+  $schema = evoc_schema();
+  $fields = $schema['evoc_rdf_properties']['fields'];
+  db_change_field($ret, 'evoc_rdf_properties', 'domain', 'rdf_domain', $fields['rdf_domain']);
+  db_change_field($ret, 'evoc_rdf_properties', 'range', 'rdf_range', $fields['rdf_range']);
+  return $ret;
+}
+
+/**
+ * Implementation of hook_update_N.
+ *
+ * Rename columns to avoid reserved word conflicts (specifically with MySQL 5.1)
+ * Remark
+ * as at the beginning all the superclasses and superproperties were only one the parameter look as a boolean
+ * value but it is supose to be and int, but 1 = TRUE = supouse cuantity of superclasses or superproperties
+ */
+function evoc_update_6200() {
+  $ret = array('#finished' => 0);
+  
+  $schema = evoc_schema();
+  
+  db_change_field($ret, 'evoc_rdf_classes', 'prefix', 'prefix', $schema['evoc_rdf_classes']['fields']['prefix']);
+  db_change_field($ret, 'evoc_rdf_classes', 'id', 'id', $schema['evoc_rdf_classes']['fields']['id']);
+  db_change_field($ret, 'evoc_rdf_classes', 'label', 'label', $schema['evoc_rdf_classes']['fields']['label']);
+  db_change_field($ret, 'evoc_rdf_properties', 'prefix', 'prefix', $schema['evoc_rdf_classes']['fields']['prefix']);
+  db_change_field($ret, 'evoc_rdf_properties', 'id', 'id', $schema['evoc_rdf_classes']['fields']['id']);
+  db_change_field($ret, 'evoc_rdf_properties', 'label', 'label', $schema['evoc_rdf_classes']['fields']['label']);
+  
+  db_add_field($ret, 'evoc_rdf_classes', 'superclasses', $schema['evoc_rdf_classes']['fields']['superclasses']);
+  db_add_field($ret, 'evoc_rdf_properties', 'superproperties', $schema['evoc_rdf_properties']['fields']['superproperties']);
+  db_add_field($ret, 'evoc_rdf_properties', 'domains', $schema['evoc_rdf_properties']['fields']['domains']);
+  db_add_field($ret, 'evoc_rdf_properties', 'ranges', $schema['evoc_rdf_properties']['fields']['ranges']);
+  
+  db_create_table($ret, 'evoc_rdf_superclasses', $schema['evoc_rdf_superclasses']);
+  db_create_table($ret, 'evoc_rdf_superproperties', $schema['evoc_rdf_superproperties']);
+  db_create_table($ret, 'evoc_rdf_propertiesdomains', $schema['evoc_rdf_propertiesdomains']);
+  db_create_table($ret, 'evoc_rdf_propertiesranges', $schema['evoc_rdf_propertiesranges']);
+  db_create_table($ret, 'evoc_sparql_endpoints', $schema['evoc_sparql_endpoints']);
+
+  // create all the superclasses in the table evoc_rdf_superclasses for each class 
+  // in evoc_rdf_classes that its superclass column has some value
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_result(db_query('select count(*) from {evoc_rdf_classes}'));
+    $sandbox['max'] += db_result(db_query('select count(*) from {evoc_rdf_properties}'));
+  }
+  
+  $classes = db_query("select prefix, id, superclass from {evoc_rdf_classes}");
+  while ($class = db_fetch_object($classes)) {
+    $has_superclass = FALSE;
+    if( !empty($class->superclass) ) {
+      $query = 'insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("'.$class->prefix.'", "'.$class->id.'", "'.$class->superclass.'")';  
+      $ret[] = update_sql($query);
+      $has_superclass = TRUE;
+    }
+   
+    $ret[] = update_sql('update {evoc_rdf_classes} set superclasses = "'.$has_superclass.'" where prefix = "'.$class->prefix.'" and  id = "'.$class->id.'"');
+    $sandbox['progress']++;
+  }
+  
+  $properties = db_query("select prefix, id, rdf_domain, rdf_range from {evoc_rdf_properties}");
+  while ($property = db_fetch_object($properties)) {
+    $has_domain = $has_range = FALSE;
+    
+    // check for property domains
+    if( !empty($property->rdf_domain) ) {
+      $query = 'insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("'.$property->prefix.'", "'.$property->id.'", "'.$property->rdf_domain.'")';  
+      $ret[] = update_sql($query);
+      $has_domain = TRUE;
+    }
+        
+    // check for property range
+    if( !empty($property->rdf_range) ) {
+      $query = 'insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("'.$property->prefix.'", "'.$property->id.'", "'.$property->rdf_range.'")';  
+      $ret[] = update_sql($query);
+      $has_range = TRUE;
+    }
+   
+    $ret[] = update_sql('update {evoc_rdf_properties} set domains = "'.$has_domain.'", ranges = "'.$has_range.'" where prefix = "'.$property->prefix.'" and  id = "'.$property->id.'"');
+    $sandbox['progress']++;
+  }
+  
+  $ret['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+  
+  // remove the field superclass from evoc_rdf_classes
+  db_drop_field($ret, 'evoc_rdf_classes', 'superclass');
+  db_drop_field($ret, 'evoc_rdf_properties', 'rdf_domain');
+  db_drop_field($ret, 'evoc_rdf_properties', 'rdf_range');
+  
+  return $ret;
+}
+
