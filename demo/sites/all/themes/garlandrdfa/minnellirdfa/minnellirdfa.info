@@ -1,7 +1,0 @@
-; $Id: minnelli.info,v 1.7 2007/12/04 20:58:44 goba Exp $
-name = Minnelli RDFa
-description = RDFa compatible Minnelli theme.
-version = VERSION
-core = 6.x
-base theme = garlandrdfa
-stylesheets[all][] = minnelli.css
