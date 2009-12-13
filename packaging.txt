@@ -1,6 +1,8 @@
 How to release a new version of Neologism
 =========================================
 
+@@@ TODO this is outdated; should probably copy ALL of trunk to the tag, then use a version of make-archive.sh to build the archive, but use svn export instead of svn co. 
+
 # edit CHANGELOG.neologism.txt and sites/all/modules/neologism/neologism.info in order to update the version number that is being released.
 # commit the changes to svn:
 svn ci -m 'preparing release 0.33'
