@@ -190,11 +190,11 @@ $content['fields']  = array (
     'label' => 'Comment',
     'field_name' => 'field_comment',
     'type' => 'text',
-    'widget_type' => 'text_textfield',
+    'widget_type' => 'text_textarea',
     'change' => 'Change basic information',
     'weight' => '-6',
     'rows' => '2',
-    'size' => '130',
+    'size' => '255',
     'description' => 'A plain text description of the property.',
     'default_value' => 
     array (
