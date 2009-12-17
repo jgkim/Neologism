@@ -13,7 +13,7 @@ define("XML", "xml");
 define("LAYOUT", "layout");
 
 define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'neologism') ."/includes/rap/");
-define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', 'neologism') ."/includes/content_negotiation/");
+define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', 'neologis`m') ."/includes/content_negotiation/");
 define("NEOLOGISM_CT_VOCABULARY", "neo_vocabulary");
 define("NEOLOGISM_CT_CLASS", "neo_class");
 define("NEOLOGISM_CT_PROPERTY", "neo_property");
@@ -440,7 +440,10 @@ function neologism_export_html($node) {
   
   // add the links for add classes or properties if there is right 
   if (user_access(PERMISSION_EDIT_VOCABULARIES)) {
-    $output .= '<p id="add_terms_link" class="neologism">'. l('Add class', 'node/add/'.$class_url_str, array('query' => "v=$node->nid")) .'| '. l('Add property', 'node/add/'.$property_url_str, array('query' => "v=$node->nid")) . '</p>';
+  	//array('query' => "v=$node->nid"),
+  	$add_newclass_link = l('Create new class', url('node/add/'.$class_url_str, array('query' => "v=$node->nid")), array('html' => FALSE, 'attributes' => Array('title' => 'Create a new class for this vocabulary.')));
+	$add_newproperty_link = l('Create new property', url('node/add/'.$property_url_str, array('query' => "v=$node->nid")), array('html' => FALSE, 'attributes' => Array('title' => 'Create a new property for this vocabulary.')));
+    $output .= '<p id="add_terms_link" class="neologism">'.$add_newclass_link.'| '.$add_newproperty_link.'</p>';
   }
   
   ext_load_library();
@@ -1153,7 +1156,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
  */
 function neologism_get_preferred_content($accept) {
   if (isset($accept)) {
-    include_once(CONTENT_NEGOTATION_DIR . "content_negotiation.inc.php");
+    include_once( drupal_get_path('module', NEOLOGISM) . CONTENT_NEGOTATION_DIR . "content_negotiation.inc.php");
     // Stupid browsers that send */* should get HTML, so give
     // highest preference ot that. We prefer XHTML over HTML if
     // both are supported. Among RDF formats, RDF/XML has precedence
