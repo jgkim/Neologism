@@ -229,8 +229,10 @@ function neologism_menu() {
 //TODO check the new form_alter
 function neologism_form_alter(&$form, &$form_state, $form_id) {
 
-    
-  if ( $form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' ) {
+  // we never use the preview button
+	unset($form['buttons']['preview']);
+	
+	if ( $form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' ) {
     // add validation function for create or edition of properties form
     $form['#validate'][] = '_neologism_neo_vocabulary_node_form_validate';
   }
@@ -245,12 +247,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     // FIXME this temporal, we need to do so in a best way
     $form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
     $form['field_vocabulary']['#suffix'] = '</div>';
-     //$form['field_vocabulary']['#access'] = FALSE;
-  }
-  
-  // Select the parent class if provided in the url of type node/add/class/parent/9
-  if ($form_id == NEOLOGISM_CT_CLASS.'_node_form' && arg(3) == 'parent' && isset($form['field_subclassof']['#default_value'])) {
-    $form['field_subclassof']['#default_value'][0]['nid'] = arg(4);
+    
+    // we are using the hook after build to disable the field_vocabulary field
+    //$form['#after_build'][] = '_neologism_after_build';
   }
   
   if( $form_id == NEOLOGISM_CT_PROPERTY.'_node_form' ) {
@@ -265,6 +264,25 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       // handle the situation.
       $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
     }
+    else if( arg(3) == 'parent' ) { // Select the parent class if provided in the url of type node/add/property/parent/11
+    	$nproperty = (object) node_load(arg(4));
+    	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
+    	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nproperty->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
+      $qname = $prefix->title.':'.$nproperty->title;
+      	
+      	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
+    	$form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($qname);
+    	$form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+    	
+    	// hook after build
+    	//$form['#after_build'][] = '_neologism_after_build';
+    	$form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
+    	$form['field_vocabulary']['#suffix'] = '</div>';
+    }
+    // Select the domain of a property if provided in the url of type node/add/property/classparent/3
+    else if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
+      $form['field_domain']['#default_value'][0]['nid'] = arg(4);
+    } 
     
     $form['#validate'][] = '_neologism_neo_property_node_form_validate';
     $form['buttons']['submit']['#submit'][] = 'neologism_neo_property_form_submit';
@@ -277,16 +295,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     if( isset($form['field_range2']) ) {
       $form['field_range2']['#prefix'] = '<div id="range-field">';
       $form['field_range2']['#suffix'] = '</div>';  
-    }
-    
-    // Select the domain of a property if provided in the url of type node/add/property/classparent/3
-    if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
-      $form['field_domain']['#default_value'][0]['nid'] = arg(4);
-    }
-    
-    // Select the parent class if provided in the url of type node/add/property/parent/11
-    if( arg(3) == 'parent' && isset($form['field_subpropertyof']['#default_value']) ) {
-      $form['field_subpropertyof']['#default_value'][0]['nid'] = arg(4);
     }
   }
   
@@ -304,6 +312,23 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       $form['field_superclass2']['#mxcbs_behaviour']['editing_value'] = $qname;
       $form['field_disjointwith2']['#mxcbs_behaviour']['editing_value'] = $qname;
     }
+    // the user has click over the "Create new subclass" link
+    // Select the parent class if provided in the url of type node/add/class/parent/9
+    else if( arg(3) == 'parent' ) {
+    	$nclass = (object) node_load(arg(4));
+    	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
+    	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nclass->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
+      $qname = $prefix->title.':'.$nclass->title;
+      	
+      	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
+    	$form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($qname);
+    	$form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+    	
+    	// hook after build
+    	//$form['#after_build'][] = '_neologism_after_build';
+    	$form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
+    	$form['field_vocabulary']['#suffix'] = '</div>';
+  	}
     
     $form['#validate'][] = '_neologism_neo_class_node_form_validate';
     $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
@@ -356,7 +381,8 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-  $vocabulary_title = check_plain($node->field_title[0]['value']);
+  //$vocabulary_title = check_plain($node->field_title[0]['value']);
+  $vocabulary_title = $node->field_title[0]['value'];
   
   //$head_title = $vocabulary_title;
   
@@ -374,7 +400,9 @@ function neologism_export_html($node) {
   drupal_set_title($vocabulary_title);
   
   $classes = _neologism_get_all_classes($node);
+  usort($classes, '_neologism_cmp_2array_alphabetically');
   $properties = _neologism_get_all_properties($node);
+  usort($properties, '_neologism_cmp_2array_alphabetically');
   
   $output .= '<div id="last-update" ><h3>Last update:</h3><div id="last-update-value">'.format_date($node->changed, 'large').'</div></div>';
   
@@ -440,13 +468,12 @@ function neologism_export_html($node) {
   
   // add the links for add classes or properties if there is right 
   if (user_access(PERMISSION_EDIT_VOCABULARIES)) {
-  	//array('query' => "v=$node->nid"),
-  	$add_newclass_link = l('Create new class', url('node/add/'.$class_url_str, array('query' => "v=$node->nid")), array('html' => FALSE, 'attributes' => Array('title' => 'Create a new class for this vocabulary.')));
-	$add_newproperty_link = l('Create new property', url('node/add/'.$property_url_str, array('query' => "v=$node->nid")), array('html' => FALSE, 'attributes' => Array('title' => 'Create a new property for this vocabulary.')));
+		$add_newclass_link = l('Create new class', 'node/add/'.$class_url_str, array('query' => 'v='.$node->nid, 'attributes' => Array('title' => 'Create a new class for '.$vocabulary_title)));
+		$add_newproperty_link = l('Create new property', 'node/add/'.$property_url_str, array('query' => 'v='.$node->nid, 'attributes' => Array('title' => 'Create a new property for '.$vocabulary_title)));
     $output .= '<p id="add_terms_link" class="neologism">'.$add_newclass_link.'| '.$add_newproperty_link.'</p>';
   }
   
-  ext_load_library();
+  //ext_load_library();
   drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->title)), 'setting');
   
   if ($classes) {
@@ -894,19 +921,18 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
     $class_url_str = str_replace('_', '-', NEOLOGISM_CT_CLASS);
     $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
 
-    if (user_access(PERMISSION_EDIT_VOCABULARIES) && $node->type == NEOLOGISM_CT_CLASS) {
+    //if( $type == 'node' )
+	if (user_access(PERMISSION_EDIT_VOCABULARIES) && $node->type == NEOLOGISM_CT_CLASS) {
       $links['neologism_edit_class'] = array(
         'title' => t('Edit'),
         'href' => "node/$node->nid/edit",
         'query' => $destination,
+	    'attributes' => array('title' => 'Edit '.$node->field_label[0]['value'].' class.')
       );
       $links['neologism_add_subclass'] = array(
-        'title' => t('Add subclass'),
-        'href' => "node/add/" . $class_url_str . "/parent/$node->nid"
-      );
-      $links['neologism_add_property'] = array(
-        'title' => t('Add property'),
-        'href' => "node/add/" . $property_url_str . "/classparent/$node->nid"
+        'title' => t('Create new subclass'),
+        'href' => "node/add/" . $class_url_str . "/parent/$node->nid",
+      	'attributes' => array('title' => 'Create a new class as subclass of '.$node->field_label[0]['value'].'.')	
       );
     }
 
@@ -917,8 +943,9 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
         'query' => $destination,
       );
       $links['neologism_add_subproperty'] = array(
-        'title' => t('Add subproperty'),
-        'href' => "node/add/" . $property_url_str . "/parent/$node->nid"
+        'title' => t('Create new subproperty'),
+        'href' => "node/add/" . $property_url_str . "/parent/$node->nid",
+      	'attributes' => array('title' => 'Create a new property as subproperty of '.$node->field_label[0]['value'].'.')	
       );
     }
 
@@ -1511,12 +1538,22 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
     $comment .= $node->field_comment[0]['value'];
   }
   
+	$label = '';
+  if ( !empty($node->field_label) ) {
+    $label .= $node->field_label[0]['value'];
+  }
+  
+  $description = '';
+	if ( !empty($node->field_description2) ) {
+    $description .= $node->field_description2[0]['value'];
+  }
+  
   $output .= '
-  <div id="classview">
+  <div id="propertyview">
     <h3 id="'.$node->title.'">Property: '.$vocabulary.':'.$node->title.'</h3>';
-    
-  if( !empty($node->body) ) {    
-    $output .= '<div class="abstract"><em>'.$node->title.'</em> - '.$node->body.'</div>';
+	
+  if( !empty($comment) ) {    
+    $output .= '<div class="abstract"><em>'.$label.'</em> - '.$comment.'</div>';
   }
   
   $output .= '
@@ -1527,7 +1564,7 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
           '.$domain.'
           '.$range.'
       </div>
-     <div class="description">'.$comment.'</div>';
+     <div class="description">'.$description.'</div>';
      
   if ( $teaser ) {
     $output .= '<div class="linkontop">[<a href="#sec_glance">back to top</a>]</div>';  
@@ -2112,47 +2149,76 @@ function neologism_rdf_uri_to_qname($uri) {
   return implode(':', $qname_parts);
 }
 
+/**
+ * hook_evoc_widgetbehaviour_preprocess executed before a evoc_widgetbehaviour is bing shown
+ * @param $field_name
+ * @param $default_of_values
+ * @param $extra_values
+ * @return unknown_type
+ */
+function neologism_evoc_widgetbehaviour_preprocess($field_name, $default_of_values, $extra_values) {
+	$result = array();
+	
+	switch ($field_name) {
+		case 'field_superclass2':
+			// we need to preprocess this field because at this time we have added to the list of value other super class
+			// but we need to check if there is other class that might be super class of this class that is currently analyzing
+			
+			// in our case it is very simply just assing the extra_values to the result_list_of_values
+			$result = $extra_values;
+			break;
+			
+		case 'field_superproperty2':
+			$result = $extra_values;
+			break;
+	}
+	
+	return $result;
+}
 
-// this is for a test
-function neologism_import_form_test($form_state) {
-  $form['help'] = array(
-    '#value' => 'This form allows you to import external RDF vocabularies into your site.
-    These can later be used by other modules such as <a href="http://drupal.org/project/rdfcck">RDF CCK</a> or <a href="http://drupal.org/project/neologism">Neologism</a>. Popular vocabularies include:<br />
-    dc : http://purl.org/dc/elements/1.1/<br />
-    dcterms : http://purl.org/dc/terms/<br />
-    dcmitype : http://purl.org/dc/dcmitype/<br />
-    foaf : http://xmlns.com/foaf/0.1/<br />
-    sioc : http://rdfs.org/sioc/ns#<br />
-    skos : http://www.w3.org/2008/05/skos#<br />
-    doap : http://usefulinc.com/ns/doap#<br />
-    ',
-  );
-  $form['ns_uri'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Vocabulary URI'),
-    '#required' => TRUE,
-    '#default_value' => isset($form_state['values']['ns_uri']) ? $form_state['values']['ns_uri'] : NULL,
-    '#description' => "Enter the URI of the vocabulary to import. Make sure it finishes by either / or #.",
-  );
-  $form['prefix'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Prefix'),
-    '#required' => TRUE,
-    '#default_value' => isset($form_state['values']['prefix']) ? $form_state['values']['prefix'] : NULL,
-    '#description' => "Choose a prefix for this vocabulary. Example: dc, foaf, sioc etc. This prefix will later be used in the system to refer to this vocabulary.",
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => 'Submit',
-  );
+/**
+ * Callback to be execute after a form is built.
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function _neologism_after_build($form, &$form_state) {
+	_neologism_fix_disabled($form['field_vocabulary']);
   return $form;
 }
 
+/**
+ * Find recursively the last child into a element and add the attribute disabled for such element to disable it.
+ * @param $elements
+ * @return unknown_type
+ */
+function _neologism_fix_disabled(&$elements) {
+  foreach (element_children($elements) as $key) {
+    if (isset($elements[$key]) && $elements[$key]) {
 
+      // Recurse through all children elements.
+      _neologism_fix_disabled($elements[$key]);
+    }
+  }
 
+  if (!isset($elements['#attributes'])) {
+    $elements['#attributes'] = array();
+  }
+  
+  $elements['#attributes']['disabled'] = 'disabled';
+}
 
-
-
-
-
-
+/**
+ * Compare the string hold by array the arrays $a['id] and $b['id'] using the strcmp function.
+ * This function is the cmp_function used by "bool usort ( array &$array , callback $cmp_function )" function to
+ * sort and array.
+ * This functio return an integer less than, equal to, or greater than zero if the first argument is considered to be 
+ * respectively less than, equal to, or greater than the second.
+ * @param $a array
+ * @param $b array
+ * @return int
+ */
+function _neologism_cmp_2array_alphabetically($a, $b)
+{
+	return strcmp($a['id'], $b['id']);
+}
