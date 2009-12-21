@@ -213,6 +213,62 @@ img#legend {
   font-size: 12px;  
 }
 
+/* property view */
+#propertyview {
+  margin: 10px 0px 25px 0px;
+  padding: 0px;
+  display: block;
+  border-bottom: #ccc solid 2px;
+}
+
+#propertyview h3 {
+  font-size: 14px;
+  margin: 0px 0px 3px 0px;
+}
+
+#propertyview .abstract {
+  font-size: 12px;
+  margin: 0px 0px 0px 0px;
+  text-align: justify;
+}
+
+#propertyview .abstract em {
+  font-style: italic;
+}
+
+#propertyview .properties-block {
+  display: block;
+  margin: 10px 0px 0px 0px;
+  /*background-color: #add;*/
+}
+
+#propertyview .row {
+  /*background-color: #ff0000;*/
+  clear: both;
+  display: block;
+}
+
+#propertyview .properties-block .row .column-title {
+  width: 100px;
+  float: left;
+  /*background-color: #00ff00;*/
+}
+
+#propertyview .properties-block .row .column-values {
+  margin-left: 100px;
+  /*background-color: #0000ff;*/
+}
+
+#propertyview .description {
+  font-size: 12px;
+  margin: 10px 0px 15px 0px;
+  text-align: justify;
+}
+
+#propertyview .links {
+  margin-top: 5px;
+  font-size: 12px;  
+}
 
 .icon-n3 {
     background-image: url(images/icons/n3.gif) !important;
@@ -233,7 +289,7 @@ img#legend {
 
 /* field_superclass2_id */
 #field_superclass2_id {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #field_superclass2_id table {
@@ -299,7 +355,7 @@ img#legend {
 /************* field_disjointwith2_id *************/
 
 #field_disjointwith2_id {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #field_disjointwith2_id table {
@@ -363,7 +419,7 @@ img#legend {
 
 /* field_superproperty2_id */
 #field_superproperty2_id {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #field_superproperty2_id table {
@@ -427,7 +483,7 @@ img#legend {
 
 /***** field_range2_id *****/
 #field_range2_id {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #field_range2_id table {
@@ -491,7 +547,7 @@ img#legend {
 
 /***** field_domain2_id *****/
 #field_domain2_id {
-  margin: 0px 0px 15px 0px;
+  margin: 0px 0px 0px 0px;
 }
 
 #field_domain2_id table {
@@ -680,6 +736,32 @@ img#legend {
 .vocabulary-view .abstract h3 {
   font-size: 12px;
   margin: 0px 0px 3px 0px;
+}
+
+.vocabulary-node {
+	margin: 10px 0px 25px 0px;
+  	padding: 0px;
+  	display: block;
+	}
+	
+.vocabulary-node .authors {
+  	font-size: 16px;
+  	margin: 0px 0px 5px 0px;
+}
+
+.vocabulary-node .authors h3 {
+  	display: inline;
+  	font-size: 16px;
+}
+
+.vocabulary-node .abstract {
+  	margin: 7px 0 10px 0px;
+  /*padding: 10px 0px 10px 0px;*/
+}
+
+.vocabulary-node .abstract h3 {
+  	margin: 0px 0px 3px 0px;
+  	font-size: 16px;
 }
 
 
