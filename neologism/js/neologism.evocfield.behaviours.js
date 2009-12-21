@@ -51,6 +51,7 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
             }, null);
           });
           
+          // disjoiness depend from classes selection
           Neologism.disjointWithTreePanel.render(Neologism.objectToRender);
         }
       }
@@ -61,7 +62,7 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
       id		: 'root',                  // this IS the id of the startnode
       iconCls: 'class-samevoc',
       disabled: true,
-      expanded: false,
+      expanded: false
     }),
     
     listeners: {
@@ -198,14 +199,14 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
     
   });
 
-}
+};
 
 /**
  * widget behaviour for field_disjointwith2 field
  * 
  * @param {Object} field_name
  */
-Neologism.createDisjointWithSelecctionWidget = function(field_name){
+Neologism.createDisjointWithSelecctionWidget = function(field_name) {
   var objectToRender = Drupal.settings.neologism.field_id[field_name];
   var editingValue = Drupal.settings.neologism.editing_value[field_name];
   Neologism.objectToRender = objectToRender;
@@ -264,7 +265,7 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name){
       id: 'root', // this IS the id of the startnode
       iconCls: 'class-samevoc',
       disabled: true,
-      expanded: false,
+      expanded: false
     }),
     
     listeners: {
@@ -345,13 +346,13 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name){
       }
     } // listeners
    });
-}
+};
 
 /**
  * 
  * @param {Object} field_name
  */
-Neologism.createSuperpropertySelecctionWidget = function(field_name){
+Neologism.createSuperpropertySelecctionWidget = function(field_name) {
 
   var objectToRender = Drupal.settings.neologism.field_id[field_name];
   var dataUrl = Drupal.settings.neologism.json_url[field_name];
@@ -408,7 +409,7 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name){
       id: 'root', // this IS the id of the startnode
       iconCls: 'class-samevoc',
       disabled: true,
-      expanded: false,
+      expanded: false
     }),
     
     listeners: {
@@ -449,6 +450,6 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name){
       } // checkchange
     }
   });
-}
+};
     
     
