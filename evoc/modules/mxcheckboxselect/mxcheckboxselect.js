@@ -114,12 +114,12 @@ EvocWidget.createStandardClassSelecctionWidget = function( field_name ) {
       checkchange: function(node, checked) {
         if ( checked && node.parentNode !== null ) {
           // if we're checking the box, check it all the way up
-    			if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-            if ( baseParams.arrayOfValues.indexOf(node.id) == -1 ) {
-              baseParams.arrayOfValues.push(node.id);
-            }
-          }
-    		} else {
+    		if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
+    			if ( baseParams.arrayOfValues.indexOf(node.id) == -1 ) {
+    				baseParams.arrayOfValues.push(node.id);
+    			}
+    		}
+    	} else {
           for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
             if ( baseParams.arrayOfValues[i] == node.attributes.id ) {
               baseParams.arrayOfValues.splice(i, 1);
