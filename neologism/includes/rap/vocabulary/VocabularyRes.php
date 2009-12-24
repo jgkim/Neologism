@@ -9,7 +9,7 @@
 */
 
 // Include vocabularies
-include_once RDFAPI_INCLUDE_DIR . PACKAGE_RESMODEL);
+include_once RDFAPI_INCLUDE_DIR . PACKAGE_RESMODEL;
 require_once RDFAPI_INCLUDE_DIR . 'vocabulary/ATOM_RES.php';
 require_once RDFAPI_INCLUDE_DIR . 'vocabulary/RDF_RES.php';
 require_once RDFAPI_INCLUDE_DIR . 'vocabulary/RDFS_RES.php';

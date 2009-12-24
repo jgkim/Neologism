@@ -20,10 +20,11 @@ define("NEOLOGISM_CT_PROPERTY", "neo_property");
 
 define("DEFAULT_RDFS_SUPERCLASS", "rdfs:Resource");
 
-define("MSG_INVALID_ID", "It is not a valid namespace name. 
-      You must type a valid namespace. It must start with alpha letter or underscore 
-      character fallowed by any alpha letter, digit, dot, underscore or minus character. ^[a-zA-Z_]+[a-zA-Z0-9_-]*");
+define("MSG_INVALID_ID", "is not a valid identifier. It should start with a letter, and should contain only letters, 
+													numbers, dashes, and underscores.");
       
+
+
 define("MSG_ID_ALREADY_IN_USE", "Id already in use.  Please check that the vocabulary is not in the system.");      
 
 define("DISJOINTS_WITH", "disjointswith");
@@ -36,6 +37,9 @@ define("SUBPROPERTYOF", "subpropertyof");
 define("PERMISSION_EDIT_VOCABULARIES", "edit vocabularies");
 define("PERMISSION_IMPORT_VOCABULARIES", "import vocabularies");
 
+define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
+define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
+define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
 
 /**
  * Implementation of hook_init().
@@ -80,6 +84,21 @@ function neologism_theme() {
     ),
     'neo_property_node_view' => array(
       'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL),
+    ),
+    NEOLOGISM_VOCABULARY_FORM_ID => array(
+    	'arguments' => array('from' => NULL)
+    ),
+    NEOLOGISM_PROPERTY_FORM_ID => array(
+    	'arguments' => array('from' => NULL)
+    ),
+    NEOLOGISM_CLASS_FORM_ID => array(
+    	'arguments' => array('from' => NULL)
+    ),
+    'render_URI_field' => array(
+    	'arguments' => array('element' => NULL)
+    ),
+    'neologism_form_element' => array(
+    	'arguments' => array('element' => NULL, 'value' => NULL)
     )
   );
 }
@@ -226,33 +245,59 @@ function neologism_menu() {
 /**
  * Implementation of hook_form_alter().
  */
-//TODO check the new form_alter
 function neologism_form_alter(&$form, &$form_state, $form_id) {
-
-  // we never use the preview button
-	unset($form['buttons']['preview']);
-	
-	if ( $form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' ) {
+	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
-    $form['#validate'][] = '_neologism_neo_vocabulary_node_form_validate';
-  }
+    $form['#validate'][] = '_neo_vocabulary_node_form_validate';
+  	$form['title']['#theme'] = "render_URI_field";
+  	$form['title']['#namespace'] = _neologism_get_namespace();
+  	// fix the size of the Id field to 20
+  	$form['title']['#size'] = 20;
+  	
+  	// we never use the preview button
+		unset($form['buttons']['preview']);
+  	unset($form['menu']);
+  	// hide the path fielset
+  	$form['path']['#access'] = FALSE;
+	}
     
   // Select the vocabulary when adding a class or a property from a vocabulary page
-  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_CT_PROPERTY.'_node_form')
+  if (($form_id == NEOLOGISM_CLASS_FORM_ID || $form_id == NEOLOGISM_PROPERTY_FORM_ID)
       && isset($_GET['v']) && isset($form['field_vocabulary']['#default_value'])) {
     $vocabulary_id = (int)$_GET['v'];
     
     $form['field_vocabulary']['#default_value'][0]['nid'] = $vocabulary_id;
-    
-    // FIXME this temporal, we need to do so in a best way
-    $form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
-    $form['field_vocabulary']['#suffix'] = '</div>';
-    
-    // we are using the hook after build to disable the field_vocabulary field
-    //$form['#after_build'][] = '_neologism_after_build';
+  	// hide the field
+    $form['field_vocabulary']['#access'] = FALSE;
+    $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $vocabulary_id, NEOLOGISM_CT_VOCABULARY));
+		if( $prefix ) {
+			// for the prefix
+    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
+		}
   }
   
-  if( $form_id == NEOLOGISM_CT_PROPERTY.'_node_form' ) {
+  if( $form_id == NEOLOGISM_PROPERTY_FORM_ID ) {
+  	$form['title']['#theme'] = "render_URI_field";
+  	$form['title']['#size'] = 20;
+		
+  	// we never use the preview button neither the menu fieldset
+		unset($form['buttons']['preview']);
+  	unset($form['menu']);
+  	// hide the path fielset
+  	$form['path']['#access'] = FALSE;
+  	$form['#validate'][] = 'neo_property_node_form_validate';
+    $form['buttons']['submit']['#submit'][] = '_neo_property_node_form_submit';
+    
+    // add behaviours for evoc fields if they are using the MXCheckBox selection widget
+    $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
+    $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
+    $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
+    
+    if( isset($form['field_range2']) ) {
+      $form['field_range2']['#prefix'] = '<div id="range-field">';
+      $form['field_range2']['#suffix'] = '</div>';  
+    }
+  	
     // add validation function for create or edition of properties form
     if( arg(2) == 'edit' && isset($form['#node']) ) {
       $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
@@ -263,6 +308,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       // why need to inform to the widget that there is comming an edition for a value, so the widget can
       // handle the situation.
       $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
+      
+      // for the prefix
+    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title);
     }
     else if( arg(3) == 'parent' ) { // Select the parent class if provided in the url of type node/add/property/parent/11
     	$nproperty = (object) node_load(arg(4));
@@ -274,38 +322,53 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	$form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($qname);
     	$form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
     	
-    	// hook after build
-    	//$form['#after_build'][] = '_neologism_after_build';
-    	$form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
-    	$form['field_vocabulary']['#suffix'] = '</div>';
+    	// fill the field with thw default value
+      $form['field_vocabulary']['#default_value'][0]['nid'] = $nproperty->field_vocabulary[0]['nid'];
+    	
+    	// for the prefix
+    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
+    	$form['field_vocabulary']['#access'] = FALSE;
     }
+    
     // Select the domain of a property if provided in the url of type node/add/property/classparent/3
-    else if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
-      $form['field_domain']['#default_value'][0]['nid'] = arg(4);
-    } 
-    
-    $form['#validate'][] = '_neologism_neo_property_node_form_validate';
-    $form['buttons']['submit']['#submit'][] = 'neologism_neo_property_form_submit';
-    
-    // add behaviours for evoc fields if they are using the MXCheckBox selection widget
-    $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
-    $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
-    $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
-    
-    if( isset($form['field_range2']) ) {
-      $form['field_range2']['#prefix'] = '<div id="range-field">';
-      $form['field_range2']['#suffix'] = '</div>';  
-    }
+    //else if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
+    //  $form['field_domain']['#default_value'][0]['nid'] = arg(4);
+    //} 
   }
   
   // add the validation handler to both content type
-  if( $form_id == NEOLOGISM_CT_CLASS.'_node_form' )
+  if( $form_id == NEOLOGISM_CLASS_FORM_ID )
   {
+  	// we never use the preview button neither the menu fieldset
+		unset($form['buttons']['preview']);
+  	unset($form['menu']);
+  	// hide the path fielset
+  	$form['path']['#access'] = FALSE;
+  	
+  	$form['title']['#theme'] = "render_URI_field";
+  	$form['title']['#size'] = 20;
+  	
+  	$form['#validate'][] = 'neo_class_node_form_validate';
+  	//$form['#redirect'] = 'node/'.$form['#node']->field_vocabulary[0]['nid'];
+    $form['buttons']['submit']['#submit'][] = '_neo_class_node_form_submit';
+  	
+    $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
+    $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createClassSelecctionWidget';
+    $form['field_superclass2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+    $form['field_disjointwith2']['#mxcbs_behaviour']['owntitle'] = FALSE;
+    $form['field_disjointwith2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDisjointWithSelecctionWidget'; 
+    $form['field_disjointwith2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree'; 
+  
+    // hide the input field
+    $form['field_vocabulary']['#access'] = FALSE;
+    
     if( arg(2) == 'edit' && isset($form['#node']) ) {
       $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
       $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nid, NEOLOGISM_CT_VOCABULARY));
       $id = $form['#node']->title;
       $qname = $prefix->title.':'.$id;
+      
+      $form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
       
       // why need to inform to the widget that there is comming an edition for a value, so the widget can
       // handle the situation.
@@ -319,35 +382,24 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
     	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nclass->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
       $qname = $prefix->title.':'.$nclass->title;
-      	
+      
+      // fill the field with thw default value
+      $form['field_vocabulary']['#default_value'][0]['nid'] = $nclass->field_vocabulary[0]['nid'];
+      
+      $form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
       	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
     	$form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($qname);
     	$form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
-    	
-    	// hook after build
-    	//$form['#after_build'][] = '_neologism_after_build';
-    	$form['field_vocabulary']['#prefix'] = '<div id="vocabulary-field" style="display:none;">';
-    	$form['field_vocabulary']['#suffix'] = '</div>';
   	}
-    
-    $form['#validate'][] = '_neologism_neo_class_node_form_validate';
-    $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
-    $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createClassSelecctionWidget';
-    $form['field_superclass2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
-    $form['field_disjointwith2']['#mxcbs_behaviour']['owntitle'] = FALSE;
-    $form['field_disjointwith2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDisjointWithSelecctionWidget'; 
-    $form['field_disjointwith2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree'; 
-  
-    $form['buttons']['submit']['#submit'][] = 'neologism_neo_class_form_submit';
   }
   
   // Hide the menu settings fieldset in class and property forms
   // as it is not likely to be used here and also steps in the middle of the form flow.
-  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_CT_PROPERTY.'_node_form') && isset($form['menu'])) {
+  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_PROPERTY_FORM_ID) && isset($form['menu'])) {
     unset($form['menu']);
   }
   // Set the size of the description field to 5 rows in class and property forms.
-  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_CT_PROPERTY.'_node_form') && isset($form['body_field']['body']['#rows'])) {
+  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_PROPERTY_FORM_ID) && isset($form['body_field']['body']['#rows'])) {
     $form['body_field']['body']['#rows'] = 4;
   }
   // Hide the layout field of the vocublary page since it's only used
@@ -1260,13 +1312,6 @@ function neologism_rdf_namespaces() {
 }
 
 
-function neologism_neo_class_form_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/'.$form_state['values']['field_vocabulary'][0]['nid'];
-}
-
-function neologism_neo_property_form_submit($form, &$form_state) {
-  $form_state['redirect'] = 'node/'.$form_state['values']['field_vocabulary'][0]['nid'];
-}
 
 /**
  * hook_removed_external_vocabulary($prefix)
@@ -1586,7 +1631,7 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
 }
 
 /**
- * 
+ * Deprecated... 
  * @param object $node
  * @param object $teaser [optional]
  * @param object $page [optional]
@@ -1627,6 +1672,123 @@ function theme_neo_property_node_view($node, $teaser = FALSE, $page = FALSE, $li
 
   return theme('node', $node, $teaser, $page);
 }
+
+/**
+ * 
+ * @param $form
+ * @return unknown_type
+ */
+function theme_neo_vocabulary_node_form($form) {
+	$output = '';
+	//dpm($form['title']);
+	
+	$buttons = drupal_render($form['buttons']);
+	//$form['title']['#namespace_url'] = $namespace_url;
+	//$URI = theme('render_URI_field', $form['title']);
+	$URI = drupal_render($form['title']);
+	
+	//$output .= drupal_render($form['field_title']);
+	//$output .= drupal_render($form['field_authors']);
+	
+	$output .= $URI.drupal_render($form). $buttons;
+	
+	return $output;
+}
+
+function theme_neo_property_node_form($form) {
+	$output = '';
+	$buttons = drupal_render($form['buttons']);
+	$URI = drupal_render($form['title']);
+	$label = drupal_render($form['field_label']);
+	$comment = drupal_render($form['field_comment']);
+	$domain = drupal_render($form['field_domain2']);
+	//$range = drupal_render($form['field_range2']);
+	$grouprange = drupal_render($form['group_range']);
+	$description = drupal_render($form['field_description2']);
+	$inverse = drupal_render($form['field_inverse2']);
+	$fp = drupal_render($form['field_fp']);
+	$ifp = drupal_render($form['field_ifp']);
+	$superproperty = drupal_render($form['field_superproperty2']);
+	
+	$output .= $URI.$label.$comment.$domain.$grouprange.$description.$inverse.$fp.$ifp.$superproperty.drupal_render($form).$buttons;
+	//$output = drupal_render($form).$buttons;
+	return $output;
+}
+
+function theme_neo_class_node_form($form) {
+	$output = '';
+	$buttons = drupal_render($form['buttons']);
+	$URI = drupal_render($form['title']);
+	$output .= $URI.drupal_render($form).$buttons;
+	return $output;
+}
+
+function theme_render_URI_field($element) {
+  $size = empty($element['#size']) ? '' : ' size="'. $element['#size'] .'"';
+  $maxlength = empty($element['#maxlength']) ? '' : ' maxlength="'. $element['#maxlength'] .'"';
+  $class = array('form-text');
+  $extra = '';
+  $output = '';
+
+  if ($element['#autocomplete_path'] && menu_valid_path(array('link_path' => $element['#autocomplete_path']))) {
+    drupal_add_js('misc/autocomplete.js');
+    $class[] = 'form-autocomplete';
+    $extra =  '<input class="autocomplete" type="hidden" id="'. $element['#id'] .'-autocomplete" value="'. check_url(url($element['#autocomplete_path'], array('absolute' => TRUE))) .'" disabled="disabled" />';
+  }
+  
+  _form_set_class($element, $class);
+
+  if (isset($element['#field_prefix'])) {
+    $output .= '<span class="field-prefix">'. $element['#field_prefix'] .'</span> ';
+  }
+
+  $output .= '<input type="text"'. $maxlength .' name="'. $element['#name'] .'" id="'. $element['#id'] .'"'. $size .' value="'. check_plain($element['#value']) .'"'. drupal_attributes($element['#attributes']) .' />';
+
+  if (isset($element['#field_suffix'])) {
+    $output .= ' <span class="field-suffix">'. $element['#field_suffix'] .'</span>';
+  }
+
+  return theme('neologism_form_element', $element, $output) . $extra;
+}
+
+/**
+ * This function is an exactly copy of theme_form_element but adpted for neologism
+ * @param $element
+ * @param $value
+ * @return unknown_type
+ */
+function theme_neologism_form_element(array $element, $value) {
+	//dpm($element);
+	$t = get_t();
+	
+	$output = '<div class="form-item"';
+  if (!empty($element['#id'])) {
+    $output .= ' id="'. $element['#id'] .'-wrapper"';
+  }
+  $output .= ">\n";
+  $required = !empty($element['#required']) ? '<span class="form-required" title="'. $t('This field is required.') .'">*</span>' : '';
+
+  if (!empty($element['#title'])) {
+    $title = $element['#title'];
+    if (!empty($element['#id'])) {
+      $output .= ' <label for="'. $element['#id'] .'">'. $t('!title: !required', array('!title' => filter_xss_admin($title), '!required' => $required)) ."</label>\n";
+    }
+    else {
+      $output .= ' <label>'. $t('!title: !required', array('!title' => filter_xss_admin($title), '!required' => $required)) ."</label>\n";
+    }
+  }
+
+  $output .= " <span>".$element['#namespace']."</span> $value\n";
+
+  if (!empty($element['#description'])) {
+    $output .= ' <div class="description">'. $element['#description'] ."</div>\n";
+  }
+
+  $output .= "</div>\n";
+
+  return $output;
+}
+
 // end theming section
 //-------------------------------------------------------------------------------------------------------
 
@@ -1826,7 +1988,13 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
 // validations hooks for the content types classes and properties
 // These methods to validate both form, classes and properties are provisional
 // 
-function _neologism_neo_vocabulary_node_form_validate($form, &$form_state) {
+/**
+ * 
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function _neo_vocabulary_node_form_validate($form, &$form_state) {
   $title = $form_state['values']['title'];
   if ( !_neologism_is_valid_id($title) ) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
@@ -1840,11 +2008,12 @@ function _neologism_neo_vocabulary_node_form_validate($form, &$form_state) {
  * @param object $form_state
  * @return 
  */
-function _neologism_neo_class_node_form_validate($form, &$form_state) {
+function neo_class_node_form_validate($form, &$form_state) {
+//function _neologism_neo_class_node_form_validate($form, &$form_state) {
   // due the node module check for the existences of the title we just to check it 
   // when the user select a name this name doesn't exists in the same vocabulary.
   // check if the action is over a new node
-  if( !$form_state['values']['nid'] ) {
+  //if( !$form_state['values']['nid'] ) {
     $vocabulary_nid = $form_state['values']['field_vocabulary'][0]['nid'];
     $class_title = $form_state['values']['title'];
     if ( !_neologism_is_valid_id($class_title) ) {
@@ -1869,7 +2038,7 @@ function _neologism_neo_class_node_form_validate($form, &$form_state) {
       }
     }
     
-  } // end if
+  //} // end if
 }
 
 /**
@@ -1879,7 +2048,8 @@ function _neologism_neo_class_node_form_validate($form, &$form_state) {
  * @param object $form_state
  * @return 
  */
-function _neologism_neo_property_node_form_validate($form, &$form_state) {
+function neo_property_node_form_validate($form, &$form_state) {
+//function _neologism_neo_property_node_form_validate($form, &$form_state) {
   // check for a new property
   if( !$form_state['values']['nid'] ) {
     $vocabulary_nid = $form_state['values']['field_vocabulary'][0]['nid'];
@@ -1919,6 +2089,26 @@ function _neologism_neo_property_node_form_validate($form, &$form_state) {
       }
     }
   }
+}
+
+/**
+ * 
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function _neo_class_node_form_submit($form, &$form_state) {
+  $form_state['redirect'] = 'node/'.$form_state['values']['field_vocabulary'][0]['nid'];
+}
+
+/**
+ * 
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function _neo_property_node_form_submit($form, &$form_state) {
+  $form_state['redirect'] = 'node/'.$form_state['values']['field_vocabulary'][0]['nid'];
 }
 
 // end validation node section
@@ -2183,7 +2373,9 @@ function neologism_evoc_widgetbehaviour_preprocess($field_name, $default_of_valu
  * @return unknown_type
  */
 function _neologism_after_build($form, &$form_state) {
-	_neologism_fix_disabled($form['field_vocabulary']);
+	//_neologism_fix_disabled($form['field_vocabulary']);
+	_neologism_fix_disabled($form['title']);
+	//print_r($form['title']);
   return $form;
 }
 
@@ -2221,4 +2413,11 @@ function _neologism_fix_disabled(&$elements) {
 function _neologism_cmp_2array_alphabetically($a, $b)
 {
 	return strcmp($a['id'], $b['id']);
+}
+
+
+function _neologism_get_namespace($path = NULL) {
+	$opts = array('absolute' => TRUE);
+  $namespace_url = url($path, $opts);
+  return $namespace_url;
 }

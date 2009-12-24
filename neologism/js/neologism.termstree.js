@@ -172,8 +172,8 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
  		});
 
     if(!pattern){
- 			return;
- 		}
+ 		return;
+ 	}
     
     this.expandAll();
 		

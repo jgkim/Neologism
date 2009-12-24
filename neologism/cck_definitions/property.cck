@@ -1,8 +1,8 @@
 $content['type']  = array (
   'name' => 'Property',
   'type' => 'neo_property',
-  'description' => 'Use mixedCase: Start with a lowercase letter and use only letters, numbers and hyphen.',
-  'title_label' => 'Id',
+  'description' => 'Only letters, numbers, dashes, and underscores.',
+  'title_label' => 'URI',
   'body_label' => 'A full description of the class. Include as much detail as you like. Limited HTML is allowed.',
   'size' => 25,
   'min_word_count' => '0',
