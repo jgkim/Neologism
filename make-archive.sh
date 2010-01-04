@@ -6,13 +6,19 @@ mv drupal-6.14 neologism-1.0-rc4
 cd neologism-1.0-rc4
 
 # Download required modules
-drush dl cck rdf sparql ext
+drush dl cck rdf sparql ext rules
 
 # Download and extract ARC, which is required as part of the RDF module
 mkdir sites/all/modules/rdf/vendor
 curl -o sites/all/modules/rdf/vendor/arc.tar.gz http://code.semsol.org/source/arc.tar.gz
 tar xzf sites/all/modules/rdf/vendor/arc.tar.gz -C sites/all/modules/rdf/vendor/
 rm sites/all/modules/rdf/vendor/arc.tar.gz
+
+# Download and extract ExtJS-3, which is required for the evoc module 
+wget http://www.extjs.com/products/extjs/download.php?dl=extjs3
+tar xzf ext-3.0.0.zip
+mv ext-3.0.0 sites/all/modules/ext/
+rm ext-3.0.0.zip
 
 # Check out Neologism and evoc modules from Google Code SVN
 # @@@ use export instead???
