@@ -63,7 +63,7 @@ function neologism_profile_details() {
  */
 function neologism_profile_task_list() {
 	return array(
-		'neologism-structuring' => st('Structuring site')
+		'building-neologism-perspective' => st('Building Neologism\'s Perspective')
 	);
 }
 
@@ -135,10 +135,10 @@ function neologism_profile_tasks(&$task, $url) {
 	  // Update the menu router information.
 	  menu_rebuild();
 	  
-	  $task = 'neologism-structuring';
+	  $task = 'building-neologism-perspective';
   }
   
-  if( $task == 'neologism-structuring' ) {
+  if( $task == 'building-neologism-perspective' ) {
   	// set the default ExtJS library path to same place where is located the ext module
   	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext-3.0.0');
   	
@@ -196,7 +196,7 @@ function neologism_profile_tasks(&$task, $url) {
   	// set the default mission
   	$form_id = 'system_site_information_settings';
   	$form_state['values'] = array(
-			'site_mission' => 'Richard here should go the mission provide by you...'
+			'site_mission' => 'Richard here should goes the mission provide by you...'
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
@@ -337,6 +337,10 @@ function neologism_profile_tasks(&$task, $url) {
 										)"
   	);
   	drupal_execute($form_id, $form_state);
+  	
+  	// hidden the SPARQL links
+  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "sparql"');
+  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "node/add/sparql"');
   	
   	// return control to the installer
 	  $task = 'profile-finished';
