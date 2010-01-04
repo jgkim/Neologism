@@ -196,7 +196,7 @@ function neologism_profile_tasks(&$task, $url) {
   	// set the default mission
   	$form_id = 'system_site_information_settings';
   	$form_state['values'] = array(
-			'site_mission' => 'Richard here should goes the mission provide by you...'
+			'site_mission' => 'Here should goes the mission\'s message (We are working in such a message...)'
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
