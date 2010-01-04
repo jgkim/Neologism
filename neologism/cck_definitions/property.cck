@@ -131,7 +131,7 @@ $content['fields']  = array (
     'weight' => '-7',
     'rows' => '1',
     'size' => 60,
-    'description' => 'Capitalise this label using title case, as though it was being used as a heading in a table.',
+    'description' => 'A human readable name to the property.',
     'default_value' => 
     array (
     ),

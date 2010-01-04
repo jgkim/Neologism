@@ -1,7 +1,7 @@
 $content['type']  = array (
   'name' => 'Vocabulary',
   'type' => 'neo_vocabulary',
-  'description' => 'Only letters, numbers, dashes, and underscores.',
+  'description' => 'A Vocabulary is the content type that you can use to create your own terms and uses external predefined terms to define concepts and the relationships between them for a specific area of interest, or domain.',
   'title_label' => 'URI',
   'body_label' => 'Description',
   'min_word_count' => '0',
@@ -33,7 +33,7 @@ $content['fields']  = array (
     'weight' => '-4',
     'rows' => '1',
     'size' => 60,
-    'description' => '',
+    'description' => 'A human readable title for the vocabulary.',
     'default_value' => 
     array (
       0 => 
