@@ -259,6 +259,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   	unset($form['menu']);
   	// hide the path fielset
   	$form['path']['#access'] = FALSE;
+  	
+  	// add to the title label a description
+  	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
 	}
     
   // Select the vocabulary when adding a class or a property from a vocabulary page
@@ -293,6 +296,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
     $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
     
+    // add to the title label a description
+  	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
+  	
     if( isset($form['field_range2']) ) {
       $form['field_range2']['#prefix'] = '<div id="range-field">';
       $form['field_range2']['#suffix'] = '</div>';  
@@ -361,6 +367,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   
     // hide the input field
     $form['field_vocabulary']['#access'] = FALSE;
+    
+    // add to the title label a description
+  	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
     
     if( arg(2) == 'edit' && isset($form['#node']) ) {
       $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
@@ -2415,9 +2424,28 @@ function _neologism_cmp_2array_alphabetically($a, $b)
 	return strcmp($a['id'], $b['id']);
 }
 
-
+/**
+ * 
+ * @param $path
+ * @return unknown_type
+ */
 function _neologism_get_namespace($path = NULL) {
 	$opts = array('absolute' => TRUE);
   $namespace_url = url($path, $opts);
   return $namespace_url;
+}
+
+/**
+ * Overwritten the hook_menu_link_alter to hidden the Classes and Properties creation from navigation menu.
+ * @param $item
+ * @param $menu
+ * @return unknown_type
+ */
+function neologism_menu_link_alter(&$item, $menu) {
+	switch( $item['link_path'] ) {
+		case 'node/add/neo-class':
+		case 'node/add/neo-property':
+			$item['hidden'] = 1;
+			break;	
+	}
 }
