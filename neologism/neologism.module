@@ -12,8 +12,10 @@ define("N3", "n3");
 define("XML", "xml");
 define("LAYOUT", "layout");
 
-define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'neologism') ."/includes/rap/");
-define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', 'neologis`m') ."/includes/content_negotiation/");
+// this definition has been moved to the Evoc module whose is using RAP
+//define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'evoc') ."/includes/rap/");
+
+define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', NEOLOGISM)."/includes/content_negotiation/");
 define("NEOLOGISM_CT_VOCABULARY", "neo_vocabulary");
 define("NEOLOGISM_CT_CLASS", "neo_class");
 define("NEOLOGISM_CT_PROPERTY", "neo_property");
@@ -27,11 +29,12 @@ define("MSG_INVALID_ID", "is not a valid identifier. It should start with a lett
 
 define("MSG_ID_ALREADY_IN_USE", "Id already in use.  Please check that the vocabulary is not in the system.");      
 
-define("DISJOINTS_WITH", "disjointswith");
+define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
 define("DOMAINS", "domains");
 define("RANGES", "ranges");
 define("SUBPROPERTYOF", "subpropertyof");
+define("INVERSE", "inverse");
 
 // persmission definitions
 define("PERMISSION_EDIT_VOCABULARIES", "edit vocabularies");
@@ -41,6 +44,7 @@ define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
 define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
 define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
 
+
 /**
  * Implementation of hook_init().
  */
@@ -49,6 +53,8 @@ function neologism_init() {
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.termstree.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.evocfield.behaviours.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/widgetbehaviour.domain.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/widgetbehaviour.inverse.js');
   
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-darkgray.css');
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-slickness.css');
@@ -246,6 +252,8 @@ function neologism_menu() {
  * Implementation of hook_form_alter().
  */
 function neologism_form_alter(&$form, &$form_state, $form_id) {
+	global $evoc_xsd_datatypes;
+	
 	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
     $form['#validate'][] = '_neo_vocabulary_node_form_validate';
@@ -280,6 +288,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   }
   
   if( $form_id == NEOLOGISM_PROPERTY_FORM_ID ) {
+  	//kpr($form);
   	$form['title']['#theme'] = "render_URI_field";
   	$form['title']['#size'] = 20;
 		
@@ -292,17 +301,64 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['buttons']['submit']['#submit'][] = '_neo_property_node_form_submit';
     
     // add behaviours for evoc fields if they are using the MXCheckBox selection widget
+    $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
+    $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
+    $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+    
+    $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
+    $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
+    $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+    
+    // add behaviours for evoc fields if they are using the MXCheckBox selection widget
     $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
     $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
     $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
     
+    // add behaviours for field_inverse2 field
+    $form['field_inverse2']['#mxcbs_behaviour']['owntitle'] = FALSE;
+    $form['field_inverse2']['#mxcbs_behaviour']['handler'] = 'Neologism.createInverseSelecctionWidget';
+    $form['field_inverse2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
+    
     // add to the title label a description
   	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
   	
-    if( isset($form['field_range2']) ) {
-      $form['field_range2']['#prefix'] = '<div id="range-field">';
-      $form['field_range2']['#suffix'] = '</div>';  
-    }
+	  // add the group for ranges
+	  $form['range_group']['resource_type'] = array(
+	    '#type' => 'radios',
+	    //'#title' => t('The value of this property is'),
+	    '#title' => t('Range'),
+	    '#options' => array(
+	    	1 => t('The value of this property is another resource.'),
+	    	2 => t('The value of this property is a literal (string, number, date, ...).'),
+	    	3 => t('The value of this property can be either.')
+	    ),
+	    //'#description' => t('Description should goes here....'),
+	    '#default_value' => 1,
+	    '#prefix' => '<div id="range-group-resourcetype">',
+	    '#suffix' => '</div>',
+	    '#attributes' => array('onClick' => 'Neologism.checkResourceType()'),
+	    //'#theme' => "render_URI_field"
+	  );
+	  
+	  $form['range_group']['data_types'] = array(
+	  	'#title' => '',//t('Data Types'),
+	  	'#type' => 'select',
+	  	'#description' => t('Select the data type for this property.'),
+	  	'#options' => evoc_get_xsd_datatype_list(),
+	  	'#multiple' => FALSE,
+	  	'#prefix' => '<div id="range-group-datatypes">',
+	  	'#suffix' => '</div>'
+	  	//'#weight' => 20
+	  );
+	  
+	  if( isset($form['field_range2']) ) {
+	  	//$form['range_group']['field_range2'] = $form['field_range2'];
+	    //$form['range_group']['field_range2']['#prefix'] = '<div id="range-group-fieldrange2">';
+	    //$form['range_group']['field_range2']['#suffix'] = '</div>';
+	    $form['field_range2']['#prefix'] = '<div id="range-group-fieldrange2">';
+	    $form['field_range2']['#suffix'] = '</div>';  
+	  }
+    
   	
     // add validation function for create or edition of properties form
     if( arg(2) == 'edit' && isset($form['#node']) ) {
@@ -340,6 +396,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     //else if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
     //  $form['field_domain']['#default_value'][0]['nid'] = arg(4);
     //} 
+    
   }
   
   // add the validation handler to both content type
@@ -1019,6 +1076,9 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
  */
 function neologism_nodeapi(&$node, $op, $teaser, $page) {
   
+	// to use constant definitions
+	//include_once( drupal_get_path('module', 'evoc').'/evoc.module' );
+
   switch ($op) {
     case 'prepare':
       if( $node->type == NEOLOGISM_CT_CLASS ) {
@@ -1082,6 +1142,15 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
           }
         }
         
+      	$term[EVOC_DISJOINT_WITH] = array();
+        if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
+          foreach ( $node->field_disjointwith2 as $value ) {
+            if( !empty($value['evoc_term']) ) {
+              $term[EVOC_DISJOINT_WITH][] = $value['evoc_term'];
+            }
+          }
+        }
+        
         // load vocabulary's node to get its title as namespace/prefix for this class 
         $vocabulary = node_load($node->field_vocabulary[0][nid]);
         $term['prefix'] = $vocabulary->title; 
@@ -1124,6 +1193,19 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
             }
           }
         }
+        
+        //kpr($form);
+      	$term[EVOC_INVERSE] = array();
+        if( !empty($node->field_inverse2) && is_array($node->field_inverse2) ) {
+          foreach ( $node->field_inverse2 as $value ) {
+            if( !empty($value['evoc_term']) ) {
+              $term[EVOC_INVERSE][] = $value['evoc_term'];
+            }
+          }
+        }
+        
+        // inverse normalizatio should goes here
+        $term[EVOC_INVERSE] = $node->field_inverse2[0]['evoc_term'];
  
         // load vocabulary's node to get its title as namespace/prefix for this class 
         $vocabulary = node_load($node->field_vocabulary[0][nid]);
@@ -1158,6 +1240,15 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
           foreach ( $node->field_superclass2 as $value ) {
             if( !empty($value['evoc_term']) ) {
               $term['superclasses'][] = $value['evoc_term'];
+            }
+          }
+        }
+        
+      	$term[EVOC_DISJOINTS_WITH] = array();
+        if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
+          foreach ( $node->field_disjointwith2 as $value ) {
+            if( !empty($value['evoc_term']) ) {
+              $term[EVOC_DISJOINTS_WITH][] = $value['evoc_term'];
             }
           }
         }
@@ -1204,6 +1295,9 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
             }
           }
         }
+        
+      	//kpr($form);
+      	$term[EVOC_INVERSE] = $node->field_inverse2[0]['evoc_term'];
  
         // load vocabulary's node to get its title as namespace/prefix for this class 
         $vocabulary = node_load($node->field_vocabulary[0][nid]);
@@ -1244,7 +1338,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
  */
 function neologism_get_preferred_content($accept) {
   if (isset($accept)) {
-    include_once( drupal_get_path('module', NEOLOGISM) . CONTENT_NEGOTATION_DIR . "content_negotiation.inc.php");
+    include_once(CONTENT_NEGOTATION_DIR."content_negotiation.inc.php");
     // Stupid browsers that send */* should get HTML, so give
     // highest preference ot that. We prefer XHTML over HTML if
     // both are supported. Among RDF formats, RDF/XML has precedence
@@ -1598,8 +1692,8 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
   }
   
   $description = '';
-	if ( !empty($node->field_description2) ) {
-    $description .= $node->field_description2[0]['value'];
+	if ( !empty($node->body_field) ) {
+    $description = $node->body_field;
   }
   
   $output .= '
@@ -1705,30 +1799,40 @@ function theme_neo_vocabulary_node_form($form) {
 }
 
 function theme_neo_property_node_form($form) {
-	$output = '';
+	//kpr($form);
+	
 	$buttons = drupal_render($form['buttons']);
 	$URI = drupal_render($form['title']);
 	$label = drupal_render($form['field_label']);
 	$comment = drupal_render($form['field_comment']);
 	$domain = drupal_render($form['field_domain2']);
-	//$range = drupal_render($form['field_range2']);
-	$grouprange = drupal_render($form['group_range']);
-	$description = drupal_render($form['field_description2']);
+	//$grouprange = drupal_render($form['group_range']);
+	//$description = drupal_render($form['field_description2']);
+	$description = drupal_render($form['body_field']);
 	$inverse = drupal_render($form['field_inverse2']);
 	$fp = drupal_render($form['field_fp']);
 	$ifp = drupal_render($form['field_ifp']);
 	$superproperty = drupal_render($form['field_superproperty2']);
-	
-	$output .= $URI.$label.$comment.$domain.$grouprange.$description.$inverse.$fp.$ifp.$superproperty.drupal_render($form).$buttons;
+  
+  $range_group = drupal_render($form['range_group']['resource_type']);
+  $range_group .= drupal_render($form['field_range2']);
+  $range_group .=drupal_render($form['range_group']['data_types']);
+  
+	$output = $URI.$label.$comment.$description.$fp.$ifp.$domain.$range_group.$superproperty.$inverse.drupal_render($form).$buttons;
 	//$output = drupal_render($form).$buttons;
 	return $output;
 }
 
 function theme_neo_class_node_form($form) {
+	//var_dump($form);
 	$output = '';
 	$buttons = drupal_render($form['buttons']);
 	$URI = drupal_render($form['title']);
-	$output .= $URI.drupal_render($form).$buttons;
+	$label = drupal_render($form['field_label']);
+	$comment = drupal_render($form['field_comment']);
+	$description = drupal_render($form['body_field']);
+	
+	$output .= $URI.$label.$comment.$description.drupal_render($form).$buttons;
 	return $output;
 }
 
@@ -2076,20 +2180,35 @@ function neo_property_node_form_validate($form, &$form_state) {
       }
     }
     
-    //check for the property's range
-    //$range = $form_state['values']['field_literal_as_range'][0]['value'] ? "rdfs:Literal" : $form_state['values']['field_range2'][0]['evoc_term'];
+    // if $form_state['values']['resource_type'] == '1' everithing come fine
+  	if( $form_state['values']['resource_type'] == '2' ) {
+    	$form_state['values']['field_range2'][0]['evoc_term'] = $form_state['values']['data_types']; 
+    }
+  	else if( $form_state['values']['resource_type'] == '3' ) {
+    	$form_state['values']['field_range2'][0] = NULL;
+    }
+    
+    /*
     if( $form_state['values']['field_literal_as_range'][0]['value'] ) {
       $range = "rdfs:Literal";
       // this would be used when save the property to the repository
       $form_state['values']['field_range2'][0]['evoc_term'] = $range;
     }
+    */
     
+    /*
+     * We don't need to check something that is filtered for the system. So we need to remove this 
+     * commented piece of code afeter be sure of that
+     * 
     // check for the property's ranges. if the range already exists in the system
-    foreach( $form_state['values']['field_range2'] as $value ) {
-      if( !evoc_term_exists(NULL, $value['evoc_term'], TRUE) ) {
-        form_set_error('field_range2', t('You must select a range from one of the terms that match your criterial. If that class does not exists in the system, please import it.'));
-      }
+    if( !empty($form_state['values']['field_range2']) ) {
+	    foreach( $form_state['values']['field_range2'] as $value ) {
+	      if( !evoc_term_exists(NULL, $value['evoc_term'], TRUE) ) {
+	        form_set_error('field_range2', t('You must select a range from one of the terms that match your criterial. If that class does not exists in the system, please import it.'));
+	      }
+	    }
     }
+    */
     
     // check for the property's superproperty field. 
     foreach( $form_state['values']['field_superproperty2'] as $value ) {
@@ -2209,8 +2328,6 @@ function _neologism_on_deleted_class_node($node, $vocabulary_title = NULL) {
   // at this point the current class has been removed. 
   // now we have to check for other classes or properties that might be subClasses or disjoints 
   // or properties that might has been using it as domain or range.
-  
-  //TODO: there is a proble somewhere this function
   
   if( !$vocabulary_title ) {
     $vocabulary_title = db_fetch_object( db_query( db_rewrite_sql("SELECT n.title FROM {node} n WHERE n.nid = %d"), $node->field_vocabulary[0]['nid']) );
