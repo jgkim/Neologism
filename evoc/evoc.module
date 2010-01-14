@@ -392,7 +392,14 @@ function evoc_import_vocabulary($vocabulary_uri, $vocabulary_prefix, $showdetail
   }
 }
 
-
+/**
+ * 
+ * @param $vocabulary_uri
+ * @param $vocabulary_prefix
+ * @param $ignore_base_ns
+ * @param $ns_uri
+ * @return unknown_type
+ */
 function evoc_fetch_vocabulary2($vocabulary_uri, $vocabulary_prefix, $ignore_base_ns = FALSE, $ns_uri = NULL) {
 	module_load_include('module', 'rdf', 'rdf');
   global $rdf_namespaces;
@@ -1195,8 +1202,15 @@ function _evoc_fetch_terms_from_vocabulary($URI) {
   include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
   include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
     
-  $model = ModelFactory::getMemModel();
-  $model->load($URI);
+  try {
+  	$model = evoc_read_RDF_from_URI($URI);
+  }
+  catch (Exception $e) {
+  	evoc_set_message($e->getMessage(), 'error');
+  	return NULL;	
+  }
+  //$model = ModelFactory::getMemModel();
+  //$model->load($URI);
   //$model->writeAsHtmlTable(); 
   
   // SPARQL queries are stored in an array.
@@ -1529,6 +1543,117 @@ function evoc_rdf_uri_to_qname($uri) {
   return implode(':', $qname_parts);
 }
 
+
+/**
+ * 
+ * @param $uri
+ * @return unknown_type
+ */
+function evoc_read_RDF_from_URI($uri) {
+    $uri = trim($uri);
+    // check if it's an HTTP URI
+    if (!preg_match('!^http://!', $uri)) {
+        throw new Exception('Can only read from http:// URIs');
+    }
+    // create a custom context that sends an Accept header that asks for RDF/XML, Turtle or N3
+    $context = stream_context_create(array('http' => array(
+            'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
+    )));
+    // read file contents
+    $content = @file_get_contents($uri, FILE_BINARY, $context);
+    if ($content === false) {
+        // reading has failed.
+        if (empty($http_response_header)) {
+            // failure is NOT an HTTP error reported by the destination server,
+            // so we will use PHP's warning message
+            if (!function_exists('error_get_last')) {
+                throw new Exception('Failed to read from URI');
+            }
+            $error = error_get_last();
+            throw new Exception('Failed to read from URI: ' . $error['message']);
+        }
+        // First http_response_header should be: 'HTTP/1.1 404 Not Found' or similar.
+        // Try to get only the '404 Not Found' part.
+        if (preg_match('/^[^ ]* (.*)/', $http_response_header[0], $match)) {
+            $http_error = $match[1];
+        } else {
+            $http_error = $http_response_header[0];
+        }
+        throw new Exception('Failed to read from URI: ' . $http_error);
+    }
+    // Remove Byte Order Mark if present
+    if (strlen($content) >= 3 && ord($content[0]) == 0xEF && ord($content[1]) == 0xBB && ord($content[2]) == 0xBF) {
+        $content = substr($content, 3);
+    }
+
+    // find media type by looking for a Content-Type header; default to application/rdf+xml
+    $media_type = null;
+    foreach (@$http_response_header as $header) {
+        $header = trim(strtolower($header));
+        if (preg_match('!^HTTP\/!i', $header)) {
+            // In case of redirects, headers of subsequent redirects are simply appended to the array.
+            // We are only interested in the last one, so reset.
+            $media_type = null;
+        }
+        if (preg_match('/^content-type *: *([a-z0-9\/+-]+)/', $header, $match)) {
+            $media_type = $match[1];
+        }
+    }
+    $extension = null;
+    if (preg_match('/\.([a-zA-Z0-9])$/', $uri, $match)) {
+        $extension = strtolower($match[1]);
+    }
+
+    // Sanity checks: Did we actually load some RDF/XML?
+    if ($media_type == 'application/rdf+xml' || $media_type == 'text/rdf' || $media_type == 'application/rdf') {
+        // Media type says RDF/XML, so let's try it
+    } else if ($extension == 'rdf' || $extension == 'rdfx' || $extension == 'owl') {
+        // Extension looks like RDF/XML, so let's try it
+    } else if (preg_match('!<rdf:RDF|http://www\.w3\.org/1999/02/22-rdf-syntax-ns#!', substr($content, 1000))) {
+        // Content smells like RDF/XML, so let's try it
+    } else if ($media_type == 'text/html' || $media_type == 'application/xhtml+xml') {
+        // Bad! This is HTML, not RDF/XML
+        throw new Exception('Server returned an HTML media type, but we can only process RDF/XML');
+    } else if (preg_match('/n3|turtle|ttl/', $media_type)) {
+        // Bad! This is N3 or Turtle, not RDF/XML
+        throw new Exception('Server returned a Turtle media type, but we can only process RDF/XML');
+    } else if (preg_match('/^\s*@prefix/', $content)) {
+        // Bad! This starts like a Turtle or N3 file
+        throw new Exception('This appears to be a Turtle document, but we can only process RDF/XML');
+    } else if (preg_match('/^x?html?$/', $media_type)) {
+        // Bad! This looks like HTML, not RDF/XML
+        throw new Exception('This appears to be an HTML document, but we can only process RDF/XML');
+    } else if ($media_type == 'text/plain' || $media_type == 'application/octet-stream') {
+        // Generic/default media types, might be OK
+    } else if ($media_type) {
+        throw new Exception("Can only process RDF/XML; reported media type was $media_type");
+    }
+    if (substr(ltrim($content), 0, 1) != '<') {
+        throw new Exception("Parse error: File does not start with '<'");
+    }
+
+    // Create a RAP model and parse the content
+    $model = ModelFactory::getDefaultModel();
+    set_error_handler('read_RDF_from_URI__error_handler', E_USER_ERROR);
+    try {
+        $model->loadFromString($content, 'rdf');
+        restore_error_handler();
+        return $model;
+    } catch (Exception $ex) {
+        restore_error_handler();
+        throw $ex;
+    }
+}
+
+function read_RDF_from_URI__error_handler($errno, $errstr) {
+    throw new Exception($errstr);
+}
+
+
+/**
+ * 
+ * @return unknown_type
+ */
 function evoc_get_xsd_datatype_list() {
 	$evoc_xsd_datatypes = array(
 			t('Standard datatypes') => array(
