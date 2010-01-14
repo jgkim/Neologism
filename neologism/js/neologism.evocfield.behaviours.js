@@ -22,7 +22,7 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
   Neologism.superclassesTreePanel = new Neologism.TermsTree({
     renderTo: objectToRender,
     title: Drupal.t('Classes'),
-    disabled: true,
+    disabled: false,
     
     loader: new Ext.tree.TreeLoader({
       dataUrl: dataUrl,
@@ -32,27 +32,43 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-          node.eachChild(function(currentNode){
-            currentNode.cascade( function() {
-              // expand the node to iterate over it
-              this.getOwnerTree().expandPath(this.getPath());
-              
-              if ( this.id == editingValue ) {
-                this.getUI().addClass('locked-for-edition');
-                this.getUI().checkbox.disabled = true;
-                this.getUI().checkbox.checked = false;
-              }
-              
-              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-                if (this.id == baseParams.arrayOfValues[j]) {
-                  this.getUI().toggleCheck(true);
-                }
-              }
-            }, null);
-          });
-          
-          // disjoiness depend from classes selection
-          Neologism.disjointWithTreePanel.render(Neologism.objectToRender);
+          	
+    		console.log(node);
+    		//node.expand(true);
+    		var editingNode = null;
+    		
+    		node.eachChild(function(currentNode){
+    			currentNode.expand();
+    			currentNode.cascade( function() {
+	            	// expand the node to iterate over it
+	            	var id = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
+	            	//this.getOwnerTree().expandPath(this.getPath());
+	              
+	              	if ( id == editingValue ) {
+						this.getUI().addClass('locked-for-edition');
+						this.getUI().checkbox.disabled = true;
+						this.getUI().checkbox.checked = false;
+						editingNode = this;
+						//this.remove();
+	              	}
+	              
+	              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+	              		if ( id == baseParams.arrayOfValues[j] ) {
+	              			this.getUI().toggleCheck(true);
+	              		}
+	              	}
+	            }, null);
+	         });
+    		
+    		// we remove the editing node from treeview for edition 
+    		// TODO at this point we also need to configure the treeview because could be possible that the editing
+    		// class be disjoint with some future superclass
+    		if( editingNode != null ) {
+    			 editingNode.remove();
+    		}
+	          
+    		// disjoiness depend from classes selection
+    		//Neologism.disjointWithTreePanel.render(Neologism.objectToRender);
         }
       }
     }),
@@ -66,114 +82,154 @@ Neologism.createClassSelecctionWidget = function( field_name ) {
     }),
     
     listeners: {
-      // behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
-      checkchange: function(node, checked) {
-        if ( checked && node.parentNode !== null ) {
-          // if we're checking the box, check it all the way up
-    			if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-            
-            //Ext.Msg.alert('Checkbox status', 'Checked: "' + node.attributes.text);
-            //Neologism.classSelection.push(node.id);
-            //alert(node.id);
-            if ( baseParams.arrayOfValues.indexOf(node.id) == -1 ) {
-              baseParams.arrayOfValues.push(node.id);
-            }
-            
-            if ( !node.parentNode.isRoot ) {
-              node.bubble( function(){
-                if (node.id != this.id && node.getUI().nodeClass != 'locked-for-edition' ) {
-                  this.getUI().checkbox.disabled = true;
-                }
-                //this.getUI().addClass('complete');
-                // if this node is the root node then return false to stop the bubble process
-                if ( this.parentNode.isRoot ) {
-                  return false;
-                }
-              });
-            }
-            
-            //alert(Neologism.disjointWithTree);
-            // disable all the classes in disjoint tree
-            Neologism.disjointWithTreePanel.expandPath(node.getPath());
-            disjointWithNode = Neologism.disjointWithTreePanel.getNodeById(node.id);
-            // when the Neologism.superclassesTree is expanding its nodes the
-            // Neologism.disjointWithTree has not load its nodes yet, so we need to check it
-            // to avoid errors 
-            //alert(disjointWithNode);
-            if( disjointWithNode !== undefined ) {
-              disjointWithNode.bubble( function(){
-                this.getUI().checkbox.disabled	= true;
-                this.getUI().addClass('complete');
-                // if this node is the root node then return false to stop the bubble process
-                if ( this.parentNode.id == Neologism.disjointWithTreePanel.getRootNode().id ) {
-                  return false;
-                }
-      				});
-            }
-          }
-    		} else {
-          for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-            if ( baseParams.arrayOfValues[i] == node.attributes.id ) {
-              
-              //alert(node.getPath());
-              baseParams.arrayOfValues.splice(i, 1);
-              
-              if (!node.parentNode.isRoot) {
-                node.bubble( function(){
-                  if (node.id != this.id && node.getUI().nodeClass != 'locked-for-edition') {
-                    this.getUI().checkbox.disabled = false;
-                  }
-                  //this.getUI().addClass('complete');
-                  // if this node is the root node then return false to stop the bubble process
-                  if ( this.parentNode.isRoot ) {
-                    return false;
-                  }
-                });
-              }
-              
-              // enable all the classes in disjoint tree
-              Neologism.disjointWithTreePanel.expandPath(node.getPath());
-              Neologism.disjointWithTreePanel.getNodeById(node.id).bubble( function(){
-                this.getUI().checkbox.disabled = false;
-                this.getUI().removeClass('complete');
-                
-                // stop the bubble if the parent is the root node
-                if ( this.parentNode.id == Neologism.disjointWithTreePanel.getRootNode().id ) {
-                  return false;
-                }
-                
-                // Loop through its childen
-                for (var i = 0, len = this.parentNode.childNodes.length; i < len; i++) {
-                  var currentChild = this.parentNode.childNodes[i];
-                              
-                  // if this child is disable so we need to keep its parent disable, return false to stop
-                  // bubble process
-                  if ( currentChild.getUI().checkbox.disabled == true ) {
-                    return false;
-                  }
-                }
-    				  });
-             
-            }
-          }    
-        }
-
-        node.cascade( function(){
-          this.expand();
-          //alert(this.id + " == " + editingValue + " result = " + (this.id == editingValue) );
-          if ( this.id != editingValue ) {
-            if (this.id != node.id && this.getUI().nodeClass != 'locked-for-edition' && this.getUI().nodeClass != 'complete') {
-              this.getUI().checkbox.disabled = node.getUI().checkbox.checked;
-            }
-          }
-          else if ( this.id == editingValue ) {
-            this.getUI().addClass('locked-for-edition');
-            this.getUI().checkbox.disabled = true;
-            this.getUI().checkbox.checked = false;
-          }
-        });
-        
-      } // checkchange  
+      	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
+      	checkchange: function(node, checked) {
+	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	  		//console.info(node);
+	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
+	  		
+	        if ( checked /*&& node.parentNode !== null*/ ) {
+		        // add selection to array of values
+        		if ( baseParams.arrayOfValues.indexOf(id) == -1 ) {
+	            	baseParams.arrayOfValues.push(id);
+	            }
+	            
+        		console.log(baseParams.arrayOfValues);
+        		
+        		// check if this node has more than 1 super class, so we need to checked it 
+        		// in other places in the tree.
+        		if( node.attributes.superclasses !== undefined ) {
+	        		var c = node.attributes.superclasses;
+	        		var len = c.length;
+	        		if ( len > 1 ) {
+		        		var rootnode = node.getOwnerTree().getRootNode(); 
+		        		for ( var i = 0; i < len; i++ ) {
+		        			if( c[i] != node.parentNode.id ) {
+		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        				if ( currentNode !== null ) {
+		        					var n = currentNode.findChild('text', id);
+		        					if( n.getUI().checkbox.checked == false ) {
+		        						n.getUI().toggleCheck(true);
+		        					}
+		        				}
+		        			}
+		        		}
+	        		}
+        		}
+        		
+	            // disabled all the parent of the selection
+        		if ( !node.parentNode.isRoot ) {
+	            	node.bubble( function() {
+		                var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
+	            		if (id != cid && node.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED
+	            				&& node.getUI().nodeClass != 'locked-for-edition') {
+		                	this.getUI().checkbox.disabled = true;
+		                	this.getUI().checkbox.checked = true;
+		                }
+		                // if this node is the root node then return false to stop the bubble process
+		                if ( this.parentNode.isRoot ) {
+		                	return false;
+		                }
+	            	});
+	            }
+	    	} 
+	        else {
+	    		// if we are unchecked a checkbox
+	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
+	    			if ( baseParams.arrayOfValues[i] == id ) {
+	    				baseParams.arrayOfValues.splice(i, 1);
+	    			}
+	    		}
+	    		
+	    		// check if we can enabled a parent after a deselection
+				if (!node.parentNode.isRoot) {
+				    // search for someone checked
+					var someoneChecked = false;
+					node.bubble( function() {
+				    	if ( id != this.id ) {
+				    		if ( this.getOwnerTree().isSomeChildChecked(this) ) {
+				    			return false;
+				    		}
+				    		this.getUI().checkbox.disabled = false;
+				    		this.getUI().checkbox.checked = false;
+				    	}
+				    	
+				    	if ( this.parentNode.isRoot ) {
+				    		return false;
+				    	}
+				    });
+					
+				}
+				
+				// check multiple superclasses dependencies
+				if( node.attributes.superclasses !== undefined ) {
+	        		var c = node.attributes.superclasses;
+	        		var len = c.length;
+	        		if ( len > 1 ) {
+		        		var rootnode = node.getOwnerTree().getRootNode(); 
+		        		for ( var i = 0; i < len; i++ ) {
+		        			if( c[i] != node.parentNode.id ) {
+		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        				//console.info(currentNode);
+		        				//console.log('Path: %s, c[i]: %s', rootnode.findChild('id', c[i]), c[i]); //.getPath());
+		        				if ( currentNode !== null ) {
+		        					var n = currentNode.findChild('text', id);
+		        					if( n.getUI().checkbox.checked == true ) {
+		        						n.getUI().toggleCheck(false);
+		        					}
+		        				}
+		        			}
+		        		}
+	        		}
+        		}
+	        } // else
+	        
+	        // check for disjointwith classes with the selected class
+    		node.getOwnerTree().checkDisjointWith(node);
+    		
+	        // disabled or enabled child in cascade depending of the value of checked
+	        node.cascade( function() {
+	        	if( !this.isExpanded() ) {
+	        		this.expand();
+	        	}
+	        	
+	        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
+        		if ( id != cid  ) {
+        			if ( checked ) {
+        				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
+        					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;
+        				}
+        				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL ) {
+        					this.getUI().addClass('class-bloked');
+	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;
+        				}
+        			}
+        			else {
+        				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT ) {
+        					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.INCONSISTENT;
+        				}
+        				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
+	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	        				this.getUI().removeClass('class-bloked');
+        				}
+        			}
+        			
+        			this.getUI().checkbox.disabled = !this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL;
+        		}
+	        });
+	        
+	        this.fireEvent('selectionchange', node);
+  		} // checkchange  
+    }
+    
+  	// override method onSelectionChange called when a fireEvent('selectionchange', ...); is invoked
+  	,onSelectionChange:function(object) {
+        // do whatever is necessary to assign the employee to position
+    	//console.log('in onSelectionChange from superclass selection');
+    	//console.info(object);
+    	
+    	// notify Observers if there is someone
+    	this.notifyObservers('selectionchange', object);
     },
     
     updatselection: function(){
@@ -221,15 +277,18 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name) {
   baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
   
   Neologism.disjointWithTreePanel = new Neologism.TermsTree({
-    //renderTo: objectToRender,
+    renderTo: objectToRender,
     title: Drupal.t('Disjoint with class(es)'),
-    disabled: true,
+    disabled: false,
     
     loader: new Ext.tree.TreeLoader({
       dataUrl: dataUrl,
       baseParams: baseParams,//baseParams,
       listeners: {
-        load: function(loader, node, response){
+    	load: function(loader, node, response){
+    	
+    		var editingNode = null;
+    	
           node.eachChild(function(currentNode){
             currentNode.cascade(function(){
               // expand the node to iterate over it
@@ -239,6 +298,7 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name) {
                 this.getUI().addClass('locked-for-edition');
                 this.getUI().checkbox.disabled = true;
                 this.getUI().checkbox.checked = false;
+                editingNode = this;
               }
               
               for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
@@ -249,12 +309,19 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name) {
             }, null);
           });
           
+          	// we remove the editing node from treeview for edition 
+    		// TODO at this point we also need to configure the treeview because could be possible that the editing
+    		// class be disjoint with some future superclass
+    		if( editingNode != null ) {
+    			editingNode.remove();
+    		}
+    		
           // enable disjointwith treepanel
-          node.getOwnerTree().enable();
+          //node.getOwnerTree().enable();
           // refresh the superclasswaTreePanel to synchronize nodes between both treepanel
-          Neologism.superclassesTreePanel.updatselection();
+          //Neologism.superclassesTreePanel.updatselection();
           // enable superclasses treepanel
-          Neologism.superclassesTreePanel.enable();
+          //Neologism.superclassesTreePanel.enable();
         }
       }
     }),
@@ -269,83 +336,170 @@ Neologism.createDisjointWithSelecctionWidget = function(field_name) {
     }),
     
     listeners: {
-      checkchange: function(node, checked){
-        if (checked && node.parentNode !== null) {
-          // if we're checking the box, check it all the way up
-          if (node.parentNode.isRoot || !node.parentNode.getUI().isChecked()) {
-            if (baseParams.arrayOfValues.indexOf(node.id) == -1) {
-              baseParams.arrayOfValues.push(node.id);
-            }
-            
-            // disable all the classes in disjoint tree
-            Neologism.superclassesTreePanel.expandPath(node.getPath());
-            superclassesTreeNode = Neologism.superclassesTreePanel.getNodeById(node.id);
-            if (superclassesTreeNode !== undefined) {
-              superclassesTreeNode.getUI().checkbox.disabled = true;
-              superclassesTreeNode.getUI().nodeClass = 'complete';
-              superclassesTreeNode.getUI().addClass('complete');
-              
-              superclassesTreeNode.eachChild(function(currentNode){
-                Neologism.superclassesTreePanel.expandPath(currentNode.getPath());
-                currentNode.cascade(function(){
-                  //alert(this);
-                  this.getUI().checkbox.disabled = true;
-                  this.getUI().nodeClass = 'complete';
-                  this.getUI().addClass('complete');
-                }, null);
-              });
-            }
-            
-          }
-        }
-        else {
-          for (i in baseParams.arrayOfValues) {
-            if (baseParams.arrayOfValues[i] == node.attributes.id) {
-              baseParams.arrayOfValues.splice(i, 1);
-              
-              // enable all the classes in disjoint tree
-              Neologism.superclassesTreePanel.expandPath(node.getPath());
-              superclassesTreeNode = Neologism.superclassesTreePanel.getNodeById(node.id);
-              if (!superclassesTreeNode.parentNode.getUI().isChecked()) {
-                superclassesTreeNode.getUI().checkbox.disabled = false;
-              }
-              superclassesTreeNode.getUI().nodeClass = '';
-              superclassesTreeNode.getUI().removeClass('complete');
-              
-              superclassesTreeNode.eachChild(function(currentNode){
-                Neologism.superclassesTreePanel.expandPath(currentNode.getPath());
-                currentNode.cascade(function(){
-                  //alert(this);
-                  this.getUI().checkbox.disabled = false;
-                  this.getUI().nodeClass = '';
-                  this.getUI().removeClass('complete');
-                }, null);
-              });
-              
-            }
-          }
-        }
-        
-        //node.getOwnerTree().expandPath(node.getPath());
-        node.cascade(function(){
-          this.expand();
-          //alert(this.id);
-          if (this.id == editingValue) {
-            this.getUI().addClass('locked-for-edition');
-            this.getUI().checkbox.disabled = true;
-            this.getUI().checkbox.checked = false;
-          }
-          else {
-            if (this.id != node.id) {
-              this.getUI().checkbox.disabled = node.getUI().checkbox.checked;
-            }
-          }
-          
-        });
-        
-      }
+	  	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
+    	checkchange: function(node, checked) {
+	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	  		//console.info(node);
+	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
+	  		
+	        if ( checked /*&& node.parentNode !== null*/ ) {
+		        // add selection to array of values
+      		if ( baseParams.arrayOfValues.indexOf(id) == -1 ) {
+	            	baseParams.arrayOfValues.push(id);
+	            }
+	            
+      		console.log(baseParams.arrayOfValues);
+      		
+      		// check if this node has more than 1 super class, so we need to checked it 
+      		// in other places in the tree.
+	      		if( node.attributes.superclasses !== undefined ) {
+	        		var c = node.attributes.superclasses;
+	        		var len = c.length;
+	        		if ( len > 1 ) {
+		        		var rootnode = node.getOwnerTree().getRootNode(); 
+		        		for ( var i = 0; i < len; i++ ) {
+		        			if( c[i] != node.parentNode.id ) {
+		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        				if ( currentNode !== null ) {
+		        					var n = currentNode.findChild('text', id);
+		        					if( n.getUI().checkbox.checked == false ) {
+		        						n.getUI().toggleCheck(true);
+		        					}
+		        				}
+		        			}
+		        		}
+	        		}
+	      		}
+      		
+	            // disabled all the parent of the selection
+      		if ( !node.parentNode.isRoot ) {
+	            	node.bubble( function() {
+		                var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
+	            		if (id != cid && this.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
+	            			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;
+	            			this.getUI().addClass('class-bloked');
+		                	this.getUI().checkbox.disabled = true;
+		                	//this.getUI().checkbox.checked = true;
+		                }
+		                // if this node is the root node then return false to stop the bubble process
+		                if ( this.parentNode.isRoot ) {
+		                	return false;
+		                }
+	            	});
+	            }
+	    	} 
+	        else {
+	    		// if we are unchecked a checkbox
+	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
+	    			if ( baseParams.arrayOfValues[i] == id ) {
+	    				baseParams.arrayOfValues.splice(i, 1);
+	    			}
+	    		}
+	    		
+	    		// check if we can enabled a parent after a deselection
+				if (!node.parentNode.isRoot) {
+				    // search for someone checked
+					node.bubble( function() {
+						console.log('bubble...id: %s, this.id: %s', id, this.id);
+						console.log(node);
+						if ( id != this.id ) {
+				    		// now we need to check for checked and BLOCKED status, so we need 
+				    		// to write a function to check both action
+				    		if ( this.getOwnerTree().isSomeChildCheckedOrStatus(this, Ext.tree.TreePanel.nodeStatus.BLOCKED) ) {
+				    			return false;
+				    		}
+				    		
+				    		// execute the action if at this point there is not any child checked
+				    		if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
+				    			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+				    			this.getUI().removeClass('class-bloked');
+				    			this.getUI().checkbox.disabled = false;
+				    			this.getUI().checkbox.checked = false;
+				    		}
+				    	}
+				    	
+				    	if ( this.parentNode.isRoot ) {
+				    		return false;
+				    	}
+				    });
+					
+				}
+				
+				// check multiple superclasses dependencies
+				if( node.attributes.superclasses !== undefined ) {
+	        		var c = node.attributes.superclasses;
+	        		var len = c.length;
+	        		if ( len > 1 ) {
+		        		var rootnode = node.getOwnerTree().getRootNode(); 
+		        		for ( var i = 0; i < len; i++ ) {
+		        			if( c[i] != node.parentNode.id ) {
+		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        				//console.info(currentNode);
+		        				//console.log('Path: %s, c[i]: %s', rootnode.findChild('id', c[i]), c[i]); //.getPath());
+		        				if ( currentNode !== null ) {
+		        					var n = currentNode.findChild('text', id);
+		        					if( n.getUI().checkbox.checked == true ) {
+		        						n.getUI().toggleCheck(false);
+		        					}
+		        				}
+		        			}
+		        		}
+	        		}
+				}
+	        } // else
+	        
+	        // check for disjointwith classes with the selected class
+	        //node.getOwnerTree().checkDisjointWith(node);
+  		
+	        // disabled or enabled child in cascade depending of the value of checked
+	        node.cascade( function() {
+	        	if( !this.isExpanded() ) {
+	        		this.expand();
+	        	}
+	        	
+	        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
+      		if ( id != cid  ) {
+      			if ( checked ) {
+      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
+      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;
+      				}
+      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL ) {
+      					//this.getUI().addClass('class-bloked');
+	        			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.IMPLICIT;
+	        			this.getUI().checkbox.checked = true;
+      				}
+      			}
+      			else {
+      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT ) {
+      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.INCONSISTENT;
+      				}
+      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.IMPLICIT ) {
+	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	        				this.getUI().checkbox.checked = false;
+      				}
+      			}
+      			
+      			this.getUI().checkbox.disabled = !this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL;
+      		}
+	        });
+	        
+	        this.fireEvent('selectionchange', node);
+		} // checkchange 
+      
     } // listeners
-   });
+  
+  	//this event sometime is fired for other component
+   
+  	,onSelectionChange:function(node) {
+	      // do whatever is necessary to assign the employee to position
+	  	console.log('in onUpdate from disjoint class');
+	  	//console.info(object);
+  	}
+    
+  });
+  
+  Neologism.superclassesTreePanel.addObserver(Neologism.disjointWithTreePanel);
+  	
 };
 
 /**
@@ -452,4 +606,4 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
   });
 };
     
-    
+
