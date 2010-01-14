@@ -153,11 +153,14 @@ function neologism_profile_tasks(&$task, $url) {
   	
   	// create custom block, this kind of block are stored in the boxes table
   	$form_id = 'block_add_block_form';
+  	
+  	$link = l('Login', 'user', array('attributes' => Array('title' => 'User Login form or User Account')));
   	$form_state['values'] = array(
 			'module' => 'block',
   		'title' => '',
   		'info' => 'Login Link',
-  		'body' => 'Powered by <a href="http://neologism.deri.ie/" title="Powered by Neologism, an Ontology Editor based on Drupal.">Neologism</a> | <a href="user" title="User Login form or User Account">Login</a>'
+  		'body' => 'Powered by <a href="http://neologism.deri.ie/" title="Powered by Neologism, an Ontology Editor based on Drupal.">Neologism</a> | '.$link 
+  		//<a href="user" title="User Login form or User Account">Login</a>'
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
