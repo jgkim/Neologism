@@ -70,8 +70,14 @@ img#legend {
     background-image: url(images/icons/collapse-all.gif) !important;
 }
 
-.complete .x-tree-node-anchor span {
+/* this the class used when a class is disabled in the treeview */
+.class-inconsistent .x-tree-node-anchor span {
   text-decoration: line-through;
+  color: #777;
+}
+
+.class-bloked .x-tree-node-anchor span {
+  text-decoration: none;
   color: #777;
 }
 
@@ -414,6 +420,70 @@ img#legend {
 }
 
 #field_disjointwith2_id input {
+  margin: 3px 0 0 0;
+}
+
+/* field_inverse2_id */
+#field_inverse2_id {
+  margin: 0px 0px 0px 0px;
+}
+
+#field_inverse2_id table {
+  margin: 0;
+  width: auto;
+}
+
+#field_inverse2_id thead th {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-weight: normal;
+}
+
+#field_inverse2_id td, th {
+  margin: 0;
+  padding: 0;
+}
+
+#field_inverse2_id ul {
+  padding: 0;
+  margin: 5px 0 5px 0;
+  overflow:hidden;
+}
+
+#field_inverse2_id ul div ul {
+  padding: 0;
+  margin: 0;
+  overflow:hidden;
+}
+
+#field_inverse2_id ul li {
+  line-height:normal;
+  margin: 2px 0 2px 0;
+  padding: 0;
+  height: auto;
+  list-style-type: none;
+  list-style-image: none;
+  background: none;
+}
+
+#field_inverse2_id ul li div {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 2px;
+  height: 15px;
+}
+
+#field_inverse2_id ul li span {
+  line-height:normal;
+  margin: 0px 0 0px 0;
+  padding: 0;
+  position:relative;
+  top: -2px;
+  left: 3px;
+}
+
+#field_inverse2_id input {
   margin: 3px 0 0 0;
 }
 
