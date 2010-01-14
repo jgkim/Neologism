@@ -1,6 +1,17 @@
 <?php
 // $Id: evoc.module, v2.0.0.0 2009/09/17 16:16:51 guidocecilio Exp $
 
+define("EVOC_DISJOINT_WITH", "disjointwith");
+define("EVOC_SUPERCLASSES", "superclasses");
+define("EVOC_DOMAIN", "rdf_domain");
+define("EVOC_RANGE", "rdf_range");
+//define("DOMAINS", "domains");
+//define("RANGES", "ranges");
+//define("SUBPROPERTYOF", "subpropertyof");
+define("EVOC_INVERSE", "inverse");
+
+define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'evoc') ."/includes/rap/");
+
 /**
  * Implementation of hook_menu().
  */
@@ -99,44 +110,65 @@ function evoc_theme() {
 
 
 function evoc_import_form($form_state) {
-  $form['help'] = array(
-    '#value' => 'This form allows you to import external RDF vocabularies into your site.
-    These can later be used by other modules such as <a href="http://drupal.org/project/rdfcck">RDF CCK</a> or <a href="http://drupal.org/project/neologism">Neologism</a>. Popular vocabularies include:<br />
-    dc : http://purl.org/dc/elements/1.1/<br />
-    dcterms : http://purl.org/dc/terms/<br />
-    dcmitype : http://purl.org/dc/dcmitype/<br />
-    foaf : http://xmlns.com/foaf/0.1/<br />
-    sioc : http://rdfs.org/sioc/ns#<br />
-    skos : http://www.w3.org/2008/05/skos#<br />
-    doap : http://usefulinc.com/ns/doap#<br />
-    ',
-  );
-  $form['ns_uri'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Vocabulary URI'),
-    '#required' => TRUE,
-    '#default_value' => isset($form_state['values']['ns_uri']) ? $form_state['values']['ns_uri'] : NULL,
-    '#description' => "Enter the URI of the vocabulary to import. Make sure it finishes by either / or #.",
-  );
-  $form['prefix'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Prefix'),
-    '#required' => TRUE,
-    '#default_value' => isset($form_state['values']['prefix']) ? $form_state['values']['prefix'] : NULL,
-    '#description' => "Choose a prefix for this vocabulary. Example: dc, foaf, sioc etc. This prefix will later be used in the system to refer to this vocabulary.",
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => 'Submit',
-  );
+	if (isset($form_state['storage']['results_page'])) {
+		$form['help'] = array(
+	    '#value' => 'The vocabulary was imported successfully.<br />'
+	  );
+	  
+		$form['submit'] = array(
+	    '#type' => 'submit',
+	    '#value' => 'Import another vocabulary',
+	  );
+  }
+  else {
+		$form['help'] = array(
+	    '#value' => 'This form allows you to import external RDF vocabularies into your site.
+	    These can later be used by other modules such as <a href="http://drupal.org/project/rdfcck">RDF CCK</a> or <a href="http://drupal.org/project/neologism">Neologism</a>. Popular vocabularies include:<br />
+	    <br />
+	    dc : http://purl.org/dc/elements/1.1/<br />
+	    dcterms : http://purl.org/dc/terms/<br />
+	    dcmitype : http://purl.org/dc/dcmitype/<br />
+	    foaf : http://xmlns.com/foaf/0.1/<br />
+	    sioc : http://rdfs.org/sioc/ns#<br />
+	    skos : http://www.w3.org/2008/05/skos#<br />
+	    doap : http://usefulinc.com/ns/doap#<br />
+	    ',
+	  );
+	  $form['ns_uri'] = array(
+	    '#type' => 'textfield',
+	    '#title' => t('Vocabulary URI'),
+	    '#required' => TRUE,
+	    '#default_value' => isset($form_state['values']['ns_uri']) ? $form_state['values']['ns_uri'] : NULL,
+	    '#description' => "Enter the URI of the vocabulary to import. Make sure it finishes by either / or #.",
+	  );
+	  $form['prefix'] = array(
+	    '#type' => 'textfield',
+	    '#title' => t('Prefix'),
+	    '#required' => TRUE,
+	    '#default_value' => isset($form_state['values']['prefix']) ? $form_state['values']['prefix'] : NULL,
+	    '#description' => "Choose a prefix for this vocabulary. Example: dc, foaf, sioc etc. This prefix will later be used in the system to refer to this vocabulary.",
+	  );
+	  $form['submit'] = array(
+	    '#type' => 'submit',
+	    '#value' => 'Submit',
+	  );
+  }
+  
   return $form;
 }
 
 function evoc_import_form_submit($form, &$form_state) {
-  $form_state['storage']['values'] = $form_state['values'];
+  //$form_state['storage']['values'] = $form_state['values'];
+  //unset();
   $form_state['rebuild'] = true;
-
-  evoc_import_vocabulary($form_state['values']['ns_uri'], $form_state['values']['prefix']);
+	if( isset($form_state['storage']['results_page']) ) {
+		unset($form_state['storage']['results_page']);	
+	}
+	else {
+		if( evoc_import_vocabulary($form_state['values']['ns_uri'], $form_state['values']['prefix']) ) {
+	  	$form_state['storage']['results_page'] = TRUE;		
+	  }
+	}
 }
 
 //-------------------------------------------------------------------------------------------------------------
@@ -218,6 +250,20 @@ function evoc_remove_vocabulary($prefix) {
       $c = db_fetch_object(db_query(db_rewrite_sql('select superclasses from {evoc_rdf_classes} where prefix="%s" and id="%s"'), $class->prefix, $class->reference));
       $result = db_query(db_rewrite_sql('update {evoc_rdf_classes} set superclasses = "%d" where prefix = "%s" and id = "%s"'), --$c->superclasses, $class->prefix, $class->reference);
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_superclasses} where prefix="%s" and reference="%s" and superclass="%s"'), $class->prefix, $class->reference, $class->superclass);        
+    }
+  }
+  
+	// remove disjointwith dependencies
+  $result = db_query(db_rewrite_sql('delete from {evoc_rdf_disjointwith} where prefix="%s"'), $prefix);
+  $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_disjointwith} where disjointwith like "%s%"'), $prefix);
+  // remove superclasses references
+  while ( $class = db_fetch_object($classes) ) {
+    $qname_parts = explode(':', $class->disjointwith);
+    $p = $qname_parts[0];
+    if( $p == $prefix ) {
+      $c = db_fetch_object(db_query(db_rewrite_sql('select ndisjointwith from {evoc_rdf_classes} where prefix="%s" and id="%s"'), $class->prefix, $class->reference));
+      $result = db_query(db_rewrite_sql('update {evoc_rdf_classes} set ndisjointwith = "%d" where prefix = "%s" and id = "%s"'), --$c->ndisjointwith, $class->prefix, $class->reference);
+      $result = db_query(db_rewrite_sql('delete from {evoc_rdf_disjointwith} where prefix="%s" and reference="%s" and disjointwith="%s"'), $class->prefix, $class->reference, $class->disjointwith);        
     }
   }
   
@@ -334,15 +380,36 @@ http://www.w3.org/2001/vcard-rdf/3.0#
  * @return 
  */
 function evoc_import_vocabulary($vocabulary_uri, $vocabulary_prefix, $showdetails = TRUE) {
-  $fetched_terms = evoc_fetch_vocabulary($vocabulary_uri, $vocabulary_prefix);
+  // TODO we are using for the momment sparql endpoints but the idea is to remove it and use
+	$fetched_terms = evoc_fetch_vocabulary2($vocabulary_uri, $vocabulary_prefix);
   if( $fetched_terms != NULL ) {
     _evoc_save_rdf_terms($vocabulary_uri, $vocabulary_prefix, $fetched_terms, $showdetails);
+    return TRUE;
   }
   else {
-    evoc_set_message('There is not result for the SPARQL query. 
-      May be you are using the incorrect SPARQL Endpoint.<br/>You can go to the '
-      .l('Evoc admin section', 'admin/settings/evoc'). ' and change the default endpoint.', 'error');
+    evoc_set_message('There is not result for the SPARQL query. You shoud check the URI.'); 
+  	return FALSE;
   }
+}
+
+
+function evoc_fetch_vocabulary2($vocabulary_uri, $vocabulary_prefix, $ignore_base_ns = FALSE, $ns_uri = NULL) {
+	module_load_include('module', 'rdf', 'rdf');
+  global $rdf_namespaces;
+  // this function execute all rdf_namespaces hook available in the drupal instance
+  // and update the global array $rdf_namespaces 
+  rdf_get_namespaces();
+
+  if (!in_array($vocabulary_uri, $rdf_namespaces)) {
+    // Add momentarily the namespace in memory to be able to convert the URIs to QNames.
+    $rdf_namespaces[$vocabulary_prefix] = $vocabulary_uri;
+  }
+  if ($ns_uri && !in_array($ns_uri, $rdf_namespaces)) {
+    // Add momentarily the namespace in memory to be able to convert the URIs to QNames.
+    $rdf_namespaces[$vocabulary_prefix] = $ns_uri;
+  }
+  
+  return _evoc_fetch_terms_from_vocabulary($vocabulary_uri);
 }
 
 /*
@@ -378,14 +445,12 @@ function evoc_fetch_vocabulary($vocabulary_uri, $vocabulary_prefix, $ignore_base
   prefix owl: <http://www.w3.org/2002/07/owl#>
   select *
   from <$vocabulary_uri>
-  where {
-  {?class rdf:type owl:Class}
-  union
-  {?class rdf:type rdfs:Class}.
-  OPTIONAL {?class rdfs:label ?label}.
-  OPTIONAL {?class rdfs:subClassOf ?superclass}.
-  OPTIONAL {?class rdfs:comment ?comment}.
-  }
+      where { {?class rdf:type owl:Class} union {?class rdf:type rdfs:Class}.
+        OPTIONAL {?class rdfs:label ?label}.
+        OPTIONAL {?class rdfs:subClassOf ?superclass}.
+        OPTIONAL {?class owl:disjointWith ?disjointwith}.
+        OPTIONAL {?class rdfs:comment ?comment}.
+      }
   limit 1000
   ");
   $term_queries[] = array('type' => 'property',
@@ -459,6 +524,15 @@ function evoc_fetch_vocabulary($vocabulary_uri, $vocabulary_prefix, $ignore_base
             if ( !empty($res_term['superclass']->uri) ) {
               $term['superclasses'][] = rdf_uri_to_qname($res_term['superclass']->uri);
             }
+            
+	        	$term[DISJOINTS_WITH] = array();
+	          if ( !empty($res_term['disjointwith']->uri) ) {
+	            $term[DISJOINTS_WITH][] = rdf_uri_to_qname($res_term['disjointwith']->uri);
+	            //_neologism_is_from_vocabulary_imported($vocabulary_name, $res_term['?disjointwith']->uri); 
+	            //if( !$term[DISJOINTS_WITH][0] ) {
+	            //  $term[DISJOINTS_WITH][0] = neologism_rdf_uri_to_qname($res_term['?disjointwith']->uri);  
+	            //}
+	          }
             break;
   
           case 'property':
@@ -570,11 +644,11 @@ function _evoc_save_rdf_terms($ns, $prefix, $terms, $showdetails = TRUE) {
 
   // RDF terms management.
   foreach ($terms as $term) {
-    if ($term['type'] == 'class') {
+    if ( $term['type'] == 'class' || $term['type'] == '?class' ) {
       $term['prefix'] = $prefix;
       evoc_write_class($term, $showdetails);
     }
-    elseif ($term['type'] == 'property') {
+    elseif ( $term['type'] == 'property' ||$term['type'] == '?property' ) {
       $term['prefix'] = $prefix;
       evoc_write_property($term, $showdetails);
     }
@@ -599,17 +673,29 @@ function evoc_write_class($class, $showdetails = TRUE) {
   }
   else {
     $count_superclasses = 0;
-    if( !empty($class['superclasses']) && is_array($class['superclasses']) ) {
-      $count_superclasses = count($class['superclasses']);
-      foreach ( $class['superclasses'] as $superclass ) {
+    $superclasses = $class[EVOC_SUPERCLASSES];
+    if( !empty($superclasses) && is_array($superclasses) ) {
+      $count_superclasses = count($superclasses);
+      foreach ( $superclasses as $superclass ) {
         if( !empty($superclass) ) {
           db_query(db_rewrite_sql('insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $superclass);
         }
       }
     }
     
-    if( db_query(db_rewrite_sql('insert into {evoc_rdf_classes} (prefix, id, label, comment, superclasses) 
-      values ("%s", "%s", "%s", "%s", "%d")'), $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses ) ) {
+  	$count_disjointwith = 0;
+  	$disjointwith_array = $class[EVOC_DISJOINT_WITH];
+    if( !empty($disjointwith_array) && is_array($disjointwith_array) ) {
+      $count_disjointwith = count($disjointwith_array);
+      foreach ( $disjointwith_array as $disjointwith ) {
+        if( !empty($disjointwith) ) {
+          db_query(db_rewrite_sql('insert into {evoc_rdf_disjointwith} (prefix, reference, disjointwith) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $disjointwith);
+        }
+      }
+    }
+    
+    if( db_query(db_rewrite_sql('insert into {evoc_rdf_classes} (prefix, id, label, comment, superclasses, ndisjointwith) 
+      values ("%s", "%s", "%s", "%s", "%d", "%d")'), $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith ) ) {
       if( $showdetails ) {
         evoc_set_message('Importing Class. Class <b>'.$class['prefix']." : ".$class['id']."</b> successfully imported.");
       }
@@ -630,6 +716,7 @@ function evoc_write_class($class, $showdetails = TRUE) {
  *                 'label' => 'class label', 
  *                 'comment' => 'some comment', 
  *                 'superclasses' => array('rdfs:Resource', 'sioc:Container'),
+ *                 'disjointwith' => array('rdfs:Resource', 'sioc:Container'),
  *                 'previous_id' => 'some_valid_previous_id'
  *                 );  
  *          
@@ -654,6 +741,13 @@ function evoc_update_class($class, $cascade_update = TRUE) {
         $result = db_query(db_rewrite_sql('update {evoc_rdf_superclasses} set superclass = "%s" where prefix = "%s" and reference = "%s"'), $new_qname, $subclassof->prefix, $subclassof->reference);  
       }
       
+      //update disjointwith table with the new classname
+    	$result = db_query(db_rewrite_sql('select * from {evoc_rdf_disjointwith} where disjointwith = "%s"'), $previous_qname);    
+      // update all the subclassesof $previous_qname
+      while ( $disjointwith = db_fetch_object($result) ) {
+        $result = db_query(db_rewrite_sql('update {evoc_rdf_disjointwith} set disjointwith = "%s" where prefix = "%s" and reference = "%s"'), $new_qname, $disjointwith->prefix, $disjointwith->reference);  
+      }
+      
       // let's go to the properties
       $result = db_query(db_rewrite_sql('select * from {evoc_rdf_propertiesdomains} where rdf_domain = "%s"'), $previous_qname);    
       while ( $domainof = db_fetch_object($result) ) {
@@ -674,17 +768,34 @@ function evoc_update_class($class, $cascade_update = TRUE) {
     }
     
     $count_superclasses = 0;
-    if( !empty($class['superclasses']) && is_array($class['superclasses']) ) {
-      $count_superclasses = count($class['superclasses']);
-      foreach ( $class['superclasses'] as $superclass ) {
+    $superclasses = $class[EVOC_SUPERCLASSES];
+    if( !empty($superclasses) && is_array($superclasses) ) {
+      $count_superclasses = count($superclasses);
+      foreach ( $superclasses as $superclass ) {
         if( !empty($superclass) ) {
           db_query(db_rewrite_sql('insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $superclass);
         }
       }
     }
     
-    $result = db_query(db_rewrite_sql('update {evoc_rdf_classes} set id = "%s", label = "%s", comment = "%s", superclasses = "%d" where prefix = "%s" and id = "%s"'), 
-      $class['id'], $class['label'], $class['comment'], $count_superclasses, $currentclass->prefix, $currentclass->id);
+  	// update disjointwith table
+    if( $currentclass->disjointwith > 0 ) {
+      $result = db_query(db_rewrite_sql('delete from {evoc_rdf_disjointwith} where prefix = "%s" and reference = "%s"'), $currentclass->prefix, $currentclass->id);
+    }
+    
+    $count_disjointwith = 0;
+    $disjointwith_array = $class[EVOC_DISJOINT_WITH];
+    if( !empty($disjointwith_array) && is_array($disjointwith_array) ) {
+      $count_disjointwith = count($disjointwith_array);
+      foreach ( $disjointwith_array as $disjointwith ) {
+        if( !empty($disjointwith) ) {
+          db_query(db_rewrite_sql('insert into {evoc_rdf_disjointwith} (prefix, reference, disjointwith) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $disjointwith);
+        }
+      }
+    }
+    
+    $result = db_query(db_rewrite_sql('update {evoc_rdf_classes} set id = "%s", label = "%s", comment = "%s", superclasses = "%d", ndisjointwith = "%d" where prefix = "%s" and id = "%s"'), 
+      $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith, $currentclass->prefix, $currentclass->id);
       
     if( $result ) {  
       evoc_set_message('Updating Class. The class '.$new_qname.' was successfully updated.');          
@@ -712,7 +823,7 @@ function evoc_remove_class($class, $remove_references = FALSE) {
     evoc_set_message("Removing Class. Impossible remove a class without prefix and id.", 'warning');  
   }
   else {
-    $current_class = db_fetch_object(db_query(db_rewrite_sql('select superclasses from {evoc_rdf_classes} where prefix="%s" and id = "%s"'), $class['prefix'], $class['id']));  
+    $current_class = db_fetch_object(db_query(db_rewrite_sql('select superclasses, ndisjointwith from {evoc_rdf_classes} where prefix="%s" and id = "%s"'), $class['prefix'], $class['id']));  
     
     if( $current_class ) {
       // if has_superclass property is not provided query for it. Then remove all the dependences if there is someone
@@ -723,6 +834,16 @@ function evoc_remove_class($class, $remove_references = FALSE) {
         }
         else {
           evoc_set_message('Removing Class. There is some error when trying to remove superclasses dependences for '.$class['prefix'].':'.$class['id'].'.', 'warning');
+        }
+      }
+    	  
+    	if( $current_class->ndisjointwith > 0 ) {
+        $result = db_query(db_rewrite_sql('delete from {evoc_rdf_disjointwith} where prefix="%s" and reference = "%s"'), $class['prefix'], $class['id']);
+        if( $result ) {
+          evoc_set_message('Removing Class. Disjointwith dependences for '.$class['prefix'].':'.$class['id'].' has been successfully removed.');
+        }
+        else {
+          evoc_set_message('Removing Class. There is some error when trying to remove disjointwith dependences for '.$class['prefix'].':'.$class['id'].'.', 'warning');
         }
       }
       
@@ -785,6 +906,7 @@ function evoc_remove_class($class, $remove_references = FALSE) {
  *         $term['rdf_range'] = array();
  *         $term['subpropertyof'] = array();
  *         $term['prefix'] = string
+ *         $term['inverse'] = string/qname
  * 
  * 
  * @return none 
@@ -797,32 +919,35 @@ function evoc_write_property($property, $showdetails = TRUE) {
   }
   else {
     $count_domains = 0;
-    if( !empty($property['rdf_domain']) && is_array($property['rdf_domain']) ) {
-      $count_domains = count($property['rdf_domain']);
-      foreach ( $property['rdf_domain'] as $rdf_domain ) {
+    $domains = $property[EVOC_DOMAIN];
+    if( !empty($domains) && is_array($domains) ) {
+      $count_domains = count($domains);
+      foreach ( $domains as $rdf_domain ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_domain);
       }
     }
     
     $count_ranges = 0;
-    if( !empty($property['rdf_range']) && is_array($property['rdf_range']) ) {
-      $count_ranges = count($property['rdf_range']);
-      foreach ( $property['rdf_range'] as $rdf_range ) {
+    $ranges = $property[EVOC_RANGE];
+    if( !empty($ranges) && is_array($ranges) ) {
+      $count_ranges = count($ranges);
+      foreach ( $ranges as $rdf_range ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_range);
       }
     }
     
     $count_superproperties = 0;
-    if( !empty($property['subpropertyof']) && is_array($property['subpropertyof']) ) {
-      $count_superproperties = count($property['subpropertyof']);
-      foreach ( $property['subpropertyof'] as $superproperty ) {
+    $superproperties = $property['subpropertyof'];
+    if( !empty($superproperties) && is_array($superproperties) ) {
+      $count_superproperties = count($superproperties);
+      foreach ( $superproperties as $superproperty ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_superproperties} (prefix, reference, superproperty) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $superproperty);
       }
     }
     
-    if( db_query(db_rewrite_sql('insert into {evoc_rdf_properties} (prefix, id, label, comment, superproperties, domains, ranges) 
-      values ("%s", "%s", "%s", "%s", "%d", "%d", "%d")'), 
-      $property['prefix'], $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges) ) {
+    if( db_query(db_rewrite_sql('insert into {evoc_rdf_properties} (prefix, id, label, comment, superproperties, domains, ranges, inverseof) 
+      values ("%s", "%s", "%s", "%s", "%d", "%d", "%d", "%s")'), 
+      $property['prefix'], $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges, $property[EVOC_INVERSE]) ) {
       if( $showdetails ) {
         evoc_set_message('Importing Property. Property <b>'.$property['prefix'].' : '.$property['id'].'</b> successfully imported.');
       }
@@ -837,16 +962,17 @@ function evoc_write_property($property, $showdetails = TRUE) {
  * Update an external RDF class in the database.
  * 
  * @param object $property / $term it's a keyed array containing the class information to be added. 
- *                 $term['id'] = string
- *                 $term['type'] = string
- *                 $term['label'] = string
- *         $term['comment'] = string
- *         $term['rdf_domain'] = array();
- *         $term['rdf_range'] = array();
- *         $term['subpropertyof'] = array();
- *         $term['prefix'] = string 
- *         $term['previous_id'] = 'some_valid_previous_id'
- *                 );  
+ *                 $property['id'] = string
+ *                 $property['type'] = string
+ *                 $property['label'] = string
+ *         $property['comment'] = string
+ *         $property['rdf_domain'] = array();
+ *         $property['rdf_range'] = array();
+ *         $property['subpropertyof'] = array();
+ *         $property['inverseof'] = string
+ *         $property['prefix'] = string 
+ *         $property['previous_id'] = 'some_valid_previous_id'
+ *                   
  *          
  * @return 
  */
@@ -868,6 +994,9 @@ function evoc_update_property($property, $cascade_update = TRUE) {
       while ( $subpropertyof = db_fetch_object($result) ) {
         $result = db_query(db_rewrite_sql('update {evoc_rdf_superproperties} set superproperty = "%s" where prefix = "%s" and reference = "%s"'), $new_qname, $subclassof->prefix, $subpropertyof->reference);  
       }
+      
+      // update the inverseof dependencies for the new property name
+      $result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set inverseof = "%s" where inverseof = "%s"'), $new_qname, $previous_qname);
     }
     
     // now it's time to update the property
@@ -876,9 +1005,10 @@ function evoc_update_property($property, $cascade_update = TRUE) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_propertiesdomains} where prefix = "%s" and reference = "%s"'), $currentproperty->prefix, $currentproperty->id);
     }
     $count_domains = 0;
-    if( !empty($property['rdf_domain']) && is_array($property['rdf_domain']) ) {
-      $count_domains = count($property['rdf_domain']);
-      foreach ( $property['rdf_domain'] as $rdf_domain ) {
+    $domains = $property[EVOC_DOMAIN];
+    if( !empty($domains) && is_array($domains) ) {
+      $count_domains = count($domains);
+      foreach ( $domains as $rdf_domain ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_domain);
       }
     }
@@ -888,9 +1018,10 @@ function evoc_update_property($property, $cascade_update = TRUE) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_propertiesranges} where prefix = "%s" and reference = "%s"'), $currentproperty->prefix, $currentproperty->id);
     }
     $count_ranges = 0;
-    if( !empty($property['rdf_range']) && is_array($property['rdf_range']) ) {
-      $count_ranges = count($property['rdf_range']);
-      foreach ( $property['rdf_range'] as $rdf_range ) {
+    $ranges = $property[EVOC_RANGE];
+    if( !empty($ranges) && is_array($ranges) ) {
+      $count_ranges = count($ranges);
+      foreach ( $ranges as $rdf_range ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_range);
       }
     }
@@ -900,16 +1031,17 @@ function evoc_update_property($property, $cascade_update = TRUE) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_superproperties} where prefix = "%s" and reference = "%s"'), $currentproperty->prefix, $currentproperty->id);
     }
     $count_superproperties = 0;
-    if( !empty($property['subpropertyof']) && is_array($property['subpropertyof']) ) {
-      $count_superproperties = count($property['subpropertyof']);
-      foreach ( $property['subpropertyof'] as $superproperty ) {
+    $superproperties = $property['subpropertyof'];
+    if( !empty($superproperties) && is_array($superproperties) ) {
+      $count_superproperties = count($superproperties);
+      foreach ( $superproperties as $superproperty ) {
         db_query(db_rewrite_sql('insert into {evoc_rdf_superproperties} (prefix, reference, superproperty) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $superproperty);
       }
     }
         
     // update the property
-    $result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set id = "%s", label = "%s", comment = "%s", superproperties = "%d", domains = "%d", ranges = "%d" where prefix = "%s" and id = "%s"'), 
-      $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges, $currentproperty->prefix, $currentproperty->id);
+    $result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set id = "%s", label = "%s", comment = "%s", superproperties = "%d", domains = "%d", ranges = "%d", inverseof = "%s" where prefix = "%s" and id = "%s"'), 
+      $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges, $property[EVOC_INVERSE], $currentproperty->prefix, $currentproperty->id);
       
     if( $result ) {  
       evoc_set_message("The property ".$new_qname." was successfully updated.");          
@@ -971,12 +1103,16 @@ function evoc_remove_property($property) {
       }
     }
     
+  	// update all posibles properties that are related with this property as inverseof
+  	$qname = $property['prefix'].':'.$property['id'];
+    $result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set inverseof = NULL where inverseof = "%s"'), $qname);
+    
     $result = db_query(db_rewrite_sql('delete from {evoc_rdf_properties} where prefix="%s" and id = "%s"'), $currentproperty->prefix, $currentproperty->id);
     if( $result ) {
-      evoc_set_message($property['prefix']." : ".$property['id']." has been successfully removed from the system.");
+      evoc_set_message($qname." has been successfully removed from the system.");
     }
     else {
-      evoc_set_message($property['prefix']." : ".$property['id']." not found in the system.", 'warning');
+      evoc_set_message($qname." not found in the system.", 'warning');
     }
   }
 }
@@ -1049,4 +1185,401 @@ function _evoc_get_sparqlendpoint($default_only = TRUE) {
   }
   
   return $return_array;
+}
+
+// TODO we need to use this function to remove the dependencies of sparql endpoints
+// but for the moment this is giving us bad results when we queried some URI
+
+// this function is called in installation time, so we need to take care how to uses it
+function _evoc_fetch_terms_from_vocabulary($URI) {
+  include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
+  include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
+    
+  $model = ModelFactory::getMemModel();
+  $model->load($URI);
+  //$model->writeAsHtmlTable(); 
+  
+  // SPARQL queries are stored in an array.
+  $term_queries = array();
+  
+  $class_optional = '
+  	OPTIONAL {?class rdfs:label ?label}.
+    OPTIONAL {?class rdfs:subClassOf ?superclass}.
+    OPTIONAL {?class owl:disjointWith ?disjointwith}.
+    OPTIONAL {?class rdfs:comment ?comment}.
+  ';
+  
+  $property_optional = '
+  	OPTIONAL {?property rdf:type ?t . FILTER (?t = owl:FunctionalProperty || ?t = owl:InverseFunctionalProperty ) }.
+	  OPTIONAL {?property rdfs:label ?label}.
+	  OPTIONAL {?property rdfs:domain ?domain}.
+	  OPTIONAL {?property rdfs:range ?range}.
+	  OPTIONAL {?property rdfs:subPropertyOf ?subpropertyof}.
+	  OPTIONAL {?property rdfs:comment ?comment}.
+	  OPTIONAL {?property rdf:type ?t2 }.
+	  OPTIONAL {?property owl:inverseOf ?inverse }.
+	';
+  
+  // Typical SPARQL queries to retrieve properties/classes, working for all major vocabularies...
+  $term_queries[] = array(
+    'type' => 'class',
+    'query' => '
+      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      prefix owl: <http://www.w3.org/2002/07/owl#>
+      select *
+      where {?class rdf:type owl:Class}.
+      limit 1'
+  );
+  // patch for the moment
+  $query_result = $model->sparqlQuery($term_queries[0]['query']);
+  array_pop($term_queries);
+  if( $query_result ) {
+  	$term_queries[] = array(
+    'type' => 'class',
+    'query' => '
+      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      prefix owl: <http://www.w3.org/2002/07/owl#>
+      select *
+      where { {?class rdf:type owl:Class}.
+        '.$class_optional.'
+      }
+      limit 1000'
+  	);
+  }
+  
+  $term_queries[] = array(
+    'type' => 'class',
+    'query' => '
+      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      prefix owl: <http://www.w3.org/2002/07/owl#>
+      select *
+      where {?class rdf:type rdfs:Class}.
+      limit 1'
+  );
+  // patch for the moment
+  $query_result = $model->sparqlQuery($term_queries[count($term_queries)-1]['query']);
+  array_pop($term_queries);
+  if( $query_result ) {
+	  $term_queries[] = array(
+	    'type' => 'class',
+	    'query' => '
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      where { {?class rdf:type rdfs:Class}.
+	       '.$class_optional.'
+	      }
+	      limit 1000'
+	  );
+  }
+
+  $term_queries[] = array(
+    'type' => 'property',
+    'query' => ' 
+      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      prefix owl: <http://www.w3.org/2002/07/owl#>
+      select *
+      from <'.$URI.'>
+      where {?property rdf:type owl:DatatypeProperty}.
+      limit 1'
+  );
+  $query_result = $model->sparqlQuery($term_queries[count($term_queries)-1]['query']);
+  array_pop($term_queries);
+  if( $query_result ) {
+	  $term_queries[] = array(
+	    'type' => 'property',
+	    'query' => ' 
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      where {
+	        {?property rdf:type owl:DatatypeProperty}.
+	     		'.$property_optional.'
+	      }
+	      limit 1000'
+	  );
+  }
+  
+  $term_queries[] = array(
+	    'type' => 'property',
+	    'query' => ' 
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      where {?property rdf:type owl:ObjectProperty}.
+	      limit 1'
+	);
+	$query_result = $model->sparqlQuery($term_queries[count($term_queries)-1]['query']);
+  array_pop($term_queries);
+  if( $query_result ) {
+  	$term_queries[] = array(
+	    'type' => 'property',
+	    'query' => ' 
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      where {
+	      	{?property rdf:type owl:ObjectProperty}.
+	      		'.$property_optional.'
+	      }
+	      limit 1000'
+	  	);
+  }
+	
+  $term_queries[] = array(
+	    'type' => 'property',
+	    'query' => ' 
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      {?property rdf:type rdf:Property}.
+	      limit 1'
+	);
+	$query_result = $model->sparqlQuery($term_queries[count($term_queries)-1]['query']);
+  array_pop($term_queries);
+  if( $query_result ) { 
+  	$term_queries[] = array(
+	    'type' => 'property',
+	    'query' => ' 
+	      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+	      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+	      prefix owl: <http://www.w3.org/2002/07/owl#>
+	      select *
+	      where {
+	      	{?property rdf:type rdf:Property}.
+	      		'.$property_optional.'
+	      }
+	      limit 1000'
+	  	);
+  }
+   
+  // Loop through all the various queries in order to extract as many classes and properties as possible.
+  $fetched_terms = array();
+  foreach ($term_queries as $query) {
+    $query_result = $model->sparqlQuery($query['query']);
+    //kpr($query_result);
+    
+    if( $query_result ) {
+	    // Parse the SPARQL results and extract the relevant terms.
+	    foreach( $query_result as $res_term ) {
+	      
+	      if( isset($res_term['?class']) ) {
+	        $type = '?class';
+	      }
+	      else if( isset($res_term['?property']) ) {
+	        $type = '?property';
+	      };
+
+	      $res_term[$type]->uri = trim($res_term[$type]->uri);
+	      $term_qname = evoc_rdf_uri_to_qname($res_term[$type]->uri); //rdf_uri_to_qname($res_term[$type]->uri);
+	        
+	      $term_qname_parts = explode(':', $term_qname);
+	      $term_prefix = $term_qname_parts[0];
+	
+	      $term = array();
+	      $term['id'] = $term_qname_parts[1];
+	      $term['type'] = $type;
+	      $term['label'] = isset($res_term['?label']->label) ? $res_term['?label']->label : NULL;
+	      $term['comment'] = isset($res_term['?comment']->label) ? trim($res_term['?comment']->label) : NULL;
+	      
+	      switch( $type ) {
+	        case '?class':
+	          $term[EVOC_SUPERCLASSES] = array();
+	          if ( isset($res_term['?superclass']->uri) ) {
+	            $res_term['?superclass']->uri = trim($res_term['?superclass']->uri);
+	            $term[EVOC_SUPERCLASSES][] = evoc_rdf_uri_to_qname($res_term['?superclass']->uri);
+	          }
+	          
+	          $term[EVOC_DISJOINT_WITH] = array();
+	          if ( isset($res_term['?disjointwith']->uri) ) {
+	            $res_term['?disjointwith']->uri = trim($res_term['?disjointwith']->uri);
+	            $term[EVOC_DISJOINT_WITH][] = evoc_rdf_uri_to_qname($res_term['?disjointwith']->uri);
+	          }
+	          
+	          break;
+	
+	        case '?property':
+	          $term['subpropertyof'] = array();
+	          if( isset($res_term['?subpropertyof']->uri) ) {
+	            $res_term['?subpropertyof']->uri = trim($res_term['?subpropertyof']->uri);
+	            $term['subpropertyof'][] = evoc_rdf_uri_to_qname($res_term['?subpropertyof']->uri); 
+	          }
+	          
+	          $term[EVOC_DOMAIN] = array();
+	          if( isset($res_term['?domain']->uri) ) {
+	            $res_term['?domain']->uri = trim($res_term['?domain']->uri);
+	            $term[EVOC_DOMAIN][] = evoc_rdf_uri_to_qname($res_term['?domain']->uri); 
+	          }
+	          
+	          $term[EVOC_RANGE] = array();
+	          if( isset($res_term['?range']->uri) ) {
+	            $res_term['?range']->uri = trim($res_term['?range']->uri);
+	            $term[EVOC_RANGE][] = evoc_rdf_uri_to_qname($res_term['?range']->uri); 
+	          }
+	          
+	          $term['owl_type'] = array();
+	          if( isset($res_term['?t']->uri) ) {
+	            $res_term['?t']->uri = trim($res_term['?t']->uri);
+	            $term['owl_type'][] = evoc_rdf_uri_to_qname($res_term['?t']->uri); 
+	          }
+	          // FIXME
+	          // temporal patch we need to figure out how to get in a better way the properties type
+	          else if( isset($res_term['?t2']->uri) ) {
+	            $res_term['?t2']->uri = trim($res_term['?t2']->uri);
+	            $owl_type = evoc_rdf_uri_to_qname($res_term['?t2']->uri);
+	            if( $owl_type == 'owl:InverseFunctionalProperty' || $owl_type == 'owl:FunctionalProperty') {
+	              $term['owl_type'][] = $owl_type;
+	            }
+	          }
+	          
+	      		$term[EVOC_INVERSE] = NULL;
+	          if( isset($res_term['?inverse']->uri) ) {
+	            $res_term['?inverse']->uri = trim($res_term['?inverse']->uri);
+	            $term[EVOC_INVERSE] = evoc_rdf_uri_to_qname($res_term['?inverse']->uri); 
+	          }
+	          
+	          break;
+	      }
+	
+	      // filter process
+	      $term_exist = FALSE;
+	      $just_updated = FALSE;
+	      foreach( $fetched_terms as &$term_value ) {
+	        if( $term_value['id'] == $term['id'] && $term_value['type'] == $term['type'] ) {
+	          $term_exist = TRUE;
+	          if( $term['type'] == '?class' ) {
+	            if( !isset($term_value['label']) && isset($term['label']) ) {
+	              $term_value['label'] = $term['label'];
+	            }
+	            if( !isset($term_value['comment']) && isset($term['comment']) ) {
+	              $term_value['comment'] = $term['comment'];
+	            }
+	            if ( isset($term[EVOC_SUPERCLASSES][0]) && !in_array($term[EVOC_SUPERCLASSES][0], $term_value[EVOC_SUPERCLASSES]) ) {
+	              $term_value[EVOC_SUPERCLASSES][] = $term[EVOC_SUPERCLASSES][0];
+	            }
+	            if ( isset($term[EVOC_DISJOINT_WITH][0]) && !in_array($term[EVOC_DISJOINT_WITH][0], $term_value[EVOC_DISJOINT_WITH]) ) {
+	              $term_value[EVOC_DISJOINT_WITH][] = $term[EVOC_DISJOINT_WITH][0];
+	            }
+	          }
+	          elseif ( $term['type'] == '?property') {
+	            if( !isset($term_value['label']) && isset($term['label']) ) {
+	              $term_value['label'] = $term['label'];
+	            }
+	            if( !isset($term_value['comment']) && isset($term['comment']) ) {
+	              $term_value['comment'] = $term['comment'];
+	            }
+	            if ( isset($term['subpropertyof'][0]) && !in_array($term['subpropertyof'][0], $term_value['subpropertyof']) ) {
+	              $term_value['subpropertyof'][] = $term['subpropertyof'][0];
+	            }
+	            if ( isset($term[EVOC_DOMAIN][0]) && !in_array($term[EVOC_DOMAIN][0], $term_value[EVOC_DOMAIN]) ) {
+	              $term_value[EVOC_DOMAIN][] = $term[EVOC_DOMAIN][0];
+	            }
+	            if ( isset($term[EVOC_RANGE][0]) && !in_array($term[EVOC_RANGE][0], $term_value[EVOC_RANGE]) ) {
+	              $term_value[EVOC_RANGE][] = $term[EVOC_RANGE][0];
+	            }
+	            if ( isset($term['owl_type'][0]) && !in_array($term['owl_type'][0], $term_value['owl_type']) ) {
+	              $term_value['owl_type'][] = $term['owl_type'][0];
+	            }
+	          	if ( !isset($term_value[EVOC_INVERSE]) && isset($term[EVOC_INVERSE]) ) {
+	              $term_value[EVOC_INVERSE] = $term[EVOC_INVERSE];
+	            }
+	            
+	          }
+	          
+	          // jump if the term exists
+	          break;  
+	        }
+	      }
+	      unset($term_value);
+	        
+	      // if not just_updated and not exists such a term add it to the array
+	      if ( !$term_exist ) {
+	        $fetched_terms[] = $term;
+	      }
+	    }
+	  } // foreach
+  } // if
+
+  //kpr($fetched_terms);
+  //die();
+    
+  return $fetched_terms;
+}
+
+/**
+ * This function is a wrapper function to fix the bug in rdfapi when localpart contain the pewfix #
+ * @param object $uri
+ * @return 
+ */
+function evoc_rdf_uri_to_qname($uri) {
+  $qname = rdf_uri_to_qname($uri);
+  $qname_parts = explode(':', $qname);
+  if ( $pos = strpos($qname_parts[1], '#') !== false ) {
+    $qname_parts[1] = substr($qname_parts[1], $pos);  
+  } 
+  return implode(':', $qname_parts);
+}
+
+function evoc_get_xsd_datatype_list() {
+	$evoc_xsd_datatypes = array(
+			t('Standard datatypes') => array(
+				'xsd:string' => 'xsd:string',
+				'xsd:decimal' => 'xsd:decimal',
+				'xsd:integer' => 'xsd:integer',
+				'xsd:date' => 'xsd:date',
+				'xsd:dateTime' => 'xsd:dateTime',
+				'xsd:boolean' => 'xsd:boolean',
+				'rdf:XMLLiteral' => 'rdf:XMLLiteral'	
+			),
+			t('Date and time') => array(
+				'xsd:date' => 'xsd:date',
+				'xsd:dateTime' => 'xsd:dateTime',
+				'xsd:time' => 'xsd:time',
+				'xsd:gYearMonth' => 'xsd:gYearMonth',
+				'xsd:gYear' => 'xsd:gYear',
+				'xsd:gMonthDay' => 'xsd:gMonthDay',
+				'xsd:time' => 'xsd:time',
+				'xsd:gDay' => 'xsd:gDay',
+				'xsd:gMonth' => 'xsd:gMonth'
+			),
+			t('Numbers') => array(
+				'xsd:decimal' => 'xsd:decimal',
+				'xsd:float' => 'xsd:float',
+				'xsd:double' => 'xsd:double',
+				'xsd:integer' => 'xsd:integer',
+				'xsd:nonPositiveInteger' => 'xsd:nonPositiveInteger',
+				'xsd:negativeInteger' => 'xsd:negativeInteger',
+				'xsd:long' => 'xsd:long',
+				'xsd:int' => 'xsd:int',
+				'xsd:short' => 'xsd:short',
+				'xsd:byte' => 'xsd:byte',
+				'xsd:nonNegativeInteger' => 'xsd:nonNegativeInteger',
+				'xsd:unsignedLong' => 'xsd:unsignedLong',
+				'xsd:unsignedInt' => 'xsd:unsignedInt',
+				'xsd:unsignedShort' => 'xsd:unsignedShort',
+				'xsd:unsignedByte' => 'xsd:unsignedByte',
+				'xsd:unsignedInt' => 'xsd:unsignedInt'
+			),
+			t('Other') => array(
+				'xsd:hexBinary' => 'xsd:hexBinary',
+				'xsd:base64Binary' => 'xsd:base64Binary',
+				'xsd:anyURI' => 'xsd:anyURI',
+				'xsd:normalizedString' => 'xsd:normalizedString',
+				'xsd:token' => 'xsd:token',
+				'xsd:language' => 'xsd:language',
+				'xsd:NMTOKEN' => 'xsd:NMTOKEN',
+				'xsd:Name' => 'xsd:Name',
+				'xsd:NCName' => 'xsd:NCName'
+			)
+	  );
+	return $evoc_xsd_datatypes;
 }
