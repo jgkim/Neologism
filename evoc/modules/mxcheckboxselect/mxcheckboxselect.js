@@ -70,6 +70,7 @@ EvocWidget.createStandardClassSelecctionWidget = function( field_name ) {
   Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
   baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
  
+  // TODO fix that dependency between Neologism TermsTree and Evoc
   var termsTree = new Neologism.TermsTree({
     renderTo: objectToRender,
     title: Drupal.t('Classes'),
