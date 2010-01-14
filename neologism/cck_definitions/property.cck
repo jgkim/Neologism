@@ -4,7 +4,6 @@ $content['type']  = array (
   'description' => 'Only letters, numbers, dashes, and underscores.',
   'title_label' => 'URI',
   'body_label' => 'A full description of the class. Include as much detail as you like. Limited HTML is allowed.',
-  'size' => 25,
   'min_word_count' => '0',
   'help' => '',
   'node_options' => 
@@ -14,7 +13,6 @@ $content['type']  = array (
     'sticky' => false,
     'revision' => false,
   ),
-  'language_content_type' => 0,
   'old_type' => 'neo_property',
   'orig_type' => '',
   'module' => 'node',
@@ -22,43 +20,6 @@ $content['type']  = array (
   'modified' => '1',
   'locked' => '0',
   'rdf_schema_class' => '',
-);
-$content['groups']  = array (
-  0 => 
-  array (
-    'label' => 'Range',
-    'group_type' => 'standard',
-    'settings' => 
-    array (
-      'form' => 
-      array (
-        'style' => 'fieldset_collapsible',
-        'description' => '',
-      ),
-      'display' => 
-      array (
-        'description' => '',
-        'teaser' => 
-        array (
-          'format' => 'fieldset',
-          'exclude' => 0,
-        ),
-        'full' => 
-        array (
-          'format' => 'fieldset',
-          'exclude' => 0,
-        ),
-        4 => 
-        array (
-          'format' => 'fieldset',
-          'exclude' => 0,
-        ),
-        'label' => 'above',
-      ),
-    ),
-    'weight' => '-4',
-    'group_name' => 'group_range',
-  ),
 );
 $content['fields']  = array (
   0 => 
@@ -90,6 +51,8 @@ $content['fields']  = array (
       'neo_class' => 0,
       'neo_property' => 0,
       'sparql' => 0,
+      'page' => false,
+      'story' => false,
     ),
     'op' => 'Save field settings',
     'module' => 'nodereference',
@@ -330,102 +293,31 @@ $content['fields']  = array (
   ),
   4 => 
   array (
-    'label' => 'Literal as Range',
-    'field_name' => 'field_literal_as_range',
-    'type' => 'text',
-    'widget_type' => 'optionwidgets_onoff',
-    'change' => 'Change basic information',
-    'weight' => '3',
-    'description' => 'Check this box to allow only literals (strings, numbers, dates etc.) as values of this property.',
-    'default_value' => 
-    array (
-      0 => 
-      array (
-        'value' => '',
-      ),
-    ),
-    'default_value_php' => '',
-    'default_value_widget' => 
-    array (
-      'field_literal_as_range' => 
-      array (
-        'value' => false,
-      ),
-    ),
-    'group' => 'group_range',
-    'required' => 0,
-    'multiple' => '0',
-    'text_processing' => '0',
-    'max_length' => '',
-    'allowed_values' => '|
-1|Literals as range.',
-    'allowed_values_php' => '',
-    'op' => 'Save field settings',
-    'module' => 'text',
-    'widget_module' => 'optionwidgets',
-    'columns' => 
-    array (
-      'value' => 
-      array (
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => false,
-        'sortable' => true,
-        'views' => true,
-      ),
-    ),
-    'rdf_property' => '',
-    'display_settings' => 
-    array (
-      'label' => 
-      array (
-        'format' => 'above',
-        'exclude' => 0,
-      ),
-      'teaser' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      'full' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      4 => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-    ),
-  ),
-  5 => 
-  array (
-    'label' => 'Range',
-    'field_name' => 'field_range2',
+    'label' => 'Inverse',
+    'field_name' => 'field_inverse2',
     'type' => 'evocreference',
     'widget_type' => 'mxcheckbox_select',
     'change' => 'Change basic information',
-    'weight' => '4',
-    'description' => 'If all possible values of this property are members of a certain class, then the class should be selected here.',
+    'weight' => '-2',
+    'description' => '',
     'default_value' => 
     array (
     ),
     'default_value_php' => '',
     'default_value_widget' => 
     array (
-      'field_range2' => 
+      'field_inverse2' => 
       array (
         'evoc_term' => '',
       ),
     ),
-    'group' => 'group_range',
+    'group' => false,
     'required' => 0,
     'multiple' => '1',
     'referenceable_term_types' => 
     array (
-      'classes' => 'classes',
-      'properties' => 0,
+      'properties' => 'properties',
+      'classes' => 0,
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
@@ -465,173 +357,7 @@ $content['fields']  = array (
       ),
     ),
   ),
-  6 => 
-  array (
-    'label' => 'Description of the property (only used in the documentation)',
-    'field_name' => 'field_description2',
-    'type' => 'text',
-    'widget_type' => 'text_textarea',
-    'change' => 'Change basic information',
-    'weight' => '-3',
-    'rows' => '5',
-    'size' => 60,
-    'description' => '',
-    'default_value' => 
-    array (
-      0 => 
-      array (
-        'value' => '',
-        '_error_element' => 'default_value_widget][field_description2][0][value',
-      ),
-    ),
-    'default_value_php' => '',
-    'default_value_widget' => 
-    array (
-      'field_description2' => 
-      array (
-        0 => 
-        array (
-          'value' => '',
-          '_error_element' => 'default_value_widget][field_description2][0][value',
-          'format' => 1,
-        ),
-      ),
-    ),
-    'group' => false,
-    'required' => 0,
-    'multiple' => '0',
-    'text_processing' => '1',
-    'max_length' => '',
-    'allowed_values' => '',
-    'allowed_values_php' => '',
-    'op' => 'Save field settings',
-    'module' => 'text',
-    'widget_module' => 'text',
-    'columns' => 
-    array (
-      'value' => 
-      array (
-        'type' => 'text',
-        'size' => 'big',
-        'not null' => false,
-        'sortable' => true,
-        'views' => true,
-      ),
-      'format' => 
-      array (
-        'type' => 'int',
-        'unsigned' => true,
-        'not null' => false,
-        'views' => false,
-      ),
-    ),
-    'rdf_property' => '',
-    'display_settings' => 
-    array (
-      'label' => 
-      array (
-        'format' => 'above',
-        'exclude' => 0,
-      ),
-      'teaser' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      'full' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      4 => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-    ),
-  ),
-  7 => 
-  array (
-    'label' => 'Inverse',
-    'field_name' => 'field_inverse2',
-    'type' => 'evocreference',
-    'widget_type' => 'evocreference_autocomplete',
-    'change' => 'Change basic information',
-    'weight' => '-2',
-    'autocomplete_match' => 'contains',
-    'reverse_link' => 0,
-    'description' => '',
-    'default_value' => 
-    array (
-      0 => 
-      array (
-        'evoc_term' => '',
-        '_error_element' => 'default_value_widget][field_inverse2][0][evoc_term][evoc_term',
-      ),
-    ),
-    'default_value_php' => '',
-    'default_value_widget' => 
-    array (
-      'field_inverse2' => 
-      array (
-        0 => 
-        array (
-          'evoc_term' => 
-          array (
-            'evoc_term' => '',
-            '_error_element' => 'default_value_widget][field_inverse2][0][evoc_term][evoc_term',
-          ),
-          '_error_element' => 'default_value_widget][field_inverse2][0][evoc_term][evoc_term',
-        ),
-      ),
-    ),
-    'group' => false,
-    'required' => 0,
-    'multiple' => '0',
-    'referenceable_term_types' => 
-    array (
-      'properties' => 'properties',
-      'classes' => 0,
-    ),
-    'op' => 'Save field settings',
-    'module' => 'evocreference',
-    'widget_module' => 'evocreference',
-    'columns' => 
-    array (
-      'evoc_term' => 
-      array (
-        'type' => 'varchar',
-        'length' => 64,
-        'not null' => false,
-        'sortable' => true,
-      ),
-    ),
-    'rdf_property' => '',
-    'display_settings' => 
-    array (
-      'label' => 
-      array (
-        'format' => 'above',
-        'exclude' => 0,
-      ),
-      'teaser' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      'full' => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-      4 => 
-      array (
-        'format' => 'default',
-        'exclude' => 0,
-      ),
-    ),
-  ),
-  8 => 
+  5 => 
   array (
     'label' => 'Functional Property',
     'field_name' => 'field_fp',
@@ -698,7 +424,7 @@ $content['fields']  = array (
       ),
     ),
   ),
-  9 => 
+  6 => 
   array (
     'label' => 'Inverse Functional Property',
     'field_name' => 'field_ifp',
@@ -765,7 +491,7 @@ $content['fields']  = array (
       ),
     ),
   ),
-  10 => 
+  7 => 
   array (
     'label' => 'Superproperty',
     'field_name' => 'field_superproperty2',
@@ -831,9 +557,76 @@ $content['fields']  = array (
       ),
     ),
   ),
+  8 => 
+  array (
+    'label' => 'Range',
+    'field_name' => 'field_range2',
+    'type' => 'evocreference',
+    'widget_type' => 'mxcheckbox_select',
+    'change' => 'Change basic information',
+    'weight' => '4',
+    'description' => 'If all possible values of this property are members of a certain class, then the class should be selected here.',
+    'default_value' => 
+    array (
+    ),
+    'default_value_php' => '',
+    'default_value_widget' => 
+    array (
+      'field_range2' => 
+      array (
+        'evoc_term' => '',
+      ),
+    ),
+    'group' => false,
+    'required' => 0,
+    'multiple' => '1',
+    'referenceable_term_types' => 
+    array (
+      'classes' => 'classes',
+      'properties' => 0,
+    ),
+    'op' => 'Save field settings',
+    'module' => 'evocreference',
+    'widget_module' => 'mxcheckboxselect',
+    'columns' => 
+    array (
+      'evoc_term' => 
+      array (
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => false,
+        'sortable' => true,
+      ),
+    ),
+    'rdf_property' => '',
+    'display_settings' => 
+    array (
+      'label' => 
+      array (
+        'format' => 'above',
+        'exclude' => 0,
+      ),
+      'teaser' => 
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'full' => 
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      4 => 
+      array (
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    ),
+  ),
 );
 $content['extra']  = array (
   'title' => '-9',
+  'body_field' => '0',
   'revision_information' => '2',
   'menu' => '-8',
   'path' => '3',
