@@ -15,7 +15,7 @@ tar xzf sites/all/modules/rdf/vendor/arc.tar.gz -C sites/all/modules/rdf/vendor/
 rm sites/all/modules/rdf/vendor/arc.tar.gz
 
 # Download and extract ExtJS-3, which is required for the evoc module 
-wget http://www.extjs.com/products/extjs/download.php?dl=extjs3
+wget http://extjs.cachefly.net/ext-3.0.0.zip 
 tar xzf ext-3.0.0.zip
 mv ext-3.0.0 sites/all/modules/ext/
 rm ext-3.0.0.zip
