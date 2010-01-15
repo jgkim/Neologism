@@ -15,7 +15,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
 	baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
 	 
-	  var termsTree = new Neologism.TermsTree({
+	Neologism.createInverseSelecctionWidget.termsTree = new Neologism.TermsTree({
 	    renderTo: objectToRender,
 	    title: Drupal.t('Classes'),
 	    disabled: false,
