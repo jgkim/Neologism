@@ -316,6 +316,7 @@ function neologism_new_node_property($vocabulary_nid, $term) {
     }
   }
     
+  //$node->field_inverse2[0]['value'] = $term['inverse'];
   /*
   // inverse
   foreach( $term['inverse'] as $value ) {

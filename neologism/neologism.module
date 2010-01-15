@@ -283,8 +283,20 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $vocabulary_id, NEOLOGISM_CT_VOCABULARY));
 		if( $prefix ) {
 			// for the prefix
+			$uri = _neologism_get_namespace($prefix->title);
     	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
 		}
+		
+		//kpr(base_path());
+		//kpr(base_path().$prefix->title);
+		//kpr($uri);
+		//add a Cancel button
+	  $form['buttons']['cancel'] = array(
+	  	'#type' => 'button',
+	  	'#value' => t('Cancel'),
+	  	'#weight' => 20,
+	  	'#attributes' => array('onclick' => 'window.location = \''.base_path().$prefix->title.'/\'; return false;'),
+	  );
   }
   
   if( $form_id == NEOLOGISM_PROPERTY_FORM_ID ) {
@@ -350,6 +362,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  	'#suffix' => '</div>'
 	  	//'#weight' => 20
 	  );
+	  
+	  
 	  
 	  if( isset($form['field_range2']) ) {
 	  	//$form['range_group']['field_range2'] = $form['field_range2'];
