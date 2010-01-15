@@ -330,6 +330,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_inverse2']['#mxcbs_behaviour']['owntitle'] = FALSE;
     $form['field_inverse2']['#mxcbs_behaviour']['handler'] = 'Neologism.createInverseSelecctionWidget';
     $form['field_inverse2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
+    $form['field_inverse2']['#prefix'] = '<div id="inverse-treeview">';
+	  $form['field_inverse2']['#suffix'] = '</div>';
     
     // add to the title label a description
   	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
