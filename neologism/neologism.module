@@ -52,9 +52,13 @@ function neologism_init() {
   drupal_add_css(drupal_get_path('module', NEOLOGISM) .'/neologism.css');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.termstree.js');
-  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.evocfield.behaviours.js');
-  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/widgetbehaviour.domain.js');
-  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/widgetbehaviour.inverse.js');
+
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/superclass.widgetbehaviour.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/disjointwith.widgetbehaviour.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/domain.widgetbehaviour.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/range.widgetbehaviour.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/superproperty.widgetbehaviour.js');
+  drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/inverse.widgetbehaviour.js');
   
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-darkgray.css');
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-slickness.css');
@@ -276,10 +280,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   if (($form_id == NEOLOGISM_CLASS_FORM_ID || $form_id == NEOLOGISM_PROPERTY_FORM_ID)
       && isset($_GET['v']) && isset($form['field_vocabulary']['#default_value'])) {
     $vocabulary_id = (int)$_GET['v'];
-    
     $form['field_vocabulary']['#default_value'][0]['nid'] = $vocabulary_id;
-  	// hide the field
-    $form['field_vocabulary']['#access'] = FALSE;
+    
     $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $vocabulary_id, NEOLOGISM_CT_VOCABULARY));
 		if( $prefix ) {
 			// for the prefix
@@ -301,6 +303,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   
   if( $form_id == NEOLOGISM_PROPERTY_FORM_ID ) {
   	//kpr($form);
+  	// hide the field
+	  $form['field_vocabulary']['#access'] = FALSE;
+	  
   	$form['title']['#theme'] = "render_URI_field";
   	$form['title']['#size'] = 20;
 		
@@ -318,7 +323,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
     
     $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
-    $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
+    $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
     $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
     
     // add behaviours for evoc fields if they are using the MXCheckBox selection widget
@@ -364,8 +369,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  	'#suffix' => '</div>'
 	  	//'#weight' => 20
 	  );
-	  
-	  
 	  
 	  if( isset($form['field_range2']) ) {
 	  	//$form['range_group']['field_range2'] = $form['field_range2'];
@@ -418,6 +421,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   // add the validation handler to both content type
   if( $form_id == NEOLOGISM_CLASS_FORM_ID )
   {
+  	// hide the field
+	  $form['field_vocabulary']['#access'] = FALSE;
+	  
   	// we never use the preview button neither the menu fieldset
 		unset($form['buttons']['preview']);
   	unset($form['menu']);
@@ -432,10 +438,10 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['buttons']['submit']['#submit'][] = '_neo_class_node_form_submit';
   	
     $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
-    $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createClassSelecctionWidget';
+    $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperclassSelecctionWidget';
     $form['field_superclass2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
     $form['field_disjointwith2']['#mxcbs_behaviour']['owntitle'] = FALSE;
-    $form['field_disjointwith2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDisjointWithSelecctionWidget'; 
+    $form['field_disjointwith2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDisjointwithSelecctionWidget'; 
     $form['field_disjointwith2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree'; 
   
     // hide the input field
