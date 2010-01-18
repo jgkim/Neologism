@@ -834,4 +834,11 @@ img#legend {
   	font-size: 16px;
 }
 
+.poweredby-logo {
+	position:relative; 
+	top: 1px; 
+	border: none;
+	vertical-align:text-bottom;
+}
+
 
