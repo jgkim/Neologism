@@ -144,23 +144,29 @@ function neologism_profile_tasks(&$task, $url) {
   	
   	// disabled the user login block
   	db_query('update {blocks} set status = 0 where bid = 1' /*module = "user" and delta = 0'*/);
+  	// disabled the powered by drupal block
+  	db_query('update {blocks} set status = 0 where bid = 3');
   	// move the navegation block to right region
   	db_query('update {blocks} set region = "right" where bid = 2' /*module = "user" and delta = 1'*/);
 
-  	
   	require_once 'modules/block/block.admin.inc';
   	require_once 'modules/block/block.module';
+  	//require_once 'includes/theme.inc';
   	
   	// create custom block, this kind of block are stored in the boxes table
   	$form_id = 'block_add_block_form';
   	
   	$link = l('Login', 'user', array('attributes' => Array('title' => 'User Login form or User Account')));
+  	$image = theme('image', drupal_get_path('module', 'neologism') .'/images/neologism-logo-80x16.png', 
+  		t('Powered by Neologism, an Ontology Editor based on Drupal.'), 
+  		t('Powered by Neologism, an Ontology Editor based on Drupal.'), array('class' => 'poweredby-logo'));
+  	$imagelink = l($image, 'http://neologism.deri.ie/', array('html' => TRUE));
   	$form_state['values'] = array(
 			'module' => 'block',
   		'title' => '',
   		'info' => 'Login Link',
-  		'body' => 'Powered by <a href="http://neologism.deri.ie/" title="Powered by Neologism, an Ontology Editor based on Drupal.">Neologism</a> | '.$link 
-  		//<a href="user" title="User Login form or User Account">Login</a>'
+  		'body' => 'Powered by '.$imagelink.' | '.$link,
+  		'format' => 2
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
