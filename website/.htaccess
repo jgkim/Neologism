@@ -1,4 +1,5 @@
-
 RewriteEngine On
-RewriteRule ^doap$ /neologism/resources/doap.rdf [R=303,L,QSA]
-
+#RewriteBase /neologism-website/
+RewriteBase /
+RewriteCond %{REQUEST_URI} !/(robots\.txt|favicon\.ico|style\.css|.*\.js|images/.*)$
+RewriteRule .* index.php
