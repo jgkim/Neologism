@@ -2,17 +2,12 @@
 
 /*
 TODO
-- Test in Firefox
-- Test in Chrome
-- Test in Opera
+- Tons of content missing!
 - Test in Internet Explorer
-- Add Google Analytics
-- Deploy
+- Deploy on neologism.deri.ie
 - Layout for Showcase page
 - Better screenshot for homepage
 - Improve screenshot display on homepage
-- HTML validation
-- Tons of content
 - RDFa markup
 */
 
@@ -227,5 +222,14 @@ if (@$content) {
         <div id="tagline">Easy Vocabulary Publishing</div>
       </div>
     </div>
+<script type="text/javascript">
+var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+try {
+var pageTracker = _gat._getTracker("UA-12554587-1");
+pageTracker._trackPageview();
+} catch(err) {}</script>
   </body>
 </html>
