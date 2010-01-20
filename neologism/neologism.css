@@ -785,6 +785,7 @@ img#legend {
 .vocabulary-view .authors {
   font-size: 12px;
   margin: 0px 0px 5px 0px;
+	background-color: #ff0000;
 }
 
 .vocabulary-view .authors h3 {
@@ -817,6 +818,11 @@ img#legend {
 .vocabulary-node .authors {
   	font-size: 16px;
   	margin: 0px 0px 5px 0px;
+}
+
+.vocabulary-node .authors .value {
+  font-size: 12px;
+  margin: 0px 0px 0px 0px;
 }
 
 .vocabulary-node .authors h3 {
