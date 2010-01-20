@@ -93,6 +93,7 @@ $pages = array(
     'mailing-list' => array('redirect' => 'http://groups.google.com/group/neologism-dev'),
     'issues' => array('redirect' => 'http://code.google.com/p/neologism/issues/list'),
     'source' => array('redirect' => 'http://code.google.com/p/neologism/source/checkout'),
+    'wiki' => array('redirect' => 'http://code.google.com/p/neologism/w/list'),
 );
 
 // ============= BEHAVIOUR CODE ==========================================
