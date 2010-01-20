@@ -3,6 +3,7 @@
 /*
 TODO
 - Tons of content missing!
+- Migrate all Google Code wiki content to the site
 - Test in Internet Explorer
 - Deploy on neologism.deri.ie
 - Layout for Showcase page
