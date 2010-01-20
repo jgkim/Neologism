@@ -342,6 +342,8 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
     
   $model = ModelFactory::getMemModel();
   $model->load($resource);
+  //$model->writeAsHtmlTable();
+  //die();
   
   // there is a convention. The filename is the vocabulary's name if the document fail in query for document's name
   $vocabulary_name = trim($title);
@@ -441,7 +443,7 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
   
   //TODO: write a message for the user when the ontology title is not provided
   if( $vocabulary_title == "" ) {
-    drupal_set_message('You document does not appear to contain a title. Your document does not appear to contain a title. Neologism has selected as title the imported filename.', 'warning');
+    drupal_set_message('Your document does not appear to contain a title. Neologism has selected as title the imported filename.', 'warning');
     $vocabulary_title = $vocabulary_name;
   }
   
@@ -462,7 +464,7 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
   // SPARQL queries are stored in an array.
   $term_queries = array();
   // Typical SPARQL queries to retrieve properties/classes, working for all major vocabularies...
-  
+
   $term_queries[] = array(
     'type' => 'class',
     'query' => '
@@ -478,6 +480,26 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
       }
       '
   );
+  
+  // some time the user just create a class using the rdfs:subClassOf. So Neologism
+  // need to execute this query to infer that there is other ?class with ?superclass
+  $term_queries[] = array(
+    'type' => 'class',
+    'query' => '
+      prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      prefix owl: <http://www.w3.org/2002/07/owl#>
+      select *
+      where { ?class rdfs:subClassOf ?superclass.
+        OPTIONAL {?class rdfs:label ?label}.
+        OPTIONAL {?class owl:disjointWith ?disjointwith}.
+        OPTIONAL {?class rdfs:comment ?comment}.
+      }
+      '
+  );
+  
+  //$query_result = $model->sparqlQuery($term_queries[0]['query']);
+  //die();
   
   $term_queries[] = array(
     'type' => 'property',
