@@ -1,8 +1,8 @@
 # Download Drupal Core
 drush dl drupal
 
-# Rename directory created by above command
-mv drupal-6.14 neologism-1.0-rc4
+# Rename directory created by above command; use wildcard because version can change
+mv drupal-6.* neologism-1.0-rc4
 cd neologism-1.0-rc4
 
 # Download required modules
@@ -15,7 +15,7 @@ tar xzf sites/all/modules/rdf/vendor/arc.tar.gz -C sites/all/modules/rdf/vendor/
 rm sites/all/modules/rdf/vendor/arc.tar.gz
 
 # Download and extract ExtJS-3, which is required for the evoc module 
-wget http://extjs.cachefly.net/ext-3.0.0.zip 
+curl -O http://extjs.cachefly.net/ext-3.0.0.zip 
 unzip ext-3.0.0.zip
 mv ext-3.0.0 sites/all/modules/ext/
 rm ext-3.0.0.zip
@@ -30,6 +30,9 @@ svn co https://neologism.googlecode.com/svn/trunk/profile profiles/neologism --u
 
 # Delete the Drupal default installation profile, we only support the Neologism one
 rm -rf profiles/default/
+
+# Check out the customisations of the Garland theme from Google Code SVN
+svn co https://neologism.googlecode.com/svn/trunk/theme themes/garland --username richard@cyganiak.de
 
 # Create archive of the entire thing, ready for installation by users
 cd ..
