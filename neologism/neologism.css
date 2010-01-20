@@ -816,7 +816,7 @@ img#legend {
 	}
 	
 .vocabulary-node .authors {
-  	font-size: 16px;
+  	font-size: 14px;
   	margin: 0px 0px 5px 0px;
 }
 
@@ -827,7 +827,7 @@ img#legend {
 
 .vocabulary-node .authors h3 {
   	display: inline;
-  	font-size: 16px;
+  	font-size: 14px;
 }
 
 .vocabulary-node .abstract {
@@ -837,7 +837,7 @@ img#legend {
 
 .vocabulary-node .abstract h3 {
   	margin: 0px 0px 3px 0px;
-  	font-size: 16px;
+  	font-size: 14px;
 }
 
 .poweredby-logo {
