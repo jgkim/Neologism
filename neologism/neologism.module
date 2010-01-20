@@ -532,7 +532,7 @@ function neologism_export_html($node) {
   $link2 = l($image, $node->path.'/'.N3, array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
-  $output .= '<h1>'.$vocabulary_title.'</h1>';
+  //$output .= '<h1>'.$vocabulary_title.'</h1>';
     
   // clear the title so we can print our formatted title
   drupal_set_title($vocabulary_title);
