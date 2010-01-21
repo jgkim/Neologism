@@ -37,10 +37,11 @@ define("INVERSE", "inverse");
 // persmission definitions
 define("PERMISSION_EDIT_VOCABULARIES", "edit vocabularies");
 define("PERMISSION_IMPORT_VOCABULARIES", "import vocabularies");
+define("PERMISSION_NEOLOGISM_ACCESS", "access vocabularies");
 
 define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
 define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
-define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
+//define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
 
 
 /**
@@ -71,7 +72,11 @@ function neologism_init() {
  * Implementation of hook_perm().
  */
 function neologism_perm() {
-    return array(PERMISSION_EDIT_VOCABULARIES, PERMISSION_IMPORT_VOCABULARIES);
+    return array(
+    	PERMISSION_EDIT_VOCABULARIES, 
+    	PERMISSION_IMPORT_VOCABULARIES,
+ //   	PERMISSION_NEOLOGISM_ACCESS
+    );
 }
 
 /**
@@ -111,24 +116,51 @@ function neologism_theme() {
   );
 }
 
+/**
+ * This function build the breadcrumb for neologism
+ * @param $path
+ * @param $title
+ * @return unknown_type
+ */
+function _neologism_build_breadcrumb($path, $title) {
+	$breadcrumb = array('<a href="'.base_path().'">Home</a>');
+	$breadcrumb[] = '<a href="'.base_path().$path.'">'.$title.'</a>';
+	return $breadcrumb;
+}
+
+/**
+ * This function handler all the content negotiation. If the page to show is an xHTML page we need
+ * to know what kind of node it is. If it is a node different from NEOLOGISM_CT_VOCABULARY we use
+ * the node_view() function to render it.
+ * @param $node
+ * @return unknown_type
+ */
 function neologism_export_conneg($node) {
-  $request_uri = $_SERVER["REQUEST_URI"];
-  $accept = $_SERVER["HTTP_ACCEPT"];
-  $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
-  header("Vary: Accept");
-  header("Content-Location: " . $redirect_uri);
-  $preferred_variant = neologism_get_preferred_content($accept);
-  if ($preferred_variant == HTML) {
-    return neologism_export_html($node);
-  } else if ($preferred_variant == RDF) {
-    neologism_export_rdfxml($node);
-  } else if ($preferred_variant == N3) {
-    neologism_export_n3($node);
-  } else if ($preferred_variant == XML) {
-    neologism_export_xml($node);
-  } else {
-    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_export_conneg()");
-  }
+	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
+		$request_uri = $_SERVER["REQUEST_URI"];
+	  $accept = $_SERVER["HTTP_ACCEPT"];
+	  $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
+	  header("Vary: Accept");
+	  header("Content-Location: " . $redirect_uri);
+	  $preferred_variant = neologism_get_preferred_content($accept);
+	  if ($preferred_variant == HTML) {
+	    return neologism_export_html($node);	
+	  } else if ($preferred_variant == RDF) {
+	    neologism_export_rdfxml($node);
+	  } else if ($preferred_variant == N3) {
+	    neologism_export_n3($node);
+	  } else if ($preferred_variant == XML) {
+	    neologism_export_xml($node);
+	  } else {
+	    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_export_conneg()");
+	  }
+	}
+	else {
+		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));
+		drupal_set_title($node->title);
+		$output = theme('node', $node, FALSE, TRUE);
+		return $output;
+	}
 }
 
 /**
@@ -141,7 +173,6 @@ function neologism_menu() {
     'title' => 'Neologism Vocabularies',
     'description' => "Show a list of vocabularies.",
     'page callback' => 'neologism_view_index',
-    //'access arguments' => TRUE,  see at http://www.aprium.net/content/error-menuinc-line-258
     'access arguments' => array('access content'),
     'type' => MENU_LOCAL_TASK,
   );
@@ -152,17 +183,14 @@ function neologism_menu() {
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
-      //'access arguments' => array('access content'),
       'type' => MENU_LOCAL_TASK,
   );
 
   $items['node/%neologism_vocabulary/'.RDF] = array(
       'title' => 'View RDF/XML',
       'page callback' => 'neologism_export_rdfxml',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
+     	'access callback' => 'node_access',
       'access arguments' => array('view', 1),
-      //'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/'.N3] = array(
@@ -171,16 +199,14 @@ function neologism_menu() {
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
-      //'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/'.XML] = array(
       'title' => 'View XML',
       'page callback' => 'neologism_export_xml',
-      'page arguments' => array(1),
+  		'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
-      //'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/'.LAYOUT] = array(
@@ -189,7 +215,6 @@ function neologism_menu() {
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
-      //'access arguments' => array('access content'),
       'type' => MENU_CALLBACK,
   );
   /*
@@ -524,9 +549,10 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 function neologism_vocabulary_load($nid) {
   if ($nid) {
     $node = node_load($nid);
-    if ($node->type == 'neo_vocabulary') {
-      return $node;
-    }
+    return $node;
+    //if ($node->type == 'neo_vocabulary') {
+      
+    //}
   }
   else {
     return FALSE;
@@ -537,7 +563,7 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-  //$vocabulary_title = check_plain($node->field_title[0]['value']);
+	//$vocabulary_title = check_plain($node->field_title[0]['value']);
   $vocabulary_title = $node->field_title[0]['value'];
   
   //$head_title = $vocabulary_title;
@@ -553,6 +579,7 @@ function neologism_export_html($node) {
   //$output .= '<h1>'.$vocabulary_title.'</h1>';
     
   // clear the title so we can print our formatted title
+  drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));
   drupal_set_title($vocabulary_title);
   
   $classes = _neologism_get_all_classes($node);
@@ -2451,13 +2478,14 @@ function _neologism_is_valid_id($string) {
 }
 
 /**
- * This function is a wrapper function to fix the bug in rdfapi when localpart contain the pewfix #
+ * This function is a wrapper function to fix the bug in rdfapi when localpart contain the prefix #
  * @param object $uri
  * @return 
  */
 function neologism_rdf_uri_to_qname($uri) {
   $qname = rdf_uri_to_qname($uri);
   $qname_parts = explode(':', $qname);
+  // TODO check for external vocabulary when this is missing and import it automatically
   if ( $pos = strpos($qname_parts[1], '#') !== false ) {
     $qname_parts[1] = substr($qname_parts[1], $pos);  
   } 
