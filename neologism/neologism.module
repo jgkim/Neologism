@@ -111,7 +111,25 @@ function neologism_theme() {
   );
 }
 
-
+function neologism_do_conneg($node) {
+  $request_uri = $_SERVER["REQUEST_URI"];
+  $accept = $_SERVER["HTTP_ACCEPT"];
+  $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
+  header("Vary: Accept");
+  header("Content-Location: " . $redirect_uri);
+  $preferred_variant = neologism_get_preferred_content($accept);
+  if ($preferred_variant == HTML) {
+    return neologism_export_html($node);
+  } else if ($preferred_variant == RDF) {
+    return neologism_export_rdfxml($node);
+  } else if ($preferred_variant == N3) {
+    return neologism_export_n3($node);
+  } else if ($preferred_variant == XML) {
+    return neologism_export_xml($node);
+  } else {
+    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_do_conneg()");
+  }
+}
 
 /**
  * Implementation of hook_menu().
@@ -130,7 +148,7 @@ function neologism_menu() {
 
   $items['node/%neologism_vocabulary'] = array(
       'title' => 'View',
-      'page callback' => 'neologism_export_html',
+      'page callback' => 'neologism_do_conneg',
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
@@ -1366,16 +1384,16 @@ function neologism_get_preferred_content($accept) {
         'application/xhtml+xml',
         'text/html',
         'application/rdf+xml',
-        'text/turtle',
         'text/rdf+n3',
+        'text/turtle',
         'application/xml',
       ),
       'app_preference' => array(
         1.00,
         0.99,
         0.90,
-        0.89,
         0.88,
+        0.89,
         0.50,
       ),
     );
