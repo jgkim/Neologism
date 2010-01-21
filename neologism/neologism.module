@@ -7,7 +7,7 @@
 
 define("NEOLOGISM", "neologism");
 define("HTML", "html");
-define("RDF", "rdfxml");
+define("RDF", "rdf");
 define("N3", "n3");
 define("XML", "xml");
 define("LAYOUT", "layout");
@@ -111,7 +111,7 @@ function neologism_theme() {
   );
 }
 
-function neologism_do_conneg($node) {
+function neologism_export_conneg($node) {
   $request_uri = $_SERVER["REQUEST_URI"];
   $accept = $_SERVER["HTTP_ACCEPT"];
   $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
@@ -121,13 +121,13 @@ function neologism_do_conneg($node) {
   if ($preferred_variant == HTML) {
     return neologism_export_html($node);
   } else if ($preferred_variant == RDF) {
-    return neologism_export_rdfxml($node);
+    neologism_export_rdfxml($node);
   } else if ($preferred_variant == N3) {
-    return neologism_export_n3($node);
+    neologism_export_n3($node);
   } else if ($preferred_variant == XML) {
-    return neologism_export_xml($node);
+    neologism_export_xml($node);
   } else {
-    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_do_conneg()");
+    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_export_conneg()");
   }
 }
 
@@ -148,7 +148,7 @@ function neologism_menu() {
 
   $items['node/%neologism_vocabulary'] = array(
       'title' => 'View',
-      'page callback' => 'neologism_do_conneg',
+      'page callback' => 'neologism_export_conneg',
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
@@ -545,9 +545,9 @@ function neologism_export_html($node) {
   $output = '<div id="vocabulary-view">';
   
   $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/rdf_w3c_icon.48.gif', t('RDF/XML version of this vocabulary.'), t('RDF/XML version of this vocabulary.'));
-  $link = l($image, $node->path.'/'.RDF, array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
+  $link = l($image, $node->path.'.'.RDF, array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/n3.gif', t('N3/Turtle version of this vocabulary.'), t('N3/Turtle version of this vocabulary.'));
-  $link2 = l($image, $node->path.'/'.N3, array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
+  $link2 = l($image, $node->path.'.'.N3, array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
   //$output .= '<h1>'.$vocabulary_title.'</h1>';
@@ -727,7 +727,7 @@ function neologism_export_html($node) {
  * using RAP (RDF API for PHP)
  * seeAlso http://www4.wiwiss.fu-berlin.de/bizer/rdfapi/
  */
-function neologism_get_rdf_model($node, $namespace, $document) {
+function neologism_get_rdf_model($node) {
   include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
 
   global $rdf_namespaces;
@@ -739,12 +739,12 @@ function neologism_get_rdf_model($node, $namespace, $document) {
   $classes = _neologism_get_all_classes($node, $detected_namespaces);
   $properties = _neologism_get_all_properties($node, $detected_namespaces);
   
-  // may be is better to specify the base uri
-  //$model = ModelFactory::getDefaultModel($document);
+  $namespace = $rdf_namespaces[$node->title];
+
   $model = ModelFactory::getDefaultModel();
 
   // add necesary namespaces
-  $model->addNamespace($node->title, $rdf_namespaces[$node->title]);
+  $model->addNamespace($node->title, $namespace);
   $model->addNamespace('rdf', $rdf_namespaces['rdf']);
   $model->addNamespace('rdfs', $rdf_namespaces['rdfs']);
   $model->addNamespace('dc', $rdf_namespaces['dc']);
@@ -758,12 +758,14 @@ function neologism_get_rdf_model($node, $namespace, $document) {
   }
     
   //export the ontology
-  $doc = new Resource($document);
-  
+  $doc = new Resource($GLOBALS['base_url'] . '/' . $node->title);
   $model->add(new Statement($doc, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["foaf"], "Document")));
   $model->add(new Statement($doc, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["owl"], "Ontology")));
   $model->add(new Statement($doc, new Resource($rdf_namespaces["dc"], "title"), new Literal($node->field_title[0]['value'])));
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["dc"], "description"), new Literal($node->field_abstract[0]['value'])));
+  $description = $node->field_abstract[0]['value'];
+  if (!empty($description)) {
+    $model->add(new Statement($doc, new Resource($rdf_namespaces["dc"], "description"), new Literal($description)));
+  }
   $model->add(new Statement($doc, new Resource($rdf_namespaces["vann"], "preferredNamespaceUri"), new Literal($namespace)));
   $model->add(new Statement($doc, new Resource($rdf_namespaces["vann"], "preferredNamespacePrefix"), new Literal($node->title)));
   
@@ -844,22 +846,18 @@ function neologism_get_rdf_model($node, $namespace, $document) {
  * Output the RDF/XML version of the vocabulary specified as input
  */
 function neologism_export_rdfxml($node) {
+
+    define('HIDE_ADVERTISE', true);
     include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
     include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
     
-    $request_uri = "http://" . $_SERVER["HTTP_HOST"] . $_SERVER["REQUEST_URI"];
-    $request_uri = substr($request_uri, 0,  strrpos($request_uri, '/'));
-    $namespace = $request_uri.'#'; 
-    $model = neologism_get_rdf_model($node, $namespace, $request_uri);
-    
+    $model = neologism_get_rdf_model($node);
     $ser = new RDFSerializer();
     $rdf = &$ser->serialize($model);
     $model->close();
 
     header("Content-Type: application/rdf+xml; charset=utf-8");
     echo $rdf;
-
-    return;
 }
 
 /**
@@ -867,22 +865,19 @@ function neologism_export_rdfxml($node) {
  */
 function neologism_export_n3($node) {
 
-    include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include(RDFAPI_INCLUDE_DIR . "syntax/N3Serializer.php");
+    define('HIDE_ADVERTISE', true);
+    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
+    include_once(RDFAPI_INCLUDE_DIR . "syntax/N3Serializer.php");
 
-    $request_uri = "http://".$_SERVER["HTTP_HOST"].$_SERVER["REQUEST_URI"];
-    //$ontology = substr($request_uri, 0, strlen($request_uri)-3) . "#";
-    $request_uri = substr($request_uri, 0,  strrpos($request_uri, '/'));
-    $namespace = $request_uri.'#';
-    $model = neologism_get_rdf_model($node, $namespace, $request_uri);
+    $model = neologism_get_rdf_model($node);
     $ser = new N3Serializer();
+    $ser->setPrettyPrint(true);
+    $ser->addNoNSPrefix($GLOBALS['base_url'] . '/');
     $n3 = &$ser->serialize($model);
     $model->close();
 
     header("Content-Type: text/rdf+n3; charset=utf-8");
     echo $n3;
-    
-    return;
 }
 
 /**
@@ -975,7 +970,6 @@ function neologism_export_xml($node) {
 
   header("Content-Type: application/xml; charset=utf-8");
   echo $xml->asXml();
-  return;
 }
 
 /**
@@ -1124,21 +1118,6 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
       }
  
   	  break;
-      
-    case 'load':
-      if ($node->type == NEOLOGISM_CT_VOCABULARY and arg(0) == TRUE and arg(1) == TRUE and arg(2) == FALSE) {
-        //vocabulary root, so content negotiation, provide an appropiate representation
-        $request_uri = $_SERVER["REQUEST_URI"];
-        $accept = $_SERVER["HTTP_ACCEPT"];
-        $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
-        //header("HTTP/1.1 303");
-        header("Vary: Accept");
-        //header("Location: " . $redirect_uri);
-        header("Content-Location: " . $redirect_uri);
-        //drupal_goto($redirect_uri);
-        //header("Content-Type: application/rdf-xml");
-      }
-      break;
       
     // catching the view event
     case 'view':
@@ -1422,7 +1401,7 @@ function neologism_get_preferred_uri($uri, $accept) {
     if (substr($uri, -1)=="/")
         return $uri . $preferred;
     else
-        return $uri . "/" . $preferred;
+        return $uri . "." . $preferred;
 }
 
 
@@ -1944,42 +1923,27 @@ function theme_neologism_form_element(array $element, $value) {
 // private functions
 
 /**
+ * update the url_alias table the alias 
+ * @param object $node
+ * @return 
+ */
+function _neologism_update_aliases($node) {
+  _neologism_unset_aliases($node);
+  _neologism_set_aliases($node);
+}
+
+/**
  * Create a alias in the url_alias table for the $node 
  * @param object $node
  * @return 
  */
 function _neologism_set_aliases($node) {
   $path = check_plain($node->title);
-  
-  path_set_alias("node/$node->nid", $path, NULL, $node->language);
-  path_set_alias("node/$node->nid/".HTML, $path.'/'.HTML, NULL, $node->language);
-  path_set_alias("node/$node->nid/".RDF, $path.'/'.RDF, NULL, $node->language);
-  path_set_alias("node/$node->nid/".N3, $path.'/'.N3, NULL, $node->language);
-  path_set_alias("node/$node->nid/".XML, $path.'/'.XML, NULL, $node->language);
-  path_set_alias("node/$node->nid/".LAYOUT, $path.'/'.LAYOUT, NULL, $node->language);
-}
-
-/**
- * update the url_alias table the alias 
- * @param object $node
- * @return 
- */
-function _neologism_update_aliases($node) {
-  $path = check_plain($node->title);
-  // we can not use $node->pid to update because we use more than an alias for represent the current voc node
-  // remove the path alias from table
-  path_set_alias(NULL, $node->path, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.HTML, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.RDF, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.N3, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.XML, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.LAYOUT, NULL, $node->language);
-  // add new path alias to table
   path_set_alias("node/$node->nid", $path, NULL, $node->language );
-  path_set_alias("node/$node->nid/".HTML, $path.'/'.HTML, NULL, $node->language);
-  path_set_alias("node/$node->nid/".RDF, $path.'/'.RDF, NULL, $node->language);
-  path_set_alias("node/$node->nid/".N3, $path.'/'.N3, NULL, $node->language);
-  path_set_alias("node/$node->nid/".XML, $path.'/'.XML, NULL, $node->language);
+  path_set_alias("node/$node->nid/".HTML, $path.'.'.HTML, NULL, $node->language);
+  path_set_alias("node/$node->nid/".RDF, $path.'.'.RDF, NULL, $node->language);
+  path_set_alias("node/$node->nid/".N3, $path.'.'.N3, NULL, $node->language);
+  path_set_alias("node/$node->nid/".XML, $path.'.'.XML, NULL, $node->language);
   path_set_alias("node/$node->nid/".LAYOUT, $path.'/'.LAYOUT, NULL, $node->language);
 }
 
@@ -1990,10 +1954,10 @@ function _neologism_update_aliases($node) {
  */
 function _neologism_unset_aliases($node) {
   path_set_alias(NULL, $node->path, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.HTML, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.RDF, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.N3, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'/'.XML, NULL, $node->language);
+  path_set_alias(NULL, $node->path.'.'.HTML, NULL, $node->language);
+  path_set_alias(NULL, $node->path.'.'.RDF, NULL, $node->language);
+  path_set_alias(NULL, $node->path.'.'.N3, NULL, $node->language);
+  path_set_alias(NULL, $node->path.'.'.XML, NULL, $node->language);
   path_set_alias(NULL, $node->path.'/'.LAYOUT, NULL, $node->language);
 }
 
