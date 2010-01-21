@@ -2,8 +2,8 @@
 drush dl drupal
 
 # Rename directory created by above command; use wildcard because version can change
-mv drupal-6.* neologism-1.0-rc4
-cd neologism-1.0-rc4
+mv drupal-6.* neologism
+cd neologism
 
 # Download required modules
 drush dl cck rdf sparql ext rules
@@ -36,4 +36,4 @@ svn co https://neologism.googlecode.com/svn/trunk/theme themes/garland --usernam
 
 # Create archive of the entire thing, ready for installation by users
 cd ..
-zip -r neologism-1.0-rc4.zip neologism-1.0-rc4
+zip -r neologism.zip neologism
