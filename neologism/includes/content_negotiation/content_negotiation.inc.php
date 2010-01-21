@@ -31,7 +31,7 @@ class content_negotiation {
 
 		// Mime types are a special case due to the possibility of subtypes
 		if($mime_negotiation) {
-			if(!preg_match_all('/([a-z\-\+\*]+)\/([a-z\-\+\*]+)\s*;?\s*q?=?(0\.\d{1,5}|1\.0|[01])?,*/i', $header, $matches)) {
+			if(!preg_match_all('/([a-z\-\+\*]+)\/([a-z0-9\-\+\*]+)\s*;?\s*q?=?(0\.\d{1,5}|1\.0|[01])?,*/i', $header, $matches)) {
 				return false;
 			}
 
