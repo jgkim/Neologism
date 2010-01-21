@@ -27,6 +27,7 @@ $section_links = array(
         'Overview' => 'docs',
         'Minimum requirements' => 'requirements',
         'Installation guide' => 'installation',
+        'Customizing' => 'customizing',
         'RDFS and OWL' => 'on-vocabularies',
         'FAQ' => 'faq',
         'Publications' => 'publications',
@@ -72,6 +73,11 @@ $pages = array(
         'section' => 'docs',
         'text' => 'installation',
     ),
+    'customizing' => array(
+        'title' => 'Customizing a Neologism Installation',
+        'section' => 'docs',
+        'text' => 'customizing',
+    ),
     'on-vocabularies' => array(
         'title' => 'On Vocabularies, RDFS, and OWL',
         'section' => 'docs',
@@ -89,7 +95,7 @@ $pages = array(
     ),
     'gpl' => array('redirect' => 'http://www.gnu.org/licenses/gpl-3.0-standalone.html'),
     'download' => array('redirect' => 'http://code.google.com/p/neologism/downloads/list'),
-    'download-latest' => array('redirect' => 'http://neologism.googlecode.com/files/neologism-1.0-rc5.zip'),
+    'download-latest' => array('redirect' => 'http://neologism.googlecode.com/files/neologism-1.0-rc6.zip'),
     'mailing-list' => array('redirect' => 'http://groups.google.com/group/neologism-dev'),
     'issues' => array('redirect' => 'http://code.google.com/p/neologism/issues/list'),
     'source' => array('redirect' => 'http://code.google.com/p/neologism/source/checkout'),
