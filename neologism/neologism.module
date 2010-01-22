@@ -1965,7 +1965,7 @@ function _neologism_set_aliases($node) {
   path_set_alias("node/$node->nid/".HTML, $path.'.'.HTML, NULL, $node->language);
   path_set_alias("node/$node->nid/".RDF, $path.'.'.RDF, NULL, $node->language);
   path_set_alias("node/$node->nid/".N3, $path.'.'.N3, NULL, $node->language);
-  path_set_alias("node/$node->nid/".XML, $path.'.'.XML, NULL, $node->language);
+  path_set_alias("node/$node->nid/".XML, $path.'/'.XML, NULL, $node->language);
   path_set_alias("node/$node->nid/".LAYOUT, $path.'/'.LAYOUT, NULL, $node->language);
 }
 
@@ -1979,7 +1979,7 @@ function _neologism_unset_aliases($node) {
   path_set_alias(NULL, $node->path.'.'.HTML, NULL, $node->language);
   path_set_alias(NULL, $node->path.'.'.RDF, NULL, $node->language);
   path_set_alias(NULL, $node->path.'.'.N3, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.'.XML, NULL, $node->language);
+  path_set_alias(NULL, $node->path.'/'.XML, NULL, $node->language);
   path_set_alias(NULL, $node->path.'/'.LAYOUT, NULL, $node->language);
 }
 
