@@ -175,7 +175,7 @@ function neologism_new_node_vocabulary( array $voc_term ) {
     return NULL;
   }
 
-  $node->language = $language->language;
+//  $node->language = $language->language;
   $node->promote = 1;
   
   node_save($node);
@@ -237,7 +237,7 @@ function neologism_new_node_class($vocabulary_nid, $term) {
   
   $node->field_comment[0]['value'] = $term['comment'];
   
-  $node->language = $language->language;
+//  $node->language = $language->language;
   node_save($node);
   if( $node->nid ) {
     watchdog('content', '@type: added %title using neologism API.', array('@type' => $node->type, '%title' => $node->title), WATCHDOG_NOTICE, l(t('view'), "node/$node->nid"));
@@ -326,7 +326,7 @@ function neologism_new_node_property($vocabulary_nid, $term) {
   }
   */
     
-  $node->language = $language->language;
+//  $node->language = $language->language;
   node_save($node);
   if( $node->nid ) {
     watchdog('content', '@type: added %title using neologism API.', array('@type' => $node->type, '%title' => $node->title), WATCHDOG_NOTICE, l(t('view'), "node/$node->nid"));
