@@ -25,7 +25,8 @@ define("DEFAULT_RDFS_SUPERCLASS", "rdfs:Resource");
 define("MSG_INVALID_ID", "is not a valid identifier. It should start with a letter, and should contain only letters, 
 													numbers, dashes, and underscores.");
 
-define("MSG_ID_ALREADY_IN_USE", "Id already in use.  Please check that the vocabulary is not in the system.");      
+define("MSG_VOCABULARYID_ALREADY_IN_USE", "Id already in use.  Please check that the vocabulary is not in the system.");  
+define("MSG_CLASSID_ALREADY_IN_USE", "Id already in use.  Please check that the class is not in the system.");      
 
 define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
