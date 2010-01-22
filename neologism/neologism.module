@@ -41,7 +41,7 @@ define("PERMISSION_NEOLOGISM_ACCESS", "access vocabularies");
 
 define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
 define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
-//define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
+define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
 
 
 /**
@@ -297,7 +297,6 @@ function neologism_menu() {
  * Implementation of hook_form_alter().
  */
 function neologism_form_alter(&$form, &$form_state, $form_id) {
-	global $evoc_xsd_datatypes;
 	
 	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
@@ -315,6 +314,16 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   	
   	// add to the title label a description
   	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
+		
+  	// Hide the layout field of the vocublary page since it's only used
+	  // internally by the viewer to store the diagram layout.
+	  if (isset($form['field_layout'])) {
+	    unset($form['field_layout']);
+	  }
+	  // Collapse the URL path fieldset to prevent people from messing with it.
+	  if (isset($form['path']['#collapsed'])) {
+	    $form['path']['#collapsed'] = TRUE;
+	  }
 	}
     
   // Select the vocabulary when adding a class or a property from a vocabulary page
@@ -419,6 +428,10 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    $form['field_range2']['#suffix'] = '</div>';  
 	  }
     
+	  // Set the size of the description field to 5 rows in class and property forms.
+	  if (isset($form['body_field']['body']['#rows'])) {
+	    $form['body_field']['body']['#rows'] = 4;
+	  }
   	
     // add validation function for create or edition of properties form
     if( arg(2) == 'edit' && isset($form['#node']) ) {
@@ -490,6 +503,11 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     
     // add to the title label a description
   	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
+  	
+  	// Set the size of the description field to 5 rows in class and property forms.
+	  if (isset($form['body_field']['body']['#rows'])) {
+	    $form['body_field']['body']['#rows'] = 4;
+	  }
     
     if( arg(2) == 'edit' && isset($form['#node']) ) {
       $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
@@ -520,29 +538,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	$form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($qname);
     	$form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
   	}
-  }
-  
-  // Hide the menu settings fieldset in class and property forms
-  // as it is not likely to be used here and also steps in the middle of the form flow.
-  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_PROPERTY_FORM_ID) && isset($form['menu'])) {
-    unset($form['menu']);
-  }
-  // Set the size of the description field to 5 rows in class and property forms.
-  if (($form_id == NEOLOGISM_CT_CLASS.'_node_form' || $form_id == NEOLOGISM_PROPERTY_FORM_ID) && isset($form['body_field']['body']['#rows'])) {
-    $form['body_field']['body']['#rows'] = 4;
-  }
-  // Hide the layout field of the vocublary page since it's only used
-  // internally by the viewer to store the diagram layout.
-  if ($form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' && isset($form['field_layout'])) {
-    unset($form['field_layout']);
-  }
-  // Collapse the URL path fieldset to prevent people from messing with it.
-  if ($form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' && isset($form['path']['#collapsed'])) {
-    $form['path']['#collapsed'] = TRUE;
-  }
-  // Set the weight of the menu settings for it to appear after the description field.
-  if ($form_id == NEOLOGISM_CT_VOCABULARY.'_node_form' && isset($form['menu']['#weight'])) {
-    $form['menu']['#weight'] = 1;
   }
 }
 
