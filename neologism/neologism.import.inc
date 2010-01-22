@@ -11,17 +11,17 @@ function neologism_import_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Vocabulary URI'),
     '#required' => TRUE,
-    '#default_value' => $form_state['values']['vocabulary_uri'],
+    //'#default_value' => $form_state['values']['vocabulary_uri'],
     '#description' => "Enter the URI of the vocabulary to import in Neologism. Make sure it finishes by either / or #.",
   );
-  /*
   $form['prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Prefix'),
     '#required' => TRUE,
-    '#default_value' => $form_state['values']['prefix'],
+    //'#default_value' => $form_state['values']['prefix'],
     '#description' => "Choose a prefix for this vocabulary. This prefix will be used by default in Neologism.",
   );
+  /*
   $form['ns_uri'] = array(
     '#type' => 'textfield',
     '#title' => t('Namespace URI'),
@@ -47,13 +47,13 @@ function neologism_import_form($form_state) {
 }
 
 function neologism_import_form_submit($form, &$form_state) {
-  $form_state['storage']['values'] = $form_state['values'];
-  $form_state['rebuild'] = true;
+  //$form_state['storage']['values'] = $form_state['values'];
+  //$form_state['rebuild'] = true;
 
   //$fetched_terms = evoc_fetch_vocabulary(
   //$form_state['values']['vocabulary_uri'], $form_state['values']['prefix'], TRUE, $form_state['values']['ns_uri']);
   
-  _neologism_import_vocabulary($form_state['values']['vocabulary_uri']);
+  _neologism_import_vocabulary($form_state['values']['vocabulary_uri'], $form_state['values']['prefix'], FALSE);
 }
 
 /**
@@ -177,7 +177,7 @@ function neologism_new_node_vocabulary( array $voc_term ) {
   // check if there is some voc with the same id
   $count = db_result(db_query(db_rewrite_sql("select count(*) from {node} where title = '%s' and type = '%s'"), $node->title, NEOLOGISM_CT_VOCABULARY));
   if( $count > 0 ) {
-    drupal_set_message( t($node->title.' '.MSG_ID_ALREADY_IN_USE), 'error');
+    drupal_set_message( t($node->title.' '.MSG_VOCABULARYID_ALREADY_IN_USE), 'error');
     return NULL;
   }
 
@@ -211,7 +211,7 @@ function neologism_new_node_class($vocabulary_nid, $term) {
   $count = db_result(db_query(db_rewrite_sql("select count(*) from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid 
     where c.field_vocabulary_nid = %d and title = '%s' and type = '%s'"), $vocabulary_nid, $node->title, NEOLOGISM_CT_CLASS));
   if( $count > 0 ) {
-    drupal_set_message( t($node->title.', '.MSG_ID_ALREADY_IN_USE), 'error');
+    drupal_set_message( t($node->title.', '.MSG_CLASSID_ALREADY_IN_USE), 'error');
     return NULL;
   }
   
@@ -342,14 +342,25 @@ function neologism_new_node_property($vocabulary_nid, $term) {
   return NULL;
 }
 
-function _neologism_import_vocabulary($resource, $title = NULL) {
+function _neologism_import_vocabulary($resource, $title = NULL, $isfilesystem_resource = TRUE) {
   include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
   include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
     
-  $model = ModelFactory::getMemModel();
-  $model->load($resource);
-  //$model->writeAsHtmlTable();
-  //die();
+  if( $isfilesystem_resource ) {
+	  $model = ModelFactory::getMemModel();
+	  $model->load($resource);
+	  //$model->writeAsHtmlTable();
+  }
+  else {
+	  //die();
+	  try {
+	  	$model = evoc_read_RDF_from_URI($resource);
+	  }
+	  catch (Exception $e) {
+	  	evoc_set_message($e->getMessage(), 'error');
+	  	return NULL;	
+	  }
+	}
   
   // there is a convention. The filename is the vocabulary's name if the document fail in query for document's name
   $vocabulary_name = trim($title);
@@ -689,6 +700,7 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
     }
   } // foreach
   
+  //kpr($fetched_terms);
   $voc_nid = neologism_new_node_vocabulary( array('id' => $vocabulary_name, 'title' => $vocabulary_title, 'description' => $vocabulary_description) );
   if( $voc_nid ) {
     foreach ($fetched_terms as $term) {
