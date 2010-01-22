@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:TitleWindow xmlns:mx="http://www.adobe.com/2006/mxml" 
+	layout="absolute" width="400" height="198" 
+	title="About NeoSViz" showCloseButton="false" 
+	>
+	
+	<mx:Script>
+        <![CDATA[
+            import mx.controls.Alert;
+            import mx.events.CloseEvent;
+            import mx.managers.PopUpManager;
+			
+			private function titleWindow_close():void {
+                PopUpManager.removePopUp(this)
+            }
+        ]]>
+    </mx:Script>
+
+	<mx:Button x="156.5" y="126" label="Ok" width="67" click="titleWindow_close()"/>
+	<mx:Label x="80.5" y="28" text="Neologism Simple Vocabulary Visualizer"/>
+	<mx:Label x="149.5" y="43" text="version 2.1b"/>
+	<mx:Label x="29" y="69" text="(C) Copyright 2008-2009, Cosmin Basca &amp; Guido Cecilio."/>
+	<mx:Label x="156.5" y="86" text="www.deri.ie"/>
+	
+</mx:TitleWindow>

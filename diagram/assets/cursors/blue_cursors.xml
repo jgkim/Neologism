@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<movie width="320" height="240" framerate="12">
+  <background color="#ffffff"/>
+  <frame/>
+  <library>
+    <clip id="AppStarting" import="assets/cursors/blue/AppStarting.png"/>
+    <clip id="AppStarting" import="assets/cursors/blue/AppStarting.png"/>
+    <clip id="Arrow" import="assets/cursors/blue/Arrow.png"/>
+    <clip id="Cross" import="assets/cursors/blue/Cross.png"/>
+    <clip id="Hand" import="assets/cursors/blue/Hand.png"/>
+    <clip id="Handwriting" import="assets/cursors/blue/Handwriting.png"/>
+    <clip id="Help" import="assets/cursors/blue/Help.png"/>
+    <clip id="IBeam" import="assets/cursors/blue/IBeam.png"/>
+    <clip id="Link" import="assets/cursors/blue/Link.png"/>
+    <clip id="NO" import="assets/cursors/blue/NO.png"/>
+    <clip id="SizeAll" import="assets/cursors/blue/SizeAll.png"/>
+    <clip id="SizeNESW" import="assets/cursors/blue/SizeNESW.png"/>
+    <clip id="SizeNS" import="assets/cursors/blue/SizeNS.png"/>
+    <clip id="SizeNWSE" import="assets/cursors/blue/SizeNWSE.png"/>
+    <clip id="SizeWE" import="assets/cursors/blue/SizeWE.png"/>
+    <clip id="UpArrow" import="assets/cursors/blue/UpArrow.png"/>
+    <clip id="Wait" import="assets/cursors/blue/Wait.png"/>
+  </library>
+</movie>

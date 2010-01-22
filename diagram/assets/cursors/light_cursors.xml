@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<movie width="32" height="32" framerate="12">
+  <background color="#ffffff"/>
+  <frame>
+  <library>
+    <clip id="AppStarting" import="assets/cursors/light/AppStarting.png"/>
+    <clip id="Arrow" import="assets/cursors/light/Arrow.png"/>
+    <clip id="Cross" import="assets/cursors/light/Cross.png"/>
+    <clip id="Hand" import="assets/cursors/light/Hand.png"/>
+    <clip id="Handwriting" import="assets/cursors/light/Handwriting.png"/>
+    <clip id="Help" import="assets/cursors/light/Help.png"/>
+    <clip id="IBeam" import="assets/cursors/light/IBeam.png"/>
+    <clip id="Link" import="assets/cursors/light/Link.png"/>
+    <clip id="NO" import="assets/cursors/light/NO.png"/>
+    <clip id="SizeAll" import="assets/cursors/light/SizeAll.png"/>
+    <clip id="SizeNESW" import="assets/cursors/light/SizeNESW.png"/>
+    <clip id="SizeNS" import="assets/cursors/light/SizeNS.png"/>
+    <clip id="SizeNWSE" import="assets/cursors/light/SizeNWSE.png"/>
+    <clip id="SizeWE" import="assets/cursors/light/SizeWE.png"/>
+    <clip id="UpArrow" import="assets/cursors/light/UpArrow.png"/>
+    <clip id="Wait" import="assets/cursors/light/Wait.png"/>
+  </library>
+
+     <place id="AppStarting" x="0" y="0" depth="1" /></frame>
+ 	<frame> <place id="Arrow" x="0" y="0" depth="2" /> </frame>
+    <frame> <place id="Cross" x="0" y="0" depth="3" /> </frame>
+    <frame> <place id="Hand" x="0" y="0" depth="4" /> </frame>
+    <frame> <place id="Handwriting" x="0" y="0" depth="5" /> </frame>
+    <frame> <place id="Help" x="0" y="0" depth="6" /> </frame>
+    <frame> <place id="IBeam" x="0" y="0" depth="7" /> </frame>
+    <frame> <place id="Link" x="0" y="0" depth="8" /> </frame>
+    <frame> <place id="NO" x="0" y="0" depth="9" /> </frame>
+    <frame> <place id="SizeAll" x="0" y="0" depth="10" /> </frame>
+    <frame> <place id="SizeNESW" x="0" y="0" depth="11" /> </frame>
+    <frame> <place id="SizeNS" x="0" y="0" depth="12" /> </frame>
+    <frame> <place id="SizeNWSE" x="0" y="0" depth="13" /> </frame>
+    <frame> <place id="SizeWE" x="0" y="0" depth="14" /> </frame>
+    <frame> <place id="UpArrow" x="0" y="0" depth="15" /> </frame>
+    <frame> <place id="Wait" x="0" y="0" depth="16" /> </frame>
+
+</movie>
