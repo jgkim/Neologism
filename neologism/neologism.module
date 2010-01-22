@@ -44,6 +44,7 @@ define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
 define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
 define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
 
+//to control the form opertion we can check 
 
 /**
  * Implementation of hook_init().
@@ -123,9 +124,11 @@ function neologism_theme() {
  * @param $title
  * @return unknown_type
  */
-function _neologism_build_breadcrumb($path, $title) {
+function _neologism_build_breadcrumb($path, $title = NULL) {
 	$breadcrumb = array('<a href="'.base_path().'">Home</a>');
-	$breadcrumb[] = '<a href="'.base_path().$path.'">'.$title.'</a>';
+	if( $path ) {
+		$breadcrumb[] = '<a href="'.base_path().$path.'">'.(($title == NULL) ? $path : $title).'</a>';
+	}
 	return $breadcrumb;
 }
 
@@ -137,6 +140,7 @@ function _neologism_build_breadcrumb($path, $title) {
  * @return unknown_type
  */
 function neologism_export_conneg($node) {
+	
 	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
 		$request_uri = $_SERVER["REQUEST_URI"];
 	  $accept = $_SERVER["HTTP_ACCEPT"];
@@ -338,6 +342,10 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 			// for the prefix
 			$uri = _neologism_get_namespace($prefix->title);
     	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
+    	$form['holder'] = array(
+    		'#type' => 'value',
+    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
+    	);
 		}
 		
 		//kpr(base_path());
@@ -441,6 +449,12 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       $id = $form['#node']->title;
       $qname = $prefix->title.':'.$id;
       
+      // create the holder with the values that we need to process/render the form
+      $form['holder'] = array(
+    		'#type' => 'value',
+    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'edit', 'qname' => $qname)		
+    	);
+      
       // why need to inform to the widget that there is comming an edition for a value, so the widget can
       // handle the situation.
       $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
@@ -453,6 +467,12 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
     	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nproperty->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
       $qname = $prefix->title.':'.$nproperty->title;
+      
+      // create the holder with the values that we need to process/render the form
+      $form['holder'] = array(
+    		'#type' => 'value',
+    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
+    	);
       	
       	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
     	$form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($qname);
@@ -516,6 +536,12 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       $id = $form['#node']->title;
       $qname = $prefix->title.':'.$id;
       
+      // create the holder with the values that we need to process/render the form
+      $form['holder'] = array(
+    		'#type' => 'value',
+    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'edit', 'qname' => $qname)		
+    	);
+      
       $form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
       
       // why need to inform to the widget that there is comming an edition for a value, so the widget can
@@ -530,6 +556,12 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
     	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nclass->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
       $qname = $prefix->title.':'.$nclass->title;
+      
+      // create the holder with the values that we need to process/render the form
+      $form['holder'] = array(
+    		'#type' => 'value',
+    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
+    	);
       
       // fill the field with thw default value
       $form['field_vocabulary']['#default_value'][0]['nid'] = $nclass->field_vocabulary[0]['nid'];
@@ -1134,9 +1166,11 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
   switch ($op) {
     case 'prepare':
       if( $node->type == NEOLOGISM_CT_CLASS ) {
-        variable_set('previous_class_title', $node->title);
+      	variable_set('previous_class_title', $node->title);
       }
       elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
+      	drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));
+				drupal_set_title($node->title);
         variable_set('previous_property_title', $node->title);
       }
  
@@ -1829,15 +1863,20 @@ function theme_neo_vocabulary_node_form($form) {
 	
 	//$output .= drupal_render($form['field_title']);
 	//$output .= drupal_render($form['field_authors']);
+	$node = $form['#node'];
+	drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path));
+	drupal_set_title($node->field_title[0]['value']);
 	
 	$output .= $URI.drupal_render($form). $buttons;
-	
 	return $output;
 }
 
+/**
+ * 
+ * @param $form
+ * @return unknown_type
+ */
 function theme_neo_property_node_form($form) {
-	//kpr($form);
-	
 	$buttons = drupal_render($form['buttons']);
 	$URI = drupal_render($form['title']);
 	$label = drupal_render($form['field_label']);
@@ -1855,11 +1894,27 @@ function theme_neo_property_node_form($form) {
   $range_group .= drupal_render($form['field_range2']);
   $range_group .=drupal_render($form['range_group']['data_types']);
   
+  $formtitle = 'Create new property';
+  if( isset($form['holder']) ) {
+  	$path = $form['holder']['#value']['vocabulary_title'];
+  	if( $form['holder']['#value']['operation'] == 'edit' ) {
+  		$formtitle = 'Editing '.$form['holder']['#value']['qname'];
+  	}
+  }
+  
+	drupal_set_breadcrumb(_neologism_build_breadcrumb($path));
+	drupal_set_title($formtitle);
+  
 	$output = $URI.$label.$comment.$description.$fp.$ifp.$domain.$range_group.$superproperty.$inverse.drupal_render($form).$buttons;
 	//$output = drupal_render($form).$buttons;
 	return $output;
 }
 
+/**
+ * 
+ * @param $form
+ * @return unknown_type
+ */
 function theme_neo_class_node_form($form) {
 	//var_dump($form);
 	$output = '';
@@ -1868,6 +1923,16 @@ function theme_neo_class_node_form($form) {
 	$label = drupal_render($form['field_label']);
 	$comment = drupal_render($form['field_comment']);
 	$description = drupal_render($form['body_field']);
+	
+	$formtitle = 'Create new class';
+  if( isset($form['holder']) ) {
+  	$path = $form['holder']['#value']['vocabulary_title'];
+  	if( $form['holder']['#value']['operation'] == 'edit' ) {
+  		$formtitle = 'Editing '.$form['holder']['#value']['qname'];
+  	}
+  }
+	drupal_set_breadcrumb(_neologism_build_breadcrumb($path));
+	drupal_set_title($formtitle);
 	
 	$output .= $URI.$label.$comment.$description.drupal_render($form).$buttons;
 	return $output;
