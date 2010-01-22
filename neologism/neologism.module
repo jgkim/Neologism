@@ -211,7 +211,7 @@ function neologism_menu() {
   );
   $items['node/%neologism_vocabulary/'.LAYOUT] = array(
       'title' => 'Diagram Layout',
-      'page callback' => 'neologism_layout',
+      'page callback' => 'neologism_diagram_layout',
       'page arguments' => array(1),
       'access callback' => 'node_access',
       'access arguments' => array('view', 1),
@@ -683,18 +683,20 @@ function neologism_export_html($node) {
   $output .= '';
   
   $base = base_path();
-  $swf = $base . drupal_get_path('module','neologism').'/includes/Neologism.swf';
+  $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
   $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
   $edit_mode = user_access(PERMISSION_EDIT_VOCABULARIES);
-  $prefix = $base . $node->path . '/';
+  $prefix = $base.$node->path;
   $token = drupal_get_token();
+  $width = '100%';
+  $height = '600px';
   
   $flex_params = "editMode=$edit_mode&prefix=$prefix&token=$token";
   $output .= '
     <div id="diagram">
     <h2>Overview diagram</h2>
     <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-        id="Neologism" width="100%" height="600px"
+        id="Diagram" width="'.$width.'" height="'.$height.'"
         codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
             <param name="movie" value="'.$swf.'" />
             <param name="quality" value="high" />
@@ -702,9 +704,9 @@ function neologism_export_html($node) {
             <param name="flashVars" value="'.$flex_params.'" />
             <param name="allowScriptAccess" value="sameDomain" />
             <embed src="'.$swf.'" quality="high" bgcolor="#ffffff"
-                width="100%"
-                height="600px"
-                name="Neologism"
+                width="'.$width.'"
+                height="'.$height.'"
+                name="Diagram"
                 align="middle"
                 play="true"
                 loop="false"
@@ -997,7 +999,7 @@ function neologism_export_xml($node) {
 /**
  * Layout of the vocabulary using REST
  */
-function neologism_layout($node) {
+function neologism_diagram_layout($node) {
   $name = $node->title;
   if (isset($_POST['layout']) && drupal_valid_token($_POST['token'])) {
     //POST, so write layout
@@ -1013,8 +1015,6 @@ function neologism_layout($node) {
     
     header("Content-Type: application/xml; charset=utf-8");
     echo $layout;
-    
-    return;
   }
 }
 

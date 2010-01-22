@@ -78,7 +78,7 @@ function neologism_import_fromfile_form($form_state) {
   $form['prefix'] = array(
     '#type' => 'textfield',
     '#title' => t('Ontology prefix'),
-    '#required' => FALSE,
+    '#required' => TRUE,
     //'#default_value' => $form_state['values']['prefix'],
     '#description' => "Choose a ontology prefix to force Neologism to create a vocabulary with such a prefix.",
   );
@@ -115,6 +115,19 @@ function neologism_import_fromfile_form_validate($form, &$form_state) {
 }
 
 /**
+ * 
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function neologism_import_fromfile_form_submit($form, &$form_state) {
+  $uploaded_file = $form_state['values']['uploaded_file'];
+  $vocabulary_name = trim($form_state['values']['title']);
+  
+  _neologism_import_vocabulary($uploaded_file->filepath, $vocabulary_name);
+}
+
+/**
  * This function check if the current $uri belong to the $vocabulary
  * @param string $vocabulary 
  * @param Resource $uri
@@ -133,13 +146,6 @@ function _neologism_is_from_vocabulary_imported( $vocabulary, $uri) {
   }
   
   return NULL;
-}
-
-function neologism_import_fromfile_form_submit($form, &$form_state) {
-  $uploaded_file = $form_state['values']['uploaded_file'];
-  $vocabulary_name = trim($form_state['values']['title']);
-  
-  _neologism_import_vocabulary($uploaded_file->filepath, $vocabulary_name);
 }
 
 /**
@@ -465,6 +471,8 @@ function _neologism_import_vocabulary($resource, $title = NULL) {
   $term_queries = array();
   // Typical SPARQL queries to retrieve properties/classes, working for all major vocabularies...
 
+  // TODO the fallowing is just a patch to solve inference problem in some kind of files
+  // in the future we going to use a rdfs inference
   $term_queries[] = array(
     'type' => 'class',
     'query' => '
