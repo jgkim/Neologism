@@ -582,7 +582,7 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-	//$vocabulary_title = check_plain($node->field_title[0]['value']);
+  //$vocabulary_title = check_plain($node->field_title[0]['value']);
   $vocabulary_title = $node->field_title[0]['value'];
   
   //$head_title = $vocabulary_title;

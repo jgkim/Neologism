@@ -149,20 +149,20 @@ function _neologism_save_imported_node($node) {
   return $node->nid;
 }
 
-function _neologism_new_node_vocabulary( array $voc_term ) {
+function _neologism_new_node_vocabulary(array $vocabulary) {
   
   // check if there is some voc with the same id
-  $count = db_result(db_query(db_rewrite_sql("select count(*) from {node} where title = '%s' and type = '%s'"), $node->title, NEOLOGISM_CT_VOCABULARY));
-  if( $count > 0 ) {
-    drupal_set_message( t($voc_term['prefix'].' '.MSG_ID_ALREADY_IN_USE), 'error');
+  $title = db_result(db_query(db_rewrite_sql("select title from {node} where title = '%s' and type = '%s'"), $vocabulary['prefix'], NEOLOGISM_CT_VOCABULARY));
+  if ($title && $title == $vocabulary['prefix']) {
+    drupal_set_message($vocabulary['prefix'].' '.t(MSG_ID_ALREADY_IN_USE), 'error');
     return null;
   }
 
-  $node = _neologism_prepare_imported_node(NEOLOGISM_CT_VOCABULARY, $voc_term['prefix']);
-  $node->field_title[0]['value'] = isset($voc_term['title']) ? $voc_term['title'] : 'Imported vocabulary';
+  $node = _neologism_prepare_imported_node(NEOLOGISM_CT_VOCABULARY, $vocabulary['prefix']);
+  $node->field_title[0]['value'] = isset($vocabulary['title']) ? $vocabulary['title'] : 'Imported vocabulary';
   $node->field_authors[0]['uid'] = $node->uid;
-  $node->field_abstract[0]['value'] = check_plain($voc_term['description']);
-  $node->teaser = '<p>This vocabulary has been imported from <a href="' . $voc_term['uri'] . '">' . $voc_term['uri'] . '</a>.</p>';
+  $node->field_abstract[0]['value'] = check_plain($vocabulary['description']);
+  $node->teaser = '<p>This vocabulary has been imported from <a href="' . $vocabulary['uri'] . '">' . $vocabulary['uri'] . '</a>.</p>';
   $node->body = $node->teaser;
   $node->promote = 1;
   return _neologism_save_imported_node($node);
@@ -174,9 +174,9 @@ function _neologism_new_node_term($vocabulary_nid, $term, $content_type) {
     drupal_set_message($local_name.' '.t(MSG_INVALID_ID), 'error');
     return false;
   }
-  $count = db_result(db_query(db_rewrite_sql("select count(*) from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid 
+  $title = db_result(db_query(db_rewrite_sql("select title from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid 
     where c.field_vocabulary_nid = %d and title = '%s' and type = '%s'"), $vocabulary_nid, $local_name, $content_type));
-  if( $count > 0 ) {
+  if ($title && $title == $local_name) {
     drupal_set_message($local_name.' '.t(MSG_ID_ALREADY_IN_USE), 'error');
     return false;
   }
@@ -245,12 +245,12 @@ function _neologism_import_vocabulary(&$model, $ns_prefix, $ns_uri) {
     $vocabulary['title'] = strtoupper($ns_prefix) . " Vocabulary";
   }
   foreach ($vocabulary['classes'] as $key => $class) {
-    if (empty($class['label']) && preg_match('![#/:]([^#/:]+)$!', $label, $match)) {
+    if (empty($class['label']) && preg_match('!:([^:]+)$!', $class['qname'], $match)) {
       $vocabulary['classes'][$key]['label'] = $match[1]; // local part of the URI
     }
   }
   foreach ($vocabulary['properties'] as $key => $property) {
-    if (empty($property['label']) && preg_match('![#/:]([^#/:]+)$!', $label, $match)) {
+    if (empty($property['label']) && preg_match('!:([^:]+)$!', $property['qname'], $match)) {
       $vocabulary['properties'][$key]['label'] = $match[1]; // local part of the URI
     }
   }
