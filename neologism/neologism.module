@@ -25,8 +25,7 @@ define("DEFAULT_RDFS_SUPERCLASS", "rdfs:Resource");
 define("MSG_INVALID_ID", "is not a valid identifier. It should start with a letter, and should contain only letters, 
 													numbers, dashes, and underscores.");
 
-define("MSG_VOCABULARYID_ALREADY_IN_USE", "Id already in use.  Please check that the vocabulary is not in the system.");  
-define("MSG_CLASSID_ALREADY_IN_USE", "Id already in use.  Please check that the class is not in the system.");      
+define("MSG_ID_ALREADY_IN_USE", "is a duplicate identifier.");      
 
 define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
@@ -244,20 +243,12 @@ function neologism_menu() {
   );
   */
   $items['neologism/import'] = array(
-    'title' => 'Import vocabulary in Neologism',
-    'description' => 'Import an RDF vocabulary and use Neologism to author it.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('neologism_import_form'),
+    'title' => 'Import vocabulary',
+    'description' => 'Import an existing RDF vocabulary from the Web or from an RDF file for editing.',
+    'page callback' => 'neologism_import_form_callback',
     'access arguments' => array(PERMISSION_IMPORT_VOCABULARIES),
     'file' => 'neologism.import.inc',
-  );
-  $items['neologism/importfromfile'] = array(
-    'title' => 'Import vocabulary in Neologism from a RDF file',
-    'description' => 'Import vocabulary in Neologism from a RDF file.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('neologism_import_fromfile_form'),
-    'access arguments' => array(PERMISSION_IMPORT_VOCABULARIES),
-    'file' => 'neologism.import.inc',
+    'weight' => 5,
   );
   // ajax/json gateway for preview classes and properties
   $items['neologism/json/classestree'] = array(
@@ -1658,7 +1649,9 @@ function theme_class_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FA
   <div id="classview">
     <h3 id="'.$node->title.'">Class: '.$vocabulary.':'.$node->title.'</h3>';
   
-  if( !empty($comment) ) {    
+  if(empty($comment) ) {    
+    $output .= '<div class="abstract"><em>'.$label.'</em></div>';
+  } else {
     $output .= '<div class="abstract"><em>'.$label.'</em> - '.$comment.'</div>';
   }
   
@@ -1701,7 +1694,7 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
   $isifp = !empty($node->field_ifp[0]['value']);  
   if( $isfp ) {
     $owl_type = '<div class="row"><div class="column-title">OWL Type:</div><div class="column-values">';
-    $owl_type .= 'FunctionalProperty';  
+    $owl_type .= '<a href="http://www.w3.org/2002/07/owl#FunctionalProperty">owl:FunctionalProperty</a>';  
   }
   if( $isifp ) {
     if( !$isfp ) {
@@ -1710,7 +1703,7 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
     else {
       $owl_type .= ', ';
     }
-    $owl_type .= 'InverseFunctionalProperty';
+    $owl_type .= '<a href="http://www.w3.org/2002/07/owl#InverseFunctionalProperty">owl:InverseFunctionalProperty</a>';
   }
   if( $isfp || $isifp ) {
     $owl_type .= '</div></div>';
@@ -1771,7 +1764,9 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
   <div id="propertyview">
     <h3 id="'.$node->title.'">Property: '.$vocabulary.':'.$node->title.'</h3>';
 	
-  if( !empty($comment) ) {    
+  if(empty($comment) ) {    
+    $output .= '<div class="abstract"><em>'.$label.'</em></div>';
+  } else {
     $output .= '<div class="abstract"><em>'.$label.'</em> - '.$comment.'</div>';
   }
   
