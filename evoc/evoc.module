@@ -379,7 +379,7 @@ http://www.w3.org/2001/vcard-rdf/3.0#
  * @param object $vocabulary_prefix
  * @return 
  */
-function evoc_import_vocabulary($vocabulary_uri, $vocabulary_prefix, $showdetails = TRUE) {
+function evoc_import_vocabulary($vocabulary_uri, $vocabulary_prefix, $showdetails = false) {
   // TODO we are using for the momment sparql endpoints but the idea is to remove it and use
 	$fetched_terms = evoc_fetch_vocabulary2($vocabulary_uri, $vocabulary_prefix);
   if( $fetched_terms != NULL ) {
@@ -622,7 +622,7 @@ function evoc_fetch_vocabulary($vocabulary_uri, $vocabulary_prefix, $ignore_base
 /**
  * Handle the creation or update of a set of RDF terms of a given namespace.
  */
-function _evoc_save_rdf_terms($ns, $prefix, $terms, $showdetails = TRUE) {
+function _evoc_save_rdf_terms($ns, $prefix, $terms, $showdetails = false) {
   // Namespace management.
   // Get the existing namespaces stored in the system 
   // (including some predefined array and the namespaces added to the database in the table rdf_namespaces).
@@ -671,11 +671,10 @@ function _evoc_save_rdf_terms($ns, $prefix, $terms, $showdetails = TRUE) {
  *          
  * @return 
  */
-function evoc_write_class($class, $showdetails = TRUE) {
+function evoc_write_class($class, $showdetails = false) {
   // Check whether this class is already in the system.
-  $exists_class = db_result(db_query(db_rewrite_sql('SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix="%s" AND id = "%s"'), $class['prefix'], $class['id'])) > 0;
-
-  if( $exists_class ) {
+  $count = db_result(db_query(db_rewrite_sql('SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix="%s" AND id = "%s"'), $class['prefix'], $class['id'])) > 0;
+  if ($count) {
     evoc_set_message('Importing Class '.$class['prefix']." : ".$class['id']." already exists in the system.", 'status', FALSE);
   }
   else {
@@ -918,10 +917,9 @@ function evoc_remove_class($class, $remove_references = FALSE) {
  * 
  * @return none 
  */
-function evoc_write_property($property, $showdetails = TRUE) {
-  $exists_property = db_result(db_query(db_rewrite_sql('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix="%s" AND id = "%s"'), $property['prefix'], $property['id'])) > 0;
-
-  if( $exists_property ) {
+function evoc_write_property($property, $showdetails = false) {
+  $count = db_result(db_query(db_rewrite_sql('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix="%s" AND id = "%s"'), $property['prefix'], $property['id'])) > 0;
+  if ($count) {
     evoc_set_message('Importing Property. Property '.$property['prefix']." : ".$property['id']." already exists in the system.", 'status', FALSE);
   }
   else {
@@ -1199,9 +1197,6 @@ function _evoc_get_sparqlendpoint($default_only = TRUE) {
 
 // this function is called in installation time, so we need to take care how to uses it
 function _evoc_fetch_terms_from_vocabulary($URI) {
-  include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-  include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
-    
   try {
   	$model = evoc_read_RDF_from_URI($URI);
   }
@@ -1547,9 +1542,13 @@ function evoc_rdf_uri_to_qname($uri) {
 /**
  * 
  * @param $uri
- * @return unknown_type
+ * @return Model
+ * @throws Exception
  */
 function evoc_read_RDF_from_URI($uri) {
+    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
+    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
+    
     $uri = trim($uri);
     // check if it's an HTTP URI
     if (!preg_match('!^http://!', $uri)) {
@@ -1560,17 +1559,26 @@ function evoc_read_RDF_from_URI($uri) {
             'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
     )));
     // read file contents
-    $content = @file_get_contents($uri, FILE_BINARY, $context);
-    if ($content === false) {
+    set_error_handler('read_RDF_from_URI__error_handler', E_WARNING);
+    try {
+        $content = file_get_contents($uri, FILE_BINARY, $context);
+    } catch (Exception $ex) {
+        $error = $ex->getMessage();
+        $offset = strrpos($error, ': ');
+        if ($offset) {
+            $error = substr($error, $offset + 2);
+        }
+    }
+    restore_error_handler();
+    if (empty($content)) {
         // reading has failed.
         if (empty($http_response_header)) {
             // failure is NOT an HTTP error reported by the destination server,
             // so we will use PHP's warning message
-            if (!function_exists('error_get_last')) {
-                throw new Exception('Failed to read from URI');
+            if ($error) {
+                throw new Exception('Failed to read from URI: ' . $error);
             }
-            $error = error_get_last();
-            throw new Exception('Failed to read from URI: ' . $error['message']);
+            throw new Exception('Failed to read from URI');
         }
         // First http_response_header should be: 'HTTP/1.1 404 Not Found' or similar.
         // Try to get only the '404 Not Found' part.

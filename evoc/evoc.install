@@ -111,7 +111,19 @@ function evoc_schema() {
  */
 function evoc_install() {
   drupal_install_schema('evoc');
-  
+
+  // Make primary keys case sensitive on MySQL (VARCHAR defaults to case insensitive on MySQL)
+  $report = db_status_report(null);
+  if (isset($report['mysql'])) {
+    if (!db_query("alter table {evoc_rdf_classes} modify prefix varchar(132) collate utf8_bin not null")
+        || !db_query("alter table {evoc_rdf_classes} modify id varchar(132) collate utf8_bin not null")
+        || ! db_query("alter table {evoc_rdf_properties} modify prefix varchar(132) collate utf8_bin not null")
+        || ! db_query("alter table {evoc_rdf_properties} modify id varchar(132) collate utf8_bin not null")) {
+      drupal_set_message( t('There is a problem changing the MySQL collation in tables {evoc_rdf_classes} and {evoc_rdf_properties}.'), 'error' );  
+      exit();
+    }
+  }
+
   // default sparql endpoint
   $endpoint = array(
     'name' => 'SPARQLer',
