@@ -26,6 +26,7 @@ function evoc_menu() {
     'access arguments' => array('administer content types'),
   );
   
+  /*
   $items['evoc/remove'] = array(
     'title' => 'Remove RDF vocabulary from the system',
     'description' => "Remove RDF vocabulary from the system.",
@@ -33,17 +34,18 @@ function evoc_menu() {
     'page arguments' => array('evoc_remove_form'),
     'access arguments' => array('administer content types'),
   );
- 
+ */
+
   $items['admin/settings/evoc/list'] = array(
-    'title' => 'List SPARQL Endpoints',
+    'title' => 'Manage namespace',
     'weight' => -10,
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'file' => 'evoc.admin.inc',
   );
-  
+
   $items['admin/settings/evoc'] = array(
-    'title' => 'Evoc settings',
-    'description' => 'Managment the settings for evoc module.',
+    'title' => 'Manage External Vocabularies',
+    'description' => 'Managment external vocabularies. Edit or remove nathe settings for evoc module.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('evoc_admin_settings'),
     'access arguments' => array('administer site configuration'),
@@ -51,6 +53,7 @@ function evoc_menu() {
     'file' => 'evoc.admin.inc'
   );
   
+  /*
   $items['admin/settings/evoc/add'] = array(
     'title' => 'Add SPARQL Endpoint',
     'page callback' => 'drupal_get_form',
@@ -77,6 +80,27 @@ function evoc_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'evoc.admin.inc',
   );
+  */
+  
+  // manage section
+  $items['admin/settings/evoc/%evoc_admin_namespace/edit'] = array(
+    'title' => 'this title change when the form is being rendered',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('evoc_admin_edit_namespace', 'edit', 3),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'evoc.admin.inc',
+  );
+  
+  $items['admin/settings/evoc/%evoc_admin_namespace/remove'] = array(
+    'title' => 'Remove external vocabulary',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('evoc_admin_remove_namespace_confirm', 3),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'evoc.admin.inc',
+  );
+  ;
   
   return $items;
 }
@@ -84,15 +108,15 @@ function evoc_menu() {
 /**
  * Load the data for a single endpoint.
  */
-function evoc_endpoint_load($id) {
-  $rs = db_query("select * from {evoc_sparql_endpoints} where id = '%d'", $id);
-  if ($rs) {
-		return db_fetch_object($rs);
-	}
- 
-  //db_fetch_array(db_query("SELECT * FROM {evoc_sparql_endpoints} WHERE id = '%d'", $id));
+function evoc_admin_namespace_load($prefix) {
+	// get the available namespaces in the system
+  $namespaces = rdf_get_namespaces();
   
-  return NULL; 
+	$namespace = new stdClass();
+  $namespace->prefix = $prefix;
+  $namespace->uri_reference = $namespaces[$prefix];
+  
+  return $namespace; 
 }
 
 
@@ -104,6 +128,9 @@ function evoc_theme() {
     'evoc_admin_settings' => array(
       'file' => 'evoc.admin.inc',
       'arguments' => array('form' => NULL),
+    ),
+    'evoc_admin_edit_namespace_form' => array(
+    	'arguments' => array('from' => NULL)
     ),
   );
 }
