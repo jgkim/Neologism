@@ -331,7 +331,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  */
   	
 	  $form['field_custom_namespace']['#theme'] = 'render_custom_namespace_field';
-	  $form['field_custom_namespace']['#default_namespace'] = $default_namespace; 
+	  $form['field_custom_namespace']['#default_namespace'] = $default_namespace.$form['title']['#default_value'];
+	  //$form['field_custom_namespace']['#default_id'] = $form['title']['#default_value']; 
 	  
   	// we never use the preview button
 		unset($form['buttons']['preview']);
@@ -2004,18 +2005,21 @@ function theme_render_URI_field($element) {
 }
 
 function theme_render_custom_namespace_field($element) {
-	//kpr($element);
 	// TODO: add the classes to the field_custom_namespace when some error it is sent to the form
 	
 	$default_value = isset($element[0]['#default_value']['value']) ? $element[0]['#default_value']['value'] : '';
-	
+	$defaul_namespace = $element['#default_namespace'];
+	$prefix = substr($defaul_namespace, 0, -stripos($defaul_namespace, '/') + 1 );
+	$suffix = substr($defaul_namespace, -stripos($defaul_namespace, '/') + 1, strlen($defaul_namespace) );
+	$defaul_namespace = $prefix.'<i>'.$suffix.'</i>#'; 
+
 	$output = ' 
 	  <div id="range-group-resourcetype">
 	  <div class="form-item">
 	 		<label>Namespace URI: </label>
 	 		<div class="form-radios"><div class="form-item" id="edit-namespace-type-1-wrapper">
 	 			<label class="option" for="edit-namespace-type-1">
-	 				<input type="radio" id="edit-namespace-type-1" name="namespace_type" value="1"  checked="checked"  onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Default ('.$element['#default_namespace'].')
+	 				<input type="radio" id="edit-namespace-type-1" name="namespace_type" value="1"  checked="checked"  onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Default ('.$defaul_namespace.')
 	 			</label>
 				</div>
 					<div class="form-item" id="edit-namespace-type-2-wrapper">
