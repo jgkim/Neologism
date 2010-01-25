@@ -58,6 +58,9 @@ if( Drupal.jsEnabled ) {
 		  $('#edit-field-custom-namespace-0-value').val('');
 	  } else {
 		  // TODO: handle what happen when the user select custom namespace and the field it is empty
+		  if ( $('#edit-field-custom-namespace-0-value').val() == '' ) {
+			  $('#edit-field-custom-namespace-0-value').val('error_field_required_empty')
+		  }
 	  }
   };
   

@@ -154,6 +154,7 @@ function neologism_export_conneg($node) {
 	  if ($preferred_variant == HTML) {
 	    return neologism_export_html($node);	
 	  } else if ($preferred_variant == RDF) {
+	  	kpr($node);
 	    neologism_export_rdfxml($node);
 	  } else if ($preferred_variant == N3) {
 	    neologism_export_n3($node);
@@ -197,8 +198,8 @@ function neologism_menu() {
   $items['node/%neologism_vocabulary/'.RDF] = array(
       'title' => 'View RDF/XML',
       'page callback' => 'neologism_export_rdfxml',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
+  		'page arguments' => array(1),
+     	'access callback' => 'node_access',
       'access arguments' => array('view', 1),
       'type' => MENU_CALLBACK,
   );
@@ -369,9 +370,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	);
 		}
 		
-		//kpr(base_path());
-		//kpr(base_path().$prefix->title);
-		//kpr($uri);
 		//add a Cancel button
 	  $form['buttons']['cancel'] = array(
 	  	'#type' => 'button',
@@ -604,18 +602,14 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-  $vocabulary_title = check_plain($node->field_title[0]['value']);
+  // TODO: finish to clean all the old code using the $node variable by the $vocabulary
+	$vocabulary_title = check_plain($node->field_title[0]['value']);
 	$vocabulary = new stdClass();
 	$vocabulary->id = $node->title;
   $vocabulary->title = $node->field_title[0]['value'];
   $vocabulary->custom_namespace = $node->field_custom_namespace[0]['value'];
   $vocabulary->description = $node->body;
   $vocabulary->authors = $node->field_authors;
-  //kpr($node);
-	//$vocabulary_title = $node->field_title[0]['value'];
-  //$custom_namespace = 
-    
-  //$head_title = $vocabulary_title;
   
   $output = '<div id="vocabulary-view">';
   
@@ -645,8 +639,12 @@ function neologism_export_html($node) {
   }
   $output .= '</div>';
 
-  $opts = array('absolute' => TRUE);
-  $namespace_url = url($node->path, $opts);
+  $namespace_url = $node->field_custom_namespace[0]['value'];
+  if( $namespace_url == '' ) {
+  	$opts = array('absolute' => TRUE);
+  	$namespace_url = url($node->path, $opts);	
+  }
+  
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'#</div></div>';
 
   // Abstract
@@ -925,9 +923,10 @@ function neologism_get_rdf_model($node) {
  */
 function neologism_export_rdfxml($node) {
 
-    define('HIDE_ADVERTISE', true);
+		define('HIDE_ADVERTISE', true);
     include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
     include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
+    
     
     $model = neologism_get_rdf_model($node);
     $ser = new RDFSerializer();
@@ -1494,13 +1493,12 @@ function neologism_rdf_namespaces() {
     return NULL; // Just a sanity check
   }
 
-  $uri = $GLOBALS['base_url'].'/';
-  
-  $vocs = db_query(db_rewrite_sql("SELECT n.title FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
+  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
   $namespaces = array(
     'vann' => 'http://purl.org/vocab/vann/',
   );
   while( $voc = db_fetch_object($vocs) ) {
+  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value.'/';
     $namespaces[$voc->title] = $uri.$voc->title.'#';
   }
   return $namespaces;
@@ -1896,7 +1894,6 @@ function theme_neo_property_node_view($node, $teaser = FALSE, $page = FALSE, $li
  */
 function theme_neo_vocabulary_node_form($form) {
 	$output = '';
-	//dpm($form);
 	
 	$buttons = drupal_render($form['buttons']);
 	$URI = drupal_render($form['title']);
@@ -2007,7 +2004,9 @@ function theme_render_URI_field($element) {
 }
 
 function theme_render_custom_namespace_field($element) {
-	kpr($element);
+	//kpr($element);
+	// TODO: add the classes to the field_custom_namespace when some error it is sent to the form
+	
 	$default_value = isset($element[0]['#default_value']['value']) ? $element[0]['#default_value']['value'] : '';
 	
 	$output = ' 
@@ -2026,7 +2025,7 @@ function theme_render_custom_namespace_field($element) {
 			</div>
 	</div>
 	</div>
-';
+	';
   return $output;
 }
 
@@ -2259,13 +2258,27 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
  * @return unknown_type
  */
 function neo_vocabulary_node_form_validate($form, &$form_state) {
-  //kpr($form_state);
 	$title = $form_state['values']['title'];
   if ( !_neologism_is_valid_id($title) ) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
   }
   
-  // TODO: add validation for custom namespace field
+  $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
+  // the cosntant error_field_required_empty is handled in Neologism.js file
+  if( $custom_namespace != '' ) {
+	  if( $custom_namespace == 'error_field_required_empty' ) {
+	  	form_set_error('field_custom_namespace', t('This field is required in your selection.'));	
+	  }
+	  else if( rdf_is_valid_uri($custom_namespace) ) {
+	  	if (substr($custom_namespace, -1) == '#') {
+	    	$custom_namespace = substr($custom_namespace, 0, -1);
+	    	$form_state['values']['field_custom_namespace'][0]['value'] = $custom_namespace;
+	  	}
+	  }
+	  else {
+	  	form_set_error('field_custom_namespace', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));	
+	  }
+	}
 }
 
 /**
@@ -2274,11 +2287,10 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
  * @param $form_state
  * @return unknown_type
  */
+/*
 function neo_vocabulary_node_form_submit($form, &$form_state) {
-  //kpr($form_state);
-  
-  // TODO: add validation for custom namespace field
 }
+*/
 
 /**
  * Handler for validation form for the neo_class node form
