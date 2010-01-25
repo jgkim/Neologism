@@ -197,7 +197,8 @@ function neologism_menu() {
   $items['node/%neologism_vocabulary/'.RDF] = array(
       'title' => 'View RDF/XML',
       'page callback' => 'neologism_export_rdfxml',
-     	'access callback' => 'node_access',
+      'page arguments' => array(1),
+      'access callback' => 'node_access',
       'access arguments' => array('view', 1),
       'type' => MENU_CALLBACK,
   );
