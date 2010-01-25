@@ -604,7 +604,6 @@ function neologism_vocabulary_load($nid) {
  */
 function neologism_export_html($node) {
   $vocabulary_title = check_plain($node->field_title[0]['value']);
-  kpr($node);
 	$vocabulary = new stdClass();
 	$vocabulary->id = $node->title;
   $vocabulary->title = $node->field_title[0]['value'];

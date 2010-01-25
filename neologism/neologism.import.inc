@@ -17,7 +17,7 @@ function neologism_import_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Namespace prefix'),
     '#required' => TRUE,
-    '#description' => t('This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
+    '#description' => t('Something like <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
     '#size' => 10,
   );
   $form['ns_uri'] = array(
@@ -58,7 +58,7 @@ function neologism_import_form($form_state) {
 
 function neologism_import_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['ns_prefix'])) {
-    $ns_prefix = $form_state['values']['ns_prefix'];
+    $ns_prefix = trim($form_state['values']['ns_prefix']);
     if (!_neologism_is_valid_id($ns_prefix)) {
       form_set_error('ns_prefix', t('The prefix must start with a letter and can only contain letters, digits, and any of “-_.”'));
       return;
@@ -70,7 +70,7 @@ function neologism_import_form_validate($form, &$form_state) {
     }
   }
   if (!empty($form_state['values']['ns_uri'])) {
-    $ns_uri = $form_state['values']['ns_uri'];
+    $ns_uri = trim($form_state['values']['ns_uri']);
     if (!rdf_is_valid_uri($ns_uri)) {
       form_set_error('ns_uri', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));
       return;
@@ -81,6 +81,8 @@ function neologism_import_form_validate($form, &$form_state) {
     }
   }
 
+  if (!$ns_uri || !$ns_prefix) return;
+
   if ($form_state['clicked_button']['#value'] == t('Import from file')) {
     $validators = array(
       'file_validate_extensions' => array('rdf')
@@ -89,16 +91,13 @@ function neologism_import_form_validate($form, &$form_state) {
     if ($file) {
       $form_state['values']['uploaded_file'] = $file;
     } else {
-      form_set_error('upload', t('You must select a file for upload.'));
+      form_set_error('file_upload', t('You must select a file for upload.'));
       return;
     }
   }
-}
 
-function neologism_import_form_submit($form, &$form_state) {
-  $ns_prefix = trim($form_state['values']['ns_prefix']);
-  $ns_uri = trim($form_state['values']['ns_uri']);
-
+  // Load and parse the RDF file, either from the Web or from uploaded file
+  require_once(drupal_get_path('module', NEOLOGISM)."/neologism.load_vocab.inc");
   if ($form_state['values']['uploaded_file']) {
     $uploaded_file = $form_state['values']['uploaded_file'];
 
@@ -107,6 +106,7 @@ function neologism_import_form_submit($form, &$form_state) {
     
     $model = ModelFactory::getMemModel();
     $model->load($uploaded_file->filepath);
+    $source_field = 'uploaded_file';
   } else {
     $vocabulary_url = $ns_uri;
     if (substr($vocabulary_url, -1) == '#') {
@@ -118,13 +118,94 @@ function neologism_import_form_submit($form, &$form_state) {
       form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
       return;
     }
+    $source_field = 'ns_uri';
   }
-  if (_neologism_import_vocabulary($model, $ns_prefix, $ns_uri)) {
-    drupal_set_message(t('The vocabulary has been successfully imported.'));
-    drupal_goto($ns_prefix);
-  } else {
+
+  // Extract information about classes, properties etc from the model
+  $vocabulary = neologism_get_vocabulary_description($model, $ns_prefix, $ns_uri);
+
+  // Sanity checks over the extracted vocabulary
+  if (!$vocabulary['classes'] && !$vocabulary['properties']) {
+    if (!$vocabulary['ignored_ns']) {
+      form_set_error($source_field, t('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.'));
+      return;
+    }
+    $msg = t('No classes or properties in the file matched your specified namespace URI. The following namespace URIs were found in the file, maybe you meant one of them?');
+    $msg .= '<ul>';
+    arsort($vocabulary['ignored_ns'], SORT_NUMERIC);
+    foreach ($vocabulary['ignored_ns'] as $uri => $term_count) {
+      $msg .= "<li>$uri ($term_count " . t('classes and properties') . ')</li>';
+    }
+    $msg .= '</url>';
+    form_set_error('ns_uri', $msg);
+    return;
+  }
+  $uris = array();
+  foreach ($vocabulary['classes'] as $class) {
+    $uris[] = $class['uri'];
+  }
+  foreach ($vocabulary['properties'] as $property) {
+    if (in_array($property['uri'], $uris)) {
+      form_set_error($source_field, 'Unsupported modelling in vocabulary file: ' . $intersection[0] . ' is typed both as a class and as a property.');
+      return;
+    }
+  }
+
+  // Validation successful! Store the vocabulary array in $form_state, hope this works!
+  $form_state['neologism_processed_vocabulary'] = $vocabulary;
+}
+
+function neologism_import_form_submit($form, &$form_state) {
+
+  // Get the vocabulary array from $form_state, should have been put there by import_form_validate()
+  if (!is_array($form_state['neologism_processed_vocabulary'])) {
+    drupal_set_message('Internal error: neologism_processed_vocabulary is not present');
+    return false;
+  }
+  $vocabulary = $form_state['neologism_processed_vocabulary'];
+
+  // Save the vocabulary.
+  if (!_neologism_import_vocabulary($vocabulary)) {
     // The import function should have set a drupal error if it returned false.
+    return false;
   }
+  drupal_set_message(t('The vocabulary has been successfully imported.'));
+
+  // Handle undefined namespaces
+  foreach ($vocabulary['undefined_ns'] as $prefix => $uri) {
+    drupal_set_message('Missing external vocabulary: ' . $prefix . ' => ' . $uri, 'warning');
+  }
+  drupal_goto($vocabulary['prefix']);
+}
+
+function _neologism_import_vocabulary($vocabulary) {
+
+  // Fix up missing data
+  if (empty($vocabulary['title'])) {    // No vocab title -- add a default
+    $vocabulary['title'] = strtoupper($vocabulary['prefix']) . " Vocabulary";
+  }
+  foreach ($vocabulary['classes'] as $key => $class) { // No class label -- use local part of URI
+    if (empty($class['label']) && preg_match('!:([^:]+)$!', $class['qname'], $match)) {
+      $vocabulary['classes'][$key]['label'] = $match[1]; // local part of the URI
+    }
+  }
+  foreach ($vocabulary['properties'] as $key => $property) { // No property label -- use local part of URI
+    if (empty($property['label']) && preg_match('!:([^:]+)$!', $property['qname'], $match)) {
+      $vocabulary['properties'][$key]['label'] = $match[1]; // local part of the URI
+    }
+  }
+
+  // Create new nodes for the vocabulary, its classes and properties
+  $vocab_nid = _neologism_new_node_vocabulary($vocabulary);
+  if (!$vocab_nid) return false;
+  foreach ($vocabulary['classes'] as $class) {
+    if (!_neologism_new_node_class($vocab_nid, $class)) return false;
+  }
+  foreach ($vocabulary['properties'] as $property) {
+    if (! _neologism_new_node_property($vocab_nid, $property)) return false;
+  }
+
+  return true;
 }
 
 function _neologism_prepare_imported_node($content_type, $title) {
@@ -215,373 +296,6 @@ function _neologism_new_node_property($vocabulary_nid, $property) {
   $node->field_ifp[0]['value'] = $property['is_inverse_functional'] ? true : null;
 //  _neologism_set_field_qnames($node, 'field_inverse2', $property['inverses']);    
   return _neologism_save_imported_node($node);
-}
-
-function _neologism_import_vocabulary(&$model, $ns_prefix, $ns_uri) {
-
-  _neologism_prepare_import_namespaces($ns_uri, $ns_prefix, $model);
-
-  $vocabulary = _neologism_query_for_vocabulary_description($model, $ns_prefix, $ns_uri);
-
-  // Sanity checks over the extracted vocabulary
-  if (!$vocabulary['classes'] && !$vocabulary['properties']) {
-    if (!$vocabulary['ignored_ns']) {
-      drupal_set_message('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.', 'error');
-      return false;
-    }
-    $msg = t('No classes or properties in the file matched your specified namespace URI. The following namespace URIs were found in the file, maybe you meant one of them?');
-    $msg .= '<ul>';
-    arsort($vocabulary['ignored_ns'], SORT_NUMERIC);
-    foreach ($vocabulary['ignored_ns'] as $uri => $term_count) {
-      $msg .= "<li>$uri ($term_count " . t('classes and properties') . ')</li>';
-    }
-    $msg .= '</url>';
-    drupal_set_message($msg, 'error');
-    return false;
-  }
-  $uris = array();
-  foreach ($vocabulary['classes'] as $class) {
-    $uris[] = $class['uri'];
-  }
-  foreach ($vocabulary['properties'] as $property) {
-    if (in_array($property['uri'], $uris)) {
-      drupal_set_message('Error: ' . $intersection[0] . ' is typed both as a class and as a property.', 'error');
-      return false;
-    }
-  }
-
-  // Fix up missing data
-  if (empty($vocabulary['title'])) {
-    $vocabulary['title'] = strtoupper($ns_prefix) . " Vocabulary";
-  }
-  foreach ($vocabulary['classes'] as $key => $class) {
-    if (empty($class['label']) && preg_match('!:([^:]+)$!', $class['qname'], $match)) {
-      $vocabulary['classes'][$key]['label'] = $match[1]; // local part of the URI
-    }
-  }
-  foreach ($vocabulary['properties'] as $key => $property) {
-    if (empty($property['label']) && preg_match('!:([^:]+)$!', $property['qname'], $match)) {
-      $vocabulary['properties'][$key]['label'] = $match[1]; // local part of the URI
-    }
-  }
-
-  // Create new nodes for the vocabulary, its classes and properties
-  $vocab_nid = _neologism_new_node_vocabulary($vocabulary);
-  if (!$vocab_nid) {
-    return false;
-  }
-  foreach ($vocabulary['classes'] as $class) {
-    if (!_neologism_new_node_class($vocab_nid, $class)) return false;
-  }
-  foreach ($vocabulary['properties'] as $property) {
-    if (! _neologism_new_node_property($vocab_nid, $property)) return false;
-  }
-
-  // Handle undefined namespaces
-  foreach (_neologism_import_get_new_namespaces() as $prefix => $uri) {
-    drupal_set_message('Missing external vocabulary: ' . $prefix . ' => ' . $uri, 'warning');
-  }
-
-  return true;
-}
-
-function _neologism_query_for_vocabulary_description(&$model, $ns_prefix, $ns_uri) {
-  $vocabulary = array(
-      'prefix' => $ns_prefix,
-      'uri' => $ns_uri,
-      'title' => _neologism_query_for_title($model, $ns_uri),
-      'description' => _neologism_query_for_description($model, $ns_uri),
-      'classes' => array(),
-      'properties' => array(),
-      'ignored_ns' => array(),
-  );
-  $class_uris = _neologism_query_for_class_uris($model, $ns_uri);
-  $ignored_uris = array();
-  foreach ($class_uris as $uri) {
-    if (substr($uri, 0, strlen($ns_uri)) != $ns_uri) {
-      $ignored_uris[] = $uri;
-      continue;
-    }
-    $vocabulary['classes'][] = _neologism_query_for_class_description($model, $uri);
-  }
-  $property_uris = _neologism_query_for_property_uris($model, $ns_uri);
-  foreach ($property_uris as $uri) {
-    if (substr($uri, 0, strlen($ns_uri)) != $ns_uri) {
-      $ignored_uris[] = $uri;
-      continue;
-    }
-    $vocabulary['properties'][] = _neologism_query_for_property_description($model, $uri);
-  }
-  foreach ($ignored_uris as $uri) {
-    if (!preg_match('!(.*[#/])[^#/]*$!', $uri, $match)) continue;
-    $ns = $match[1];
-    if (!isset($vocabulary['ignored_ns'][$ns])) {
-      $vocabulary['ignored_ns'][$ns] = 0;
-    }
-    $vocabulary['ignored_ns'][$ns]++;
-  }
-  return $vocabulary;
-}
-
-function _neologism_query_for_title(&$model, $ns_uri) {
-  $queries = array();
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> rdfs:label ?title }';
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> dc:title ?title }';
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> dcterms:title ?title }';
-  if (substr($ns_uri, -1) == '#') {
-    $uri = substr($ns_uri, 0, -1);
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> rdfs:label ?title }';
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> dc:title ?title }';
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> dcterms:title ?title }';
-  }
-  $prefixes = '
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix dc: <http://purl.org/dc/elements/1.1/>
-    prefix dcterms: <http://purl.org/dc/terms/>';
-  return _neologism_sparql_get_first_literal($model, '?title', $queries, $prefixes);
-}
-
-function _neologism_query_for_description(&$model, $ns_uri) {
-  $queries = array();
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> rdfs:comment ?description }';
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> dc:description ?description }';
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> dcterms:description ?description }';
-  if (substr($ns_uri, -1) == '#') {
-    $uri = substr($ns_uri, 0, -1);
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> rdfs:comment ?description }';
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> dc:description ?description }';
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> dcterms:description ?description }';
-  }
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX dc: <http://purl.org/dc/elements/1.1/>
-    PREFIX dcterms: <http://purl.org/dc/terms/>';
-  return _neologism_sparql_get_first_literal($model, '?description', $queries, $prefixes);
-}
-
-function _neologism_query_for_class_uris(&$model) {
-  $queries = array();
-  $queries[] = 'SELECT ?class WHERE { ?class a rdfs:Class }';
-  $queries[] = 'SELECT ?class WHERE { ?class a owl:Class }';
-  $queries[] = 'SELECT ?class WHERE { ?class rdfs:subClassOf ?other }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:subClassOf ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?class owl:disjointWith ?other }';
-  $queries[] = 'SELECT ?class WHERE { ?other owl:disjointWith ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:domain ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:range ?class }';
-  $prefixes = '
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix owl: <http://www.w3.org/2002/07/owl#>';
-  return _neologism_sparql_get_uris($model, '?class', $queries, $prefixes);
-}
-
-function _neologism_query_for_property_uris(&$model) {
-  $queries = array();
-  $queries[] = 'SELECT ?property WHERE { ?property a rdf:Property }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:DatatypeProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:ObjectProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:FunctionalProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:InverseFunctionalProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:SymmetricProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:domain ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:range ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:subPropertyOf ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?other rdfs:subPropertyOf ?property }';
-  $queries[] = 'SELECT ?property WHERE { ?property owl:inverseOf ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?other owl:inverseOf ?property }';
-  $prefixes = '
-    prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix owl: <http://www.w3.org/2002/07/owl#>
-    prefix foaf: <http://xmlns.com/foaf/0.1/>
-    prefix dc: <http://purl.org/dc/elements/1.1/>
-    prefix dcterms: <http://purl.org/dc/terms/>';
-  return _neologism_sparql_get_uris($model, '?property', $queries, $prefixes);
-}
-
-function _neologism_query_for_term_description(&$model, $uri) {
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>';
-  $query = 'SELECT ?label WHERE { <' . $uri . '> rdfs:label ?label }';
-  $label = _neologism_sparql_get_first_literal($model, '?label', $query, $prefixes);
-
-  $query = array(
-      'SELECT ?comment WHERE { <' . $uri . '> skos:definition ?comment }',
-      'SELECT ?comment WHERE { <' . $uri . '> rdfs:comment ?comment }');
-  $comment = _neologism_sparql_get_first_literal($model, '?comment', $query, $prefixes);
-  return array('uri' => $uri, 'qname' => _neologism_uri_to_qname($uri), 'label' => $label, 'comment' => $comment);
-}
-
-function _neologism_query_for_class_description(&$model, $uri) {
-  $class = _neologism_query_for_term_description($model, $uri);
-
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>';
-
-  $query = 'SELECT ?superclass WHERE { <' . $uri . '> rdfs:subClassOf ?superclass }';
-  $class['superclasses'] = _neologism_sparql_get_qnames($model, '?superclass', $query, $prefixes);
-
-  $query = array(
-      'SELECT ?disjoint WHERE { <' . $uri . '> owl:disjointWith ?disjoint }',
-      'SELECT ?disjoint WHERE { ?disjoint owl:disjointWith <' . $uri . '> }');
-  $class['disjoints'] = _neologism_sparql_get_qnames($model, '?disjoint', $query, $prefixes);
-
-  return $class;
-}
-
-function _neologism_query_for_property_description(&$model, $uri) {
-  $property = _neologism_query_for_term_description($model, $uri);
-
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>';
-
-  $query = 'SELECT ?domain WHERE { <' . $uri . '> rdfs:domain ?domain }';
-  $property['domains'] = _neologism_sparql_get_qnames($model, '?domain', $query, $prefixes);
-
-  $query = 'SELECT ?range WHERE { <' . $uri . '> rdfs:range ?range }';
-  $property['ranges'] = _neologism_sparql_get_qnames($model, '?range', $query, $prefixes);
-
-  $query = 'SELECT ?superproperty WHERE { <' . $uri . '> rdfs:subPropertyOf ?superproperty }';
-  $property['superproperties'] = _neologism_sparql_get_qnames($model, '?superproperty', $query, $prefixes);
-
-  $query = 'SELECT ?t WHERE { <' . $uri . '> a ?t . FILTER (?t = owl:FunctionalProperty) }';
-  $t = _neologism_sparql_get_uris($model, '?t', $query, $prefixes);
-  $property['is_functional'] = count($t) > 0;
-
-  $query = 'SELECT ?t WHERE { <' . $uri . '> a ?t . FILTER (?t = owl:InverseFunctionalProperty) }';
-  $t = _neologism_sparql_get_uris($model, '?t', $query, $prefixes);
-  $property['is_inverse_functional'] = count($t) > 0;
-
-  $query = array(
-    'SELECT ?inverse WHERE { <' . $uri . '> owl:inverseOf ?inverse }',
-    'SELECT ?inverse WHERE { ?inverse owl:inverseOf <' . $uri . '> }');
-  $property['inverses'] = _neologism_sparql_get_qnames($model, '?inverses', $query, $prefixes);
-
-  return $property;
-}
-
-function _neologism_sparql_get_first_literal(&$model, $var, $queries, $prefixes = '') {
-  if (!is_array($queries)) {
-    $queries = array($queries);
-  }
-  foreach ($queries as $query) {
-    $result = $model->sparqlQuery($prefixes . "\n" . $query);
-    if (!$result || !isset($result[0]) || !isset($result[0][$var])) continue;
-    return $result[0][$var]->label;
-  }
-  return null;
-}
-
-function _neologism_sparql_get_uris(&$model, $var, $queries, $prefixes = '') {
-  if (!is_array($queries)) {
-    $queries = array($queries);
-  }
-  $uris = array();
-  foreach ($queries as $query) {
-    $result = $model->sparqlQuery($prefixes . "\n" . $query);
-    if (!$result) continue;
-    foreach ($result as $binding) {
-      if (!isset($binding[$var]) || !isset($binding[$var]->uri) || is_a($binding[$var], 'BlankNode')) continue;
-      $uris[] = $binding[$var]->uri;
-    }
-  }
-  return array_unique($uris);
-}
-
-function _neologism_sparql_get_qnames(&$model, $var, $queries, $prefixes = '') {
-  $uris = _neologism_sparql_get_uris($model, $var, $queries, $prefixes);
-  $qnames = array();
-  foreach ($uris as $uri) {
-    $qnames[] = _neologism_uri_to_qname($uri);
-  }
-  return $qnames;
-}
-
-/**
- * Prepares the importer's namespace tracking.
- *
- * @param string $ns_uri Namespace URI of the vocabulary being imported
- * @param string $ns_prefix Namespace prefix of the vocabulary being imported
- * @param object $model RDF model containing the vocabulary file (including parsed namespaces)
- */
-function _neologism_prepare_import_namespaces($ns_uri, $ns_prefix, &$model) {
-  global $neologism_import_namespaces;
-  $neologism_import_namespaces = array();
-  $prefixes = array();
-  $namespaces = rdf_get_namespaces();
-  foreach ($namespaces as $p => $u) {
-    $neologism_import_namespaces[$u] = array('prefix' => $p);
-    $prefixes[] = $p;
-  }
-  $neologism_import_namespaces[$ns_uri] = array('prefix' => $ns_prefix, 'importing' => true);
-  rdf_register_namespace($ns_prefix, $ns_uri);
-  $prefixes[] = $ns_prefix;
-  $namespaces = $model->getParsedNamespaces();
-  foreach ($namespaces as $u => $p) {
-    if (!isset($neologism_import_namespaces[$u]) && !in_array($p, $prefixes)) {
-      $neologism_import_namespaces[$u] = array('prefix' => $p, 'new' => true);
-      rdf_register_namespace($p, $u);
-    }
-  }
-}
-
-/**
- * Abbreviates a URI into a QName, taking into account any namespaces
- * registered by modules, and any namespaces defined in the RDF model
- * currently being imported. Will generate new namespace mappings if
- * necessary.
- *
- * @param string $uri
- * @return string
- */
-function _neologism_uri_to_qname($uri) {
-  global $neologism_import_namespaces;
-  $longest_match = '';
-  foreach ($neologism_import_namespaces as $ns_uri => $ns_prefix) {
-    if (substr($uri, 0, strlen($ns_uri)) == $ns_uri && strlen($ns_uri) > strlen($longest_match)) {
-      $longest_match = $ns_uri;
-    }
-  }
-  if ($longest_match) {
-    $qname = $neologism_import_namespaces[$longest_match]['prefix'] . ':' . substr($uri, strlen($longest_match));
-    if (rdf_is_valid_qname($qname)) {
-      $neologism_import_namespaces[$longest_match]['used'] = true;
-      return $qname;
-    }
-  }
-  $qname = rdf_uri_to_qname($uri);
-  if (!$qname) {
-    throw new Exception('Could not generate namespace mapping for URI ' . $uri);
-  }
-  $local = substr($qname, strpos($qname, ':') + 1);
-  $ns = substr($uri, 0, -strlen($local));
-  $neologism_import_namespaces[$ns]['prefix'] = substr($qname, 0, strpos($qname, ':'));
-  $neologism_import_namespaces[$ns]['new'] = true;
-  $neologism_import_namespaces[$ns]['used'] = true;
-  return $qname;
-}
-
-/**
- * Returns an associative array from prefixes to URIs that contains
- * any namespaces that are necessary for the imported vocabulary,
- * but were not yet previously known to the rdf module. The prefixes
- * will come from the imported RDF model if possible, or are
- * auto-generated otherwise.
- *
- * @return array
- */
-function _neologism_import_get_new_namespaces() {
-  global $neologism_import_namespaces;
-  $result = array();
-  foreach ($neologism_import_namespaces as $ns_uri => $x) {
-    if ($x['used'] && $x['new']) {
-      $result[$x['prefix']] = $ns_uri;
-    }
-  }
-  return $result;
 }
 
 ?>
