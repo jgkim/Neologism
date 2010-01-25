@@ -1,10 +1,5 @@
 <?php
 
-define("SPARQL_QUERY_ERROR", "There is a NULL result in the SPARQL query <br/> 
-      </br>Please check you ontology file, or create a new entry for the development team at ".
-      l('Neologism at Google code','http://code.google.com/p/neologism/issues/list', array('html' => TRUE, 'attributes' => Array('title' => 'http://code.google.com/p/neologism/issues/list')))
-      ." and do not forget to attach your ontology file to it.");
-
 /**
  * This is a hack to work around a problem in Safari: File uploads with
  * multipart/form-data often hang when persistent connections are used.
@@ -76,6 +71,10 @@ function neologism_import_form_validate($form, &$form_state) {
   }
   if (!empty($form_state['values']['ns_uri'])) {
     $ns_uri = $form_state['values']['ns_uri'];
+    if (!rdf_is_valid_uri($ns_uri)) {
+      form_set_error('ns_uri', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));
+      return;
+    }
     if (substr($ns_uri, -1) != '#' && substr($ns_uri, -1) != '/') {
       form_set_error('ns_uri', t('The namespace URI must end in “#” or “/”.'));
       return;
@@ -124,7 +123,7 @@ function neologism_import_form_submit($form, &$form_state) {
     drupal_set_message(t('The vocabulary has been successfully imported.'));
     drupal_goto($ns_prefix);
   } else {
-    form_set_error('', t('Import failed.'));
+    // The import function should have set a drupal error if it returned false.
   }
 }
 
@@ -226,7 +225,18 @@ function _neologism_import_vocabulary(&$model, $ns_prefix, $ns_uri) {
 
   // Sanity checks over the extracted vocabulary
   if (!$vocabulary['classes'] && !$vocabulary['properties']) {
-    drupal_set_message('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.', 'error');
+    if (!$vocabulary['ignored_ns']) {
+      drupal_set_message('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.', 'error');
+      return false;
+    }
+    $msg = t('No classes or properties in the file matched your specified namespace URI. The following namespace URIs were found in the file, maybe you meant one of them?');
+    $msg .= '<ul>';
+    arsort($vocabulary['ignored_ns'], SORT_NUMERIC);
+    foreach ($vocabulary['ignored_ns'] as $uri => $term_count) {
+      $msg .= "<li>$uri ($term_count " . t('classes and properties') . ')</li>';
+    }
+    $msg .= '</url>';
+    drupal_set_message($msg, 'error');
     return false;
   }
   $uris = array();
@@ -283,14 +293,32 @@ function _neologism_query_for_vocabulary_description(&$model, $ns_prefix, $ns_ur
       'description' => _neologism_query_for_description($model, $ns_uri),
       'classes' => array(),
       'properties' => array(),
+      'ignored_ns' => array(),
   );
   $class_uris = _neologism_query_for_class_uris($model, $ns_uri);
+  $ignored_uris = array();
   foreach ($class_uris as $uri) {
+    if (substr($uri, 0, strlen($ns_uri)) != $ns_uri) {
+      $ignored_uris[] = $uri;
+      continue;
+    }
     $vocabulary['classes'][] = _neologism_query_for_class_description($model, $uri);
   }
   $property_uris = _neologism_query_for_property_uris($model, $ns_uri);
   foreach ($property_uris as $uri) {
+    if (substr($uri, 0, strlen($ns_uri)) != $ns_uri) {
+      $ignored_uris[] = $uri;
+      continue;
+    }
     $vocabulary['properties'][] = _neologism_query_for_property_description($model, $uri);
+  }
+  foreach ($ignored_uris as $uri) {
+    if (!preg_match('!(.*[#/])[^#/]*$!', $uri, $match)) continue;
+    $ns = $match[1];
+    if (!isset($vocabulary['ignored_ns'][$ns])) {
+      $vocabulary['ignored_ns'][$ns] = 0;
+    }
+    $vocabulary['ignored_ns'][$ns]++;
   }
   return $vocabulary;
 }
@@ -331,7 +359,7 @@ function _neologism_query_for_description(&$model, $ns_uri) {
   return _neologism_sparql_get_first_literal($model, '?description', $queries, $prefixes);
 }
 
-function _neologism_query_for_class_uris(&$model, $ns_uri) {
+function _neologism_query_for_class_uris(&$model) {
   $queries = array();
   $queries[] = 'SELECT ?class WHERE { ?class a rdfs:Class }';
   $queries[] = 'SELECT ?class WHERE { ?class a owl:Class }';
@@ -344,10 +372,10 @@ function _neologism_query_for_class_uris(&$model, $ns_uri) {
   $prefixes = '
     prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     prefix owl: <http://www.w3.org/2002/07/owl#>';
-  return _neologism_sparql_get_uris($model, '?class', $queries, $prefixes, $ns_uri);
+  return _neologism_sparql_get_uris($model, '?class', $queries, $prefixes);
 }
 
-function _neologism_query_for_property_uris(&$model, $ns_uri) {
+function _neologism_query_for_property_uris(&$model) {
   $queries = array();
   $queries[] = 'SELECT ?property WHERE { ?property a rdf:Property }';
   $queries[] = 'SELECT ?property WHERE { ?property a owl:DatatypeProperty }';
@@ -368,7 +396,7 @@ function _neologism_query_for_property_uris(&$model, $ns_uri) {
     prefix foaf: <http://xmlns.com/foaf/0.1/>
     prefix dc: <http://purl.org/dc/elements/1.1/>
     prefix dcterms: <http://purl.org/dc/terms/>';
-  return _neologism_sparql_get_uris($model, '?property', $queries, $prefixes, $ns_uri);
+  return _neologism_sparql_get_uris($model, '?property', $queries, $prefixes);
 }
 
 function _neologism_query_for_term_description(&$model, $uri) {
@@ -447,7 +475,7 @@ function _neologism_sparql_get_first_literal(&$model, $var, $queries, $prefixes 
   return null;
 }
 
-function _neologism_sparql_get_uris(&$model, $var, $queries, $prefixes = '', $namespace = '') {
+function _neologism_sparql_get_uris(&$model, $var, $queries, $prefixes = '') {
   if (!is_array($queries)) {
     $queries = array($queries);
   }
@@ -457,16 +485,14 @@ function _neologism_sparql_get_uris(&$model, $var, $queries, $prefixes = '', $na
     if (!$result) continue;
     foreach ($result as $binding) {
       if (!isset($binding[$var]) || !isset($binding[$var]->uri) || is_a($binding[$var], 'BlankNode')) continue;
-      $uri = $binding[$var]->uri;
-      if (substr($uri, 0, strlen($namespace)) != $namespace) continue;
-      $uris[] = $uri;
+      $uris[] = $binding[$var]->uri;
     }
   }
   return array_unique($uris);
 }
 
-function _neologism_sparql_get_qnames(&$model, $var, $queries, $prefixes = '', $namespace = '') {
-  $uris = _neologism_sparql_get_uris($model, $var, $queries, $prefixes, $namespace);
+function _neologism_sparql_get_qnames(&$model, $var, $queries, $prefixes = '') {
+  $uris = _neologism_sparql_get_uris($model, $var, $queries, $prefixes);
   $qnames = array();
   foreach ($uris as $uri) {
     $qnames[] = _neologism_uri_to_qname($uri);
