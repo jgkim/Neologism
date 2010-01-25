@@ -113,7 +113,11 @@ function neologism_theme() {
     ),
     'neologism_form_element' => array(
     	'arguments' => array('element' => NULL, 'value' => NULL)
-    )
+    ),
+    'render_custom_namespace_field' => array(
+    	'arguments' => array('element' => NULL)
+    ),
+    
   );
 }
 
@@ -296,12 +300,37 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	
 	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
-    $form['#validate'][] = '_neo_vocabulary_node_form_validate';
+    $form['#validate'][] = 'neo_vocabulary_node_form_validate';
   	$form['title']['#theme'] = "render_URI_field";
-  	$form['title']['#namespace'] = _neologism_get_namespace();
+  	
+  	$default_namespace = _neologism_get_namespace();
+  	$form['title']['#namespace'] = $default_namespace; 
   	// fix the size of the Id field to 20
   	$form['title']['#size'] = 20;
+  	$form['#attributes'] = array('onreset' => 'Neologism.neoVocabularyFormOnLoad()', 'onsubmit' => 'Neologism.neoVocabularyFormOnSubmit()');
   	
+  	// add the group for ranges
+	  /*
+  	$form['namespace_group']['namespace_type'] = array(
+	    '#type' => 'radios',
+	    //'#title' => t('The value of this property is'),
+	    '#title' => t('Namespace URI'),
+	    '#options' => array(
+	    	1 => t('Default ('.$default_namespace.')'),
+	    	2 => t('Custom')
+	    ),
+	    //'#description' => t('Description should goes here....'),
+	    '#default_value' => 1,
+	    '#prefix' => '<div id="range-group-resourcetype">',
+	    '#suffix' => '</div>',
+	    '#attributes' => array('onClick' => 'Neologism.checkResourceType()'),
+	    //'#theme' => "render_custom_namespace_field"
+	  );
+	  */
+  	
+	  $form['field_custom_namespace']['#theme'] = 'render_custom_namespace_field';
+	  $form['field_custom_namespace']['#default_namespace'] = $default_namespace; 
+	  
   	// we never use the preview button
 		unset($form['buttons']['preview']);
   	unset($form['menu']);
@@ -419,15 +448,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  	'#suffix' => '</div>'
 	  	//'#weight' => 20
 	  );
-	  
-	  if( isset($form['field_range2']) ) {
-	  	//$form['range_group']['field_range2'] = $form['field_range2'];
-	    //$form['range_group']['field_range2']['#prefix'] = '<div id="range-group-fieldrange2">';
-	    //$form['range_group']['field_range2']['#suffix'] = '</div>';
-	    $form['field_range2']['#prefix'] = '<div id="range-group-fieldrange2">';
-	    $form['field_range2']['#suffix'] = '</div>';  
-	  }
-    
+	 
 	  // Set the size of the description field to 5 rows in class and property forms.
 	  if (isset($form['body_field']['body']['#rows'])) {
 	    $form['body_field']['body']['#rows'] = 4;
@@ -582,9 +603,18 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-  //$vocabulary_title = check_plain($node->field_title[0]['value']);
-  $vocabulary_title = $node->field_title[0]['value'];
-  
+  $vocabulary_title = check_plain($node->field_title[0]['value']);
+  kpr($node);
+	$vocabulary = new stdClass();
+	$vocabulary->id = $node->title;
+  $vocabulary->title = $node->field_title[0]['value'];
+  $vocabulary->custom_namespace = $node->field_custom_namespace[0]['value'];
+  $vocabulary->description = $node->body;
+  $vocabulary->authors = $node->field_authors;
+  //kpr($node);
+	//$vocabulary_title = $node->field_title[0]['value'];
+  //$custom_namespace = 
+    
   //$head_title = $vocabulary_title;
   
   $output = '<div id="vocabulary-view">';
@@ -750,7 +780,7 @@ function neologism_export_html($node) {
   if ($classes) {
     $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Classes</h2>';
     foreach ($classes as $class) {
-      $output .= theme('class_view', node_load($class['nid']), $node->title, TRUE );
+      $output .= theme('class_view', node_load($class['nid']), $vocabulary, TRUE );
       //  $output .= node_view(node_load($class['nid']), 1, $vocabulary_title);
     }
   }
@@ -759,7 +789,7 @@ function neologism_export_html($node) {
     $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Properties</h2>';
     foreach ($properties as $property) {
         //$output .= theme('neo_property_node_view', node_load($property['nid']), 1, $node->title);
-        $output .= theme('property_view', node_load($property['nid']), $node->title, TRUE );
+        $output .= theme('property_view', node_load($property['nid']), $vocabulary, TRUE );
     }
   }
   
@@ -1611,11 +1641,19 @@ function theme_neologism_item_list($items = array(), $title = NULL, $type = 'ul'
   return $output;
 }
 
-function theme_class_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
+function theme_class_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
 	$node = (object)$node;
   $output = '';
   
   $node = node_build_content($node, $teaser, $page);
+  
+  $URI ='';
+  if ( !empty($vocabulary->custom_namespace) ) {
+  	$curi = $vocabulary->custom_namespace.'#'.$node->title;
+  	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
+  	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
+  }
+  
   
   $superclasses = '';
   if ( !empty($node->content['field_superclass2']['field']['items'][0]['#item']['evoc_term']) ) {
@@ -1647,7 +1685,7 @@ function theme_class_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FA
   
   $output .= '
   <div id="classview">
-    <h3 id="'.$node->title.'">Class: '.$vocabulary.':'.$node->title.'</h3>';
+    <h3 id="'.$node->title.'">Class: '.$vocabulary->id.':'.$node->title.'</h3>';
   
   if(empty($comment) ) {    
     $output .= '<div class="abstract"><em>'.$label.'</em></div>';
@@ -1657,7 +1695,8 @@ function theme_class_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FA
   
   $output .= '
       <div class="properties-block">
-          '.$superclasses.'
+      		'.$URI.'    
+      		'.$superclasses.'
           '.$disjointwith.'
       </div>
      <div class="description">'.$node->body.'</div>';
@@ -1681,12 +1720,19 @@ function theme_class_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FA
   return $output; 
 }
 
-function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
+function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
 	$node = (object)$node;
   $output = '';
   
   // build context to use the evoc fields values
   $node = node_build_content($node, $teaser, $page);
+  
+	$URI ='';
+  if ( !empty($vocabulary->custom_namespace) ) {
+  	$curi = $vocabulary->custom_namespace.'#'.$node->title;
+  	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
+  	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
+  }	
   
   $owl_type = '';
   $owl_type_value = '';
@@ -1762,7 +1808,7 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
   
   $output .= '
   <div id="propertyview">
-    <h3 id="'.$node->title.'">Property: '.$vocabulary.':'.$node->title.'</h3>';
+    <h3 id="'.$node->title.'">Property: '.$vocabulary->id.':'.$node->title.'</h3>';
 	
   if(empty($comment) ) {    
     $output .= '<div class="abstract"><em>'.$label.'</em></div>';
@@ -1772,7 +1818,8 @@ function theme_property_view($node, $vocabulary = NULL, $teaser = FALSE, $page =
   
   $output .= '
       <div class="properties-block">
-          '.$owl_type.'
+		      '.$URI.'     
+		      '.$owl_type.'
           '.$inverse.'
           '.$subproperty_of.'
           '.$domain.'
@@ -1849,20 +1896,18 @@ function theme_neo_property_node_view($node, $teaser = FALSE, $page = FALSE, $li
  */
 function theme_neo_vocabulary_node_form($form) {
 	$output = '';
-	//dpm($form['title']);
+	//dpm($form);
 	
 	$buttons = drupal_render($form['buttons']);
-	//$form['title']['#namespace_url'] = $namespace_url;
-	//$URI = theme('render_URI_field', $form['title']);
 	$URI = drupal_render($form['title']);
+	$title = drupal_render($form['field_title']);
+	$custom_namespace = drupal_render($form['field_custom_namespace']);
 	
-	//$output .= drupal_render($form['field_title']);
-	//$output .= drupal_render($form['field_authors']);
 	$node = $form['#node'];
 	drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path));
 	drupal_set_title($node->field_title[0]['value']);
 	
-	$output .= $URI.drupal_render($form). $buttons;
+	$output .= $URI.$title.$custom_namespace.drupal_render($form).$buttons;
 	return $output;
 }
 
@@ -1959,6 +2004,30 @@ function theme_render_URI_field($element) {
   }
 
   return theme('neologism_form_element', $element, $output) . $extra;
+}
+
+function theme_render_custom_namespace_field($element) {
+	kpr($element);
+	$default_value = isset($element[0]['#default_value']['value']) ? $element[0]['#default_value']['value'] : '';
+	
+	$output = ' 
+	  <div id="range-group-resourcetype">
+	  <div class="form-item">
+	 		<label>Namespace URI: </label>
+	 		<div class="form-radios"><div class="form-item" id="edit-namespace-type-1-wrapper">
+	 			<label class="option" for="edit-namespace-type-1">
+	 				<input type="radio" id="edit-namespace-type-1" name="namespace_type" value="1"  checked="checked"  onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Default ('.$element['#default_namespace'].')
+	 			</label>
+				</div>
+					<div class="form-item" id="edit-namespace-type-2-wrapper">
+		 				<label class="option" for="edit-namespace-type-2"><input type="radio" id="edit-namespace-type-2" name="namespace_type" value="2"   onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Custom</label>
+					  <input type="text" disabled="disabled" name="field_custom_namespace[0][value]" id="edit-field-custom-namespace-0-value" size="60" value="'.$default_value.'" class="form-text text" />
+		 			</div>
+			</div>
+	</div>
+	</div>
+';
+  return $output;
 }
 
 /**
@@ -2189,11 +2258,26 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
  * @param $form_state
  * @return unknown_type
  */
-function _neo_vocabulary_node_form_validate($form, &$form_state) {
-  $title = $form_state['values']['title'];
+function neo_vocabulary_node_form_validate($form, &$form_state) {
+  //kpr($form_state);
+	$title = $form_state['values']['title'];
   if ( !_neologism_is_valid_id($title) ) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
   }
+  
+  // TODO: add validation for custom namespace field
+}
+
+/**
+ * on submit handler for vocabulary 
+ * @param $form
+ * @param $form_state
+ * @return unknown_type
+ */
+function neo_vocabulary_node_form_submit($form, &$form_state) {
+  //kpr($form_state);
+  
+  // TODO: add validation for custom namespace field
 }
 
 /**

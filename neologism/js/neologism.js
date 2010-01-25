@@ -8,6 +8,12 @@ if( Drupal.jsEnabled ) {
     // check if the checkbox is checked is so, then hide rangeField show it otherwise
     //Neologism.checkRangeField();
     Neologism.checkResourceType();
+    
+    if ( $('#edit-field-custom-namespace-0-value').val() != '' ) {
+    	$('#edit-namespace-type-2').attr('checked', true);
+    	Neologism.neoVocabularyFormToggleNamespace();
+	}
+
   }); // ready
   
   Neologism.checkRangeField = function() {
@@ -20,7 +26,7 @@ if( Drupal.jsEnabled ) {
     else {
       rangeField.show();
     }
-  },
+  };
   
   Neologism.checkResourceType = function() {
     // Another resource
@@ -45,7 +51,25 @@ if( Drupal.jsEnabled ) {
     	$('#range-group-fieldrange2').hide();
     	Neologism.createInverseSelecctionWidget.termsTree.enable();
     }
-    
+  };
+  
+  Neologism.neoVocabularyFormOnSubmit = function() {
+	  if ( $('#edit-namespace-type-1').attr('checked') ) {
+		  $('#edit-field-custom-namespace-0-value').val('');
+	  } else {
+		  // TODO: handle what happen when the user select custom namespace and the field it is empty
+	  }
+  };
+  
+  Neologism.neoVocabularyFormToggleNamespace = function() {
+    // Another resource
+	if ( $('#edit-namespace-type-1').attr('checked') ) {
+		$('#edit-field-custom-namespace-0-value').attr('disabled', true);
+    }
+	// A literal (string, number, date, ...)
+    else if ( $('#edit-namespace-type-2').attr('checked') ) {
+    	$('#edit-field-custom-namespace-0-value').removeAttr("disabled");//.focus();//.val("editable now");
+    }
   };
   
 }
