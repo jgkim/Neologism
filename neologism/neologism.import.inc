@@ -29,7 +29,7 @@ function neologism_import_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Namespace URI'),
     '#required' => TRUE,
-    '#description' => t('Must end in “/” or “#”. Only classes and properties in this namespace will be imported.'),
+    '#description' => t('<i>Only classes and properties in this namespace will be imported!</i> Must end in “/” or “#”.'),
   );
   $form['from_web'] = array(
     '#type' => 'fieldset',
