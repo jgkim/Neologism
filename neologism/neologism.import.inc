@@ -17,7 +17,7 @@ function neologism_import_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Namespace prefix'),
     '#required' => TRUE,
-    '#description' => t('Something like <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
+    '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
     '#size' => 10,
   );
   $form['ns_uri'] = array(
@@ -97,7 +97,7 @@ function neologism_import_form_validate($form, &$form_state) {
   }
 
   // Load and parse the RDF file, either from the Web or from uploaded file
-  require_once(drupal_get_path('module', NEOLOGISM)."/neologism.load_vocab.inc");
+  require_once(drupal_get_path('module', 'evoc')."/evoc.load_vocab.inc");
   if ($form_state['values']['uploaded_file']) {
     $uploaded_file = $form_state['values']['uploaded_file'];
 
@@ -122,7 +122,7 @@ function neologism_import_form_validate($form, &$form_state) {
   }
 
   // Extract information about classes, properties etc from the model
-  $vocabulary = neologism_get_vocabulary_description($model, $ns_prefix, $ns_uri);
+  $vocabulary = evoc_get_vocabulary_description($model, $ns_prefix, $ns_uri);
 
   // Sanity checks over the extracted vocabulary
   if (!$vocabulary['classes'] && !$vocabulary['properties']) {
@@ -151,6 +151,19 @@ function neologism_import_form_validate($form, &$form_state) {
     }
   }
 
+  // Handle undefined namespaces
+  if (count($vocabulary['undefined_ns'])) {
+    $msg = t('Before importing a vocabulary, you have to register all the namespaces it uses. The following namespaces are not registered:');
+    $msg .= '<ul>';
+    foreach ($vocabulary['undefined_ns'] as $prefix => $uri) {
+      $msg .= "<li>$prefix => $uri</li>";
+    }
+    $msg .= '</ul>';
+    $msg .= t('To register a namespace, you either have to add it as an external vocabulary, or create a new vocabulary with a custom namespace.');
+    form_set_error($source_field, $msg);
+    return;
+  }
+
   // Validation successful! Store the vocabulary array in $form_state, hope this works!
   $form_state['neologism_processed_vocabulary'] = $vocabulary;
 }
@@ -169,12 +182,9 @@ function neologism_import_form_submit($form, &$form_state) {
     // The import function should have set a drupal error if it returned false.
     return false;
   }
-  drupal_set_message(t('The vocabulary has been successfully imported.'));
+  drupal_set_message(t('The vocabulary has been successfully imported with %classes classes and %properties properties.',
+      array('%classes' => count($vocabulary['classes']), '%properties' => count($vocabulary['properties']))));
 
-  // Handle undefined namespaces
-  foreach ($vocabulary['undefined_ns'] as $prefix => $uri) {
-    drupal_set_message('Missing external vocabulary: ' . $prefix . ' => ' . $uri, 'warning');
-  }
   drupal_goto($vocabulary['prefix']);
 }
 
@@ -242,6 +252,7 @@ function _neologism_new_node_vocabulary(array $vocabulary) {
   $node->field_title[0]['value'] = isset($vocabulary['title']) ? $vocabulary['title'] : 'Imported vocabulary';
   $node->field_authors[0]['uid'] = $node->uid;
   $node->field_abstract[0]['value'] = check_plain($vocabulary['description']);
+  $node->field_custom_namespace[0]['value'] = $vocabulary['uri'];
   $node->teaser = '<p>This vocabulary has been imported from <a href="' . $vocabulary['uri'] . '">' . $vocabulary['uri'] . '</a>.</p>';
   $node->body = $node->teaser;
   $node->promote = 1;

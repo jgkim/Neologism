@@ -446,7 +446,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  	'#title' => '',//t('Data Types'),
 	  	'#type' => 'select',
 	  	'#description' => t('Select the data type for this property.'),
-	  	'#options' => evoc_get_xsd_datatype_list(),
+	  	'#options' => neologism_get_xsd_datatype_list(),
 	  	'#multiple' => FALSE,
 	  	'#prefix' => '<div id="range-group-datatypes">',
 	  	'#suffix' => '</div>'
@@ -650,7 +650,7 @@ function neologism_export_html($node) {
   	$namespace_url = url($node->path, $opts);	
   }
   
-  $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'#</div></div>';
+  $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'</div></div>';
 
   // Abstract
   $output .= '<div id="abstract" class="neologism field"><div class="block title"><h3>Abstract&nbsp;</h3></div> ' . $node->field_abstract[0]['value'] . ' </div>';
@@ -1241,11 +1241,11 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
           }
         }
         
-      	$term[EVOC_DISJOINT_WITH] = array();
+      	$term[EVOC_DISJOINTS] = array();
         if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
           foreach ( $node->field_disjointwith2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DISJOINT_WITH][] = $value['evoc_term'];
+              $term[EVOC_DISJOINTS][] = $value['evoc_term'];
             }
           }
         }
@@ -1266,39 +1266,39 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         $term['comment'] = $node->field_comment[0]['value'];
         
         // normaliza the evoc's fields
-        $term['rdf_domain'] = array();
+        $term[EVOC_DOMAINS] = array();
         if( !empty($node->field_domain2) && is_array($node->field_domain2) ) {
           foreach ( $node->field_domain2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['rdf_domain'][] = $value['evoc_term'];
+              $term[EVOC_DOMAINS][] = $value['evoc_term'];
             }
           }
         }
         
-        $term['rdf_range'] = array();
+        $term[EVOC_RANGES] = array();
         if( !empty($node->field_range2) && is_array($node->field_range2) ) {
           foreach ( $node->field_range2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['rdf_range'][] = $value['evoc_term'];
+              $term[EVOC_RANGES][] = $value['evoc_term'];
             }
           }
         }
         
-        $term['subpropertyof'] = array();
+        $term[EVOC_SUPERPROPERTIES] = array();
         if( !empty($node->field_superproperty2) && is_array($node->field_superproperty2) ) {
           foreach ( $node->field_superproperty2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['subpropertyof'][] = $value['evoc_term'];
+              $term[EVOC_SUPERPROPERTIES][] = $value['evoc_term'];
             }
           }
         }
         
         //kpr($form);
-      	$term[EVOC_INVERSE] = array();
+      	$term[EVOC_INVERSES] = array();
         if( !empty($node->field_inverse2) && is_array($node->field_inverse2) ) {
           foreach ( $node->field_inverse2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term[EVOC_INVERSE][] = $value['evoc_term'];
+              $term[EVOC_INVERSES][] = $value['evoc_term'];
             }
           }
         }
@@ -1334,20 +1334,20 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         $term['comment'] = $node->field_comment[0]['value'];
         
         // normalize the superclasses array to used by evoc's evoc_write_class() method
-        $term['superclasses'] = array();
+        $term[EVOC_SUPERCLASSES] = array();
         if( !empty($node->field_superclass2) && is_array($node->field_superclass2) ) {
           foreach ( $node->field_superclass2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['superclasses'][] = $value['evoc_term'];
+              $term[EVOC_SUPERCLASSES][] = $value['evoc_term'];
             }
           }
         }
         
-      	$term[EVOC_DISJOINTS_WITH] = array();
+      	$term[EVOC_DISJOINTS] = array();
         if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
           foreach ( $node->field_disjointwith2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DISJOINTS_WITH][] = $value['evoc_term'];
+              $term[EVOC_DISJOINTS][] = $value['evoc_term'];
             }
           }
         }
@@ -1368,29 +1368,29 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         $term['comment'] = $node->field_comment[0]['value'];
         
         // normaliza the evoc's fields
-        $term['rdf_domain'] = array();
+        $term[EVOC_DOMAINS] = array();
         if( !empty($node->field_domain2) && is_array($node->field_domain2) ) {
           foreach ( $node->field_domain2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['rdf_domain'][] = $value['evoc_term'];
+              $term[EVOC_DOMAINS][] = $value['evoc_term'];
             }
           }
         }
         
-        $term['rdf_range'] = array();
+        $term[EVOC_RANGES] = array();
         if( !empty($node->field_range2) && is_array($node->field_range2) ) {
           foreach ( $node->field_range2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['rdf_range'][] = $value['evoc_term'];
+              $term[EVOC_RANGES][] = $value['evoc_term'];
             }
           }
         }
         
-        $term['subpropertyof'] = array();
+        $term[EVOC_SUPERPROPERTIES] = array();
         if( !empty($node->field_superproperty2) && is_array($node->field_superproperty2) ) {
           foreach ( $node->field_superproperty2 as $value ) {
             if( !empty($value['evoc_term']) ) {
-              $term['subpropertyof'][] = $value['evoc_term'];
+              $term[EVOC_SUPERPROPERTIES][] = $value['evoc_term'];
             }
           }
         }
@@ -1503,9 +1503,8 @@ function neologism_rdf_namespaces() {
     'vann' => 'http://purl.org/vocab/vann/',
   );
   while( $voc = db_fetch_object($vocs) ) {
-  	//$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value.'/';
-  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value;
-    $namespaces[$voc->title] = $uri.$voc->title.'#';
+  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/'.$voc->title.'#' : $voc->field_custom_namespace_value;
+    $namespaces[$voc->title] = $uri;
   }
   return $namespaces;
 }
@@ -2011,12 +2010,11 @@ function theme_render_URI_field($element) {
 
 function theme_render_custom_namespace_field($element) {
 	// TODO: add the classes to the field_custom_namespace when some error it is sent to the form
-	
+
 	$default_value = isset($element[0]['#default_value']['value']) ? $element[0]['#default_value']['value'] : '';
-	$defaul_namespace = $element['#default_namespace'];
-	$prefix = substr($defaul_namespace, 0, -stripos($defaul_namespace, '/') + 1 );
-	$suffix = substr($defaul_namespace, -stripos($defaul_namespace, '/') + 1, strlen($defaul_namespace) );
-	$defaul_namespace = $prefix.'<i>'.$suffix.'_ID</i>#'; 
+    $default_namespace = $element['#default_namespace'];
+	$default_namespace = substr($default_namespace, 0, strrpos($default_namespace, '/') + 1);
+    $default_namespace = $default_namespace . '<i>vocabulary_ID</i>#';
 
 	$output = ' 
 	  <div id="range-group-resourcetype">
@@ -2024,7 +2022,7 @@ function theme_render_custom_namespace_field($element) {
 	 		<label>Namespace URI: </label>
 	 		<div class="form-radios"><div class="form-item" id="edit-namespace-type-1-wrapper">
 	 			<label class="option" for="edit-namespace-type-1">
-	 				<input type="radio" id="edit-namespace-type-1" name="namespace_type" value="1"  checked="checked"  onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Default ('.$defaul_namespace.')
+	 				<input type="radio" id="edit-namespace-type-1" name="namespace_type" value="1"  checked="checked"  onClick="Neologism.neoVocabularyFormToggleNamespace()" class="form-radio" /> Default ('.$default_namespace.')
 	 			</label>
 				</div>
 					<div class="form-item" id="edit-namespace-type-2-wrapper">
@@ -2267,7 +2265,7 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
  * @return unknown_type
  */
 function neo_vocabulary_node_form_validate($form, &$form_state) {
-	$title = $form_state['values']['title'];
+  $title = $form_state['values']['title'];
   if ( !_neologism_is_valid_id($title) ) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
   }
@@ -2275,19 +2273,19 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
   $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
   // the cosntant error_field_required_empty is handled in Neologism.js file
   if( $custom_namespace != '' ) {
-	  if( $custom_namespace == 'error_field_required_empty' ) {
-	  	form_set_error('field_custom_namespace', t('This field is required in your selection.'));	
-	  }
-	  else if( rdf_is_valid_uri($custom_namespace) ) {
-	  	if (substr($custom_namespace, -1) == '#') {
-	    	$custom_namespace = substr($custom_namespace, 0, -1);
-	    	$form_state['values']['field_custom_namespace'][0]['value'] = $custom_namespace;
-	  	}
-	  }
-	  else {
-	  	form_set_error('field_custom_namespace', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));	
-	  }
-	}
+    if( $custom_namespace == 'error_field_required_empty' ) {
+      form_set_error('field_custom_namespace', t('This field is required in your selection.'));  
+      return;
+    }
+    if(!rdf_is_valid_uri($custom_namespace) ) {
+      form_set_error('field_custom_namespace', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));  
+      return;
+    }
+    if (substr($custom_namespace, -1) != '#' && substr($custom_namespace, -1) != '/') {
+      form_set_error('field_custom_namespace', t('The custom namespace URI must end in “#” or “/”.'));
+      return;
+    }
+  }
 }
 
 /**
@@ -2753,4 +2751,63 @@ function neologism_menu_link_alter(&$item, $menu) {
 			$item['hidden'] = 1;
 			break;	
 	}
+}
+
+/**
+ * 
+ * @return unknown_type
+ */
+function neologism_get_xsd_datatype_list() {
+	$neologism_xsd_datatypes = array(
+			t('Standard datatypes') => array(
+				'xsd:string' => 'xsd:string',
+				'xsd:decimal' => 'xsd:decimal',
+				'xsd:integer' => 'xsd:integer',
+				'xsd:date' => 'xsd:date',
+				'xsd:dateTime' => 'xsd:dateTime',
+				'xsd:boolean' => 'xsd:boolean',
+				'rdf:XMLLiteral' => 'rdf:XMLLiteral'	
+			),
+			t('Date and time') => array(
+				'xsd:date' => 'xsd:date',
+				'xsd:dateTime' => 'xsd:dateTime',
+				'xsd:time' => 'xsd:time',
+				'xsd:gYearMonth' => 'xsd:gYearMonth',
+				'xsd:gYear' => 'xsd:gYear',
+				'xsd:gMonthDay' => 'xsd:gMonthDay',
+				'xsd:time' => 'xsd:time',
+				'xsd:gDay' => 'xsd:gDay',
+				'xsd:gMonth' => 'xsd:gMonth'
+			),
+			t('Numbers') => array(
+				'xsd:decimal' => 'xsd:decimal',
+				'xsd:float' => 'xsd:float',
+				'xsd:double' => 'xsd:double',
+				'xsd:integer' => 'xsd:integer',
+				'xsd:nonPositiveInteger' => 'xsd:nonPositiveInteger',
+				'xsd:negativeInteger' => 'xsd:negativeInteger',
+				'xsd:long' => 'xsd:long',
+				'xsd:int' => 'xsd:int',
+				'xsd:short' => 'xsd:short',
+				'xsd:byte' => 'xsd:byte',
+				'xsd:nonNegativeInteger' => 'xsd:nonNegativeInteger',
+				'xsd:unsignedLong' => 'xsd:unsignedLong',
+				'xsd:unsignedInt' => 'xsd:unsignedInt',
+				'xsd:unsignedShort' => 'xsd:unsignedShort',
+				'xsd:unsignedByte' => 'xsd:unsignedByte',
+				'xsd:unsignedInt' => 'xsd:unsignedInt'
+			),
+			t('Other') => array(
+				'xsd:hexBinary' => 'xsd:hexBinary',
+				'xsd:base64Binary' => 'xsd:base64Binary',
+				'xsd:anyURI' => 'xsd:anyURI',
+				'xsd:normalizedString' => 'xsd:normalizedString',
+				'xsd:token' => 'xsd:token',
+				'xsd:language' => 'xsd:language',
+				'xsd:NMTOKEN' => 'xsd:NMTOKEN',
+				'xsd:Name' => 'xsd:Name',
+				'xsd:NCName' => 'xsd:NCName'
+			)
+	  );
+	return $neologism_xsd_datatypes;
 }
