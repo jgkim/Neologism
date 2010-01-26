@@ -646,8 +646,7 @@ function neologism_export_html($node) {
 
   $namespace_url = $node->field_custom_namespace[0]['value'];
   if( $namespace_url == '' ) {
-  	$opts = array('absolute' => TRUE);
-  	$namespace_url = url($node->path, $opts);	
+  	$namespace_url = url($node->path, array('absolute' => TRUE)) . '#';
   }
   
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'</div></div>';
