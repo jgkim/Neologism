@@ -211,24 +211,16 @@ function neologism_profile_tasks(&$task, $url) {
   	drupal_execute($form_id, $form_state);
   	
   	// Add the "vocabulary editor" Role
-  	$rol = 'vocabulary editor';
-  	db_query('insert into {role} (name) values ("%s")', $rol);
-  	$res = db_fetch_object(db_query('select rid from {role} where name = "%s"', $rol));
+  	$role = 'vocabulary editor';
+  	db_query('insert into {role} (name) values ("%s")', $role);
+  	$res = db_fetch_object(db_query('select rid from {role} where name = "%s"', $role));
   	
-  	// To get more creative, start with a list of all permissions.
-  	$raw_permissions = module_invoke('neologism','perm');
-	  foreach ($raw_permissions as $perm) {
-	    $permissions .= $perm.', '; 
-	  }
-	  
-	  $raw_permissions = module_invoke('node','perm');
-	  $i = 0;
-  	for (; $i < count($raw_permissions) - 1; $i++ ) {
-  		$permissions .= $raw_permissions[$i].', '; 	
-  	}
-	  $permissions .= $raw_permissions[$i];
-  	
-	  db_query('insert into {permission} (rid, perm) values (%d, "%s")', $res->rid, $permissions);
+  	// Give all permissions for neologism, evoc and node to the vocabulary editor role
+    $permissions = join(', ', array_merge(
+        module_invoke('neologism','perm'),
+        module_invoke('node', 'perm'),
+        module_invoke('evoc', 'perm')));
+    db_query('insert into {permission} (rid, perm) values (%d, "%s")', $res->rid, $permissions);
   	
 	  // Add a triggered rules
   	require_once 'sites/all/modules/rules/rules_admin/rules_admin.export.inc';
