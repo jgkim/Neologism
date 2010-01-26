@@ -89,20 +89,6 @@ function evoc_schema() {
     'primary key' => array('id'),
   );
   
-  $schema['evoc_sparql_endpoints'] = array(
-    'fields' => array(
-      'id' => array('type' => 'serial', 'unsigned' => TRUE, 'size' => 'normal', 'not null' => TRUE),
-      'name' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE, 'description' => 'Endpoint name or project name.'),
-      'enabled' => array('type' => 'int', 'unsigned' => TRUE, 'size' => 'small', 'not null' => TRUE, 'description' => 'describe when the endpoint is enabled.'),
-      'status' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE, 'description' => 'endpoint status'),
-      'endpoint' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
-      'webform' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
-      'comment' => array('type' => 'text', 'not null' => TRUE),
-      'data_exposed' => array('type' => 'text', 'not null' => TRUE),
-    ),
-    'primary key' => array('id'),
-  );
-
   return $schema;
 }
 
@@ -124,28 +110,6 @@ function evoc_install() {
     }
   }
 
-  // default sparql endpoint
-  $endpoint = array(
-    'name' => 'SPARQLer',
-    'enabled' => TRUE,
-    'status' => 'alive',
-    'endpoint' => 'http://www.sparql.org/sparql',
-    'webform' => 'http://www.sparql.org/sparql.html',
-    'comment' => 'based on ARQ and Joseki',
-    'data_exposed' => '"any" — "general purpose SPARQL service"'
-  );
-  
-  $result = db_query("insert into {evoc_sparql_endpoints} (name, enabled, status, endpoint, webform, comment, data_exposed) values ('%s', '%d', '%s', '%s', '%s', '%s', '%s')", 
-    $endpoint['name'], $endpoint['enabled'], $endpoint['status'], $endpoint['endpoint'], $endpoint['webform'], $endpoint['comment'], $endpoint['data_exposed']);
-  if( !result ) {
-    drupal_set_message( t('There is some problem installing the default sparql endpoint into table {evoc_sparql_endpoints}.'), 'error' );  
-    exit();
-  }
-  
-  // retrive the default id  
-  $result = db_fetch_object( db_query('select id from {evoc_sparql_endpoints} where name = "%s"', $endpoint['name']) ); 
-  variable_set('evoc_sparqlendpoint', $result->id);
-   
   module_load_include('module', 'evoc', 'evoc');
   evoc_import_vocabulary('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf', FALSE);
   evoc_import_vocabulary('http://www.w3.org/2000/01/rdf-schema#', 'rdfs', FALSE);
@@ -153,7 +117,7 @@ function evoc_install() {
   evoc_import_vocabulary('http://xmlns.com/foaf/0.1/','foaf', FALSE);
   evoc_import_vocabulary('http://www.w3.org/2002/07/owl#','owl', FALSE);
   
-  drupal_set_message( t('Evoc successfully installed and useful vocabularies were imported successful....') );
+  drupal_set_message( t('Evoc successfully installed.') );
 }
 
 /**
@@ -167,7 +131,6 @@ function evoc_uninstall() {
   evoc_remove_vocabulary('foaf');
   evoc_remove_vocabulary('owl');
   
-  variable_del('evoc_sparqlendpoint');
   drupal_uninstall_schema('evoc');
   drupal_set_message( t('Evoc successfully uninstalled.') );
 }

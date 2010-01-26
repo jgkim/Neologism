@@ -13,155 +13,206 @@
  * default callback for evoc admin section
  * @return 
  */
-function evoc_admin_settings() {
-	
-	// get the available namespaces in the system
-	$namespaces = rdf_get_namespaces();
+function evoc_manage_vocabularies() {
   
+  // get the available namespaces in the system
+  // TODO get only those that have been imported via evoc
+  $namespaces = array_diff(rdf_db_rdf_namespaces(), module_invoke('neologism', 'rdf_namespaces'));
+  
+  $header = array(
+      t('Prefix'),
+      t('Namespace URI'),
+      array('data' => t('Operations')/*, 'colspan' => '2'*/),
+  );
+
+  $rows = array();
   foreach ( $namespaces as $prefix => $uri ) {
-  	$options[$data->id] = '';
-  	$form[$prefix]['prefix'] = array('#value' => $prefix);
-  	$form[$prefix]['uri_reference'] = array('#value' => $uri);
-
-  	$operations = array();
-  	$operations['edit'] = l(t('edit'), 'admin/settings/evoc/'.$prefix.'/edit', array('attributes' => array('title' => 'Edit this namespace')));
-  	$operations['remove'] = l(t('remove'), 'admin/settings/evoc/'.$prefix.'/remove', array('attributes' => array('title' => 'Remove this namespace')));
-
-  	$form[]['operations'] = array();
-  	foreach ($operations as $op => $value) {
-  		$form[$prefix]['operations'][$op] = array('#value' => $value);
-  	}
-	}
-	
-	/*
-	$form['submit'] = array(
-		'#type' => 'submit',
-		'#value' => t('Save configuration'),
-	);
-	*/
- 
-	$form['back'] = array(
-		'#type' => 'markup',
-		'#value' => l(t('Back'), 'admin', array('attributes' => array('title' => 'Back to the admin section'))),
-	);
-  
-	return $form;
-}
-
-/**
- * Evoc callback; Build the form that handles the edition of an namespace.
- * @param object $form_state
- * @param object $type
- * @param object $endpoint
- * @return 
- */
-function evoc_admin_edit_namespace(&$form_state, $type, stdClass $namespace = NULL) {
-  if( $type == 'edit' ) {
-    $form['holder'] = array(
-      '#type' => 'value',
-      '#value' => array('prefix' => $namespace->prefix, 'uri_reference' => $namespace->uri_reference)
+    $rows[] = array(
+        array('data' => $prefix),
+        array('data' => $uri),
+//        array('data' => l(t('edit'), 'evoc/edit/'.$prefix, array('attributes' => array('title' => 'Edit the prefix')))),
+        array('data' => l(t('remove'), 'evoc/remove/'.$prefix, array('attributes' => array('title' => 'Remove this external vocabulary')))),
     );
   }
 
-  $form['#theme'] = 'evoc_admin_edit_namespace_form';
+  $output = theme('table', $header, $rows);
   
+  return $output;
+}
+
+function evoc_add_vocabulary($form_state) {
+  $form['help'] = array(
+      '#value' => 'Here you can add external vocabularies. This allows you to use their classes and properties in your own vocabularies, for example, as superclasses. We will attempt to load an RDF/XML file containing an RDFS vocabulary or OWL ontology from the namespace URI.',
+  );
+  $form['ns_prefix'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Namespace prefix'),
+    '#required' => TRUE,
+    '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. It must be a prefix that is not yet in use.'),
+    '#size' => 10,
+  );
+  $form['ns_uri'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Namespace URI'),
+    '#required' => TRUE,
+    '#description' => t('<i>Only classes and properties in this namespace will be imported!</i> Must end in “/” or “#”.'),
+  );
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Submit',
+  );
+  return $form;
+}
+
+function evoc_add_vocabulary_validate($form, &$form_state) {
+  if (!empty($form_state['values']['ns_prefix'])) {
+    $ns_prefix = trim($form_state['values']['ns_prefix']);
+    if (!rdf_is_valid_qname($ns_prefix . ':x')) {
+      form_set_error('ns_prefix', t('The prefix must start with a letter and can only contain letters, digits, and any of “-_.”'));
+      return;
+    }
+    $namespaces = rdf_get_namespaces();
+    if (isset($namespaces[$ns_prefix])) {
+      form_set_error('ns_prefix', t('This prefix is alredy in use.'));
+      return;
+    }
+  }
+  if (!empty($form_state['values']['ns_uri'])) {
+    $ns_uri = trim($form_state['values']['ns_uri']);
+    if (!rdf_is_valid_uri($ns_uri)) {
+      form_set_error('ns_uri', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));
+      return;
+    }
+    if (substr($ns_uri, -1) != '#' && substr($ns_uri, -1) != '/') {
+      form_set_error('ns_uri', t('The namespace URI must end in “#” or “/”.'));
+      return;
+    }
+  }
+
+  if (!$ns_uri || !$ns_prefix) return;
+
+  // Load and parse the RDF file
+  require_once(drupal_get_path('module', 'evoc')."/evoc.load_vocab.inc");
+  $vocabulary_url = $ns_uri;
+  if (substr($vocabulary_url, -1) == '#') {
+    $vocabulary_url = substr($vocabulary_url, 0, -1);
+  }
+  try {
+    $model = evoc_read_RDF_from_URI($vocabulary_url);
+  } catch (Exception $e) {
+    form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
+    return;
+  }
+  $source_field = 'ns_uri';
+
+  // Extract information about classes, properties etc from the model
+  $vocabulary = evoc_get_vocabulary_description($model, $ns_prefix, $ns_uri);
+
+  // Sanity checks over the extracted vocabulary
+  if (!$vocabulary['classes'] && !$vocabulary['properties']) {
+    if (!$vocabulary['ignored_ns']) {
+      form_set_error($source_field, t('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.'));
+      return;
+    }
+    $msg = t('No classes or properties in the file matched your specified namespace URI. The following namespace URIs were found in the file, maybe you meant one of them?');
+    $msg .= '<ul>';
+    arsort($vocabulary['ignored_ns'], SORT_NUMERIC);
+    foreach ($vocabulary['ignored_ns'] as $uri => $term_count) {
+      $msg .= "<li>$uri ($term_count " . t('classes and properties') . ')</li>';
+    }
+    $msg .= '</url>';
+    form_set_error('ns_uri', $msg);
+    return;
+  }
+  $uris = array();
+  foreach ($vocabulary['classes'] as $class) {
+    $uris[] = $class['uri'];
+  }
+  foreach ($vocabulary['properties'] as $property) {
+    if (in_array($property['uri'], $uris)) {
+      form_set_error($source_field, 'Unsupported modelling in vocabulary file: ' . $intersection[0] . ' is typed both as a class and as a property.');
+      return;
+    }
+  }
+
+  // Validation successful! Store the vocabulary array in $form_state, hope this works!
+  $form_state['evoc_processed_vocabulary'] = $vocabulary;
+}
+
+function evoc_add_vocabulary_submit($form, &$form_state) {
+  // Get the vocabulary array from $form_state, should have been put there by _validate()
+  if (!is_array($form_state['evoc_processed_vocabulary'])) {
+    drupal_set_message('Internal error: evoc_processed_vocabulary is not present');
+    return false;
+  }
+  $vocabulary = $form_state['evoc_processed_vocabulary'];
+
+  evoc_save_vocabulary($vocabulary);
+  drupal_set_message(t('External vocabulary added. Found %classcount classes and %propertycount properties.',
+      array('%classcount' => count($vocabulary['classes']), '%propertycount' => count($vocabulary['properties']))));
+  $form_state['redirect'] = 'evoc';
+}
+
+/*
+function evoc_edit_namespace(&$form_state, $prefix) {
+  $form['#theme'] = 'evoc_admin_edit_namespace_form';
+  $form['old_prefix'] = array('#type' => 'value', '#value' => $prefix);
   $form['prefix'] = array(
       '#type' => 'textfield',
-      '#title' => t('Prefix'),
-      '#default_value' => $namespace->prefix,
-      '#maxsize' => 32,
-      '#description' => t('Only letters, numbers, dashes, and underscores.'),
+      '#title' => t('New namespace prefix'),
+      '#default_value' => $prefix,
+      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. It must be a prefix that is not yet in use.'),
+      '#size' => 10,
       '#required' => TRUE,
-    );
-    
+  );
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save'),
   );
-  
   $form['cancel'] = array(
-		'#type' => 'markup',
-		'#value' => l(t('Cancel'), 'admin/settings/evoc', array('attributes' => array('title' => 'Cancel the operation and return to the evoc admin page'))),
+    '#type' => 'markup',
+    '#value' => l(t('Cancel'), 'evoc', array('attributes' => array('title' => 'Cancel the operation and return to the management page'))),
     '#weight' => 11,
-	 );
-
+  );
   return $form;
 }
 
-function evoc_admin_edit_namespace_validate($form, &$form_state) {
-  if (preg_match('/[^a-zA-Z0-9_\- ]/', $form_state['values']['prefix'])) {
-    form_set_error('name', t('The prefix may only consist of letters, numbers, and hyphens.'));
+function evoc_edit_namespace_validate($form, &$form_state) {
+  if (isset($form_state['values']['prefix'])) {
+    $ns_prefix = $form_state['values']['prefix'];
+    if (!rdf_is_valid_qname($ns_prefix . ':x')) {
+      form_set_error('ns_prefix', t('Invalid namespace.'));
+      return;
+    }
+    $namespaces = rdf_get_namespaces();
+    if (isset($namespaces[$ns_prefix])) {
+      form_set_error('ns_prefix', t('This prefix is alredy in use.'));
+      return;
+    }
   }
 }
 
-function evoc_admin_edit_namespace_submit($form, &$form_state) {
-	$values = $form_state['values'];
-	//TODO: make the update/accepted changes process
-  
-  $form_state['redirect'] = 'admin/settings/evoc';
+function evoc_edit_namespace_submit($form, &$form_state) {
+  $old = $form_state['values']['old_prefix'];
+  $new = $form_state['values']['prefix'];
+  $values = $form_state['values'];
+  evoc_change_prefix($old, $new);
+  drupal_set_message(t('Prefix “%old” changed to “%new”.', array('%old' => $old, '%new' => $new)));
+  $form_state['redirect'] = 'evoc';
 }
-
-/**
- * 
- * @param object $form
- * @return 
- */
-function theme_evoc_admin_settings($form) {
-	$rows = array();
-	
-  // Individual table headers.
-	$header = array();
-	$header[] = t('Prefix&nbsp;');
-  $header[] = t('URI Reference&nbsp;');
-  $header[] = array('data' => t('Operations'), 'colspan' => '3');
-  
-  foreach (element_children($form) as $key) {
-		$row = array();
-		if (isset($form[$key]['prefix'])) {
-      $row[] = array('data' => drupal_render($form[$key]['prefix']));
-			$row[] = array('data' => drupal_render($form[$key]['uri_reference']));
-      
-      $operations = array();
-      foreach (element_children($form[$key]['operations']) as $op) {
-        $operations[] = drupal_render($form[$key]['operations'][$op]);
-      }
-
-      $row = array_merge($row, $operations);
-			$rows[] = $row;
-		}
-	}
-
-	$output = theme('table', $header, $rows);
-	//$output .= theme('pager', NULL, 5);
-	
-	$output .= drupal_render($form);
-  
-	return $output;
-}
-
-/**
- * 
- * @param unknown_type $form
- * @return unknown_type
- */
-function theme_evoc_admin_edit_namespace_form($form) {
-	drupal_set_title('Change the namespace prefix for '.$form['holder']['#value']['uri_reference']);
-	return drupal_render($form);
-}
+*/
 
 /**
  * Build a confirm form for deletion of a namespace.
  * @param object $form_state
- * @param object $endpoint
+ * @param string $prefix
  * @return 
  */
-function evoc_admin_remove_namespace_confirm(&$form_state, $namespace) {
-  $form_state['#namespace'] = $namespace;
+function evoc_remove_confirm(&$form_state, $prefix) {
   $caption = '<p>'. t('This action cannot be undone.') .'</p>';
-  return confirm_form($form, 
-    t('Are you sure you want to remove the %title namespace?', 
-    array('%title' => $namespace->prefix)), 'admin/settings/evoc', 
-    $caption, t('Remove'), t('Cancel'));
+  $question = t('Are you sure you want to remove the %title namespace?', array('%title' => $prefix));
+  $form = array('prefix' => array('#type' => 'value', '#value' => $prefix));
+  return confirm_form($form, $question, 'evoc', $caption, t('Remove'), t('Cancel'));
 }
 
 /**
@@ -170,18 +221,13 @@ function evoc_admin_remove_namespace_confirm(&$form_state, $namespace) {
  * @param object $form_state
  * @return 
  */
-function evoc_admin_remove_namespace_confirm_submit($form, &$form_state) {
-	if ($form_state['values']['confirm']) {
-		$endpoint = $form_state['#endpoint'];
-    $result = db_query(db_rewrite_sql('delete from {evoc_sparql_endpoints} where id="%d"'), $endpoint->id);
-    if( $result ) {			
-		  evoc_set_message(t('SPARQL Endpoint has been deleted successfully.'));
-    }
-    else {
-      evoc_set_message(t("There is some error when trying to remove range dependences."), 'warning');
-    }
- 	}
- 
-  $form_state['redirect'] = 'admin/settings/evoc'; 
+function evoc_remove_confirm_submit($form, &$form_state) {
+  if ($form_state['values']['confirm']) {
+    $prefix = $form_state['values']['prefix'];
+    evoc_remove_vocabulary($prefix);
+    drupal_set_message(t('External vocabulary removed.'));
+  }
+  $form_state['redirect'] = 'evoc'; 
 }
 
+?>
