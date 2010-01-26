@@ -400,15 +400,18 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
     $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
     $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+    $form['field_range2']['#weight'] = 1;
     
     $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
     $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
     $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+    $form['field_range2']['#weight'] = 2;
     
     // add behaviours for evoc fields if they are using the MXCheckBox selection widget
     $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
     $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
     $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
+    $form['field_range2']['#weight'] = 3;
     
     // add behaviours for field_inverse2 field
     $form['field_inverse2']['#mxcbs_behaviour']['owntitle'] = FALSE;
@@ -416,6 +419,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_inverse2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
     $form['field_inverse2']['#prefix'] = '<div id="inverse-treeview">';
 	  $form['field_inverse2']['#suffix'] = '</div>';
+	  $form['field_range2']['#weight'] = 4;
     
     // add to the title label a description
   	$form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
@@ -2011,7 +2015,7 @@ function theme_render_custom_namespace_field($element) {
 	$defaul_namespace = $element['#default_namespace'];
 	$prefix = substr($defaul_namespace, 0, -stripos($defaul_namespace, '/') + 1 );
 	$suffix = substr($defaul_namespace, -stripos($defaul_namespace, '/') + 1, strlen($defaul_namespace) );
-	$defaul_namespace = $prefix.'<i>'.$suffix.'</i>#'; 
+	$defaul_namespace = $prefix.'<i>'.$suffix.'_ID</i>#'; 
 
 	$output = ' 
 	  <div id="range-group-resourcetype">

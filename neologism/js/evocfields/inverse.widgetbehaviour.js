@@ -92,8 +92,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        });
 	        
 	      } // checkchange
+	
+		  	
+		  	,onSelectionChange:function(node) {
+			      // do whatever is necessary to assign the employee to position
+			  	console.log('in onUpdate from disjoint class');
+			  	//console.info(object);
+		  	}
 	    }
 	  });
-	
-	Neologism.createDomainSelecctionWidget.addObserver(Neologism.inverseTermsTree);
 };

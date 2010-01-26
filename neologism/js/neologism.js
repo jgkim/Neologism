@@ -14,6 +14,24 @@ if( Drupal.jsEnabled ) {
     	Neologism.neoVocabularyFormToggleNamespace();
 	}
 
+
+	console.info(Neologism);  //add observer to the domain and range widget
+    
+	if( Neologism.domainsTermsTree !== undefined && Neologism.inverseTermsTree !== undefined ) {
+	  console.log('adding observer');
+		Neologism.domainsTermsTree.addObserver(Neologism.inverseTermsTree);
+	  console.log('Neologism.domainsTermsTree');
+	  console.info(Neologism.domainsTermsTree);
+	}
+	
+	if( Neologism.rangeTermsTree !== undefined && Neologism.inverseTermsTree !== undefined ) {
+	  Neologism.rangeTermsTree.addObserver(Neologism.inverseTermsTree);
+	  console.log('Neologism.rangeTermsTree');
+	  console.info(Neologism.rangeTermsTree);
+	}
+	
+	$('#edit-title').focus();
+	  
   }); // ready
   
   Neologism.checkRangeField = function() {
@@ -34,7 +52,8 @@ if( Drupal.jsEnabled ) {
     	$('#range-group-datatypes').hide();
     	$('#range-group-fieldrange2').show();
     	// the inverse selection widget should be shown if the range field also are shown
-    	Neologism.createInverseSelecctionWidget.termsTree.enable();
+    	if( Neologism.inverseTermsTree !== undefined )
+    		Neologism.inverseTermsTree.enable();
     	//$('#inverse-treeview').show();
     }
 	// A literal (string, number, date, ...)
@@ -43,13 +62,13 @@ if( Drupal.jsEnabled ) {
     	$('#range-group-datatypes').show();
     	// the inverse selection widget should be hidden if the range field also are hidden
     	//$('#inverse-treeview').hide();
-    	Neologism.createInverseSelecctionWidget.termsTree.disable();
+    	if( Neologism.inverseTermsTree !== undefined ) Neologism.inverseTermsTree.disable();
     }
 	// Either
     else if ( $('#edit-resource-type-3').attr('checked') ) {
     	$('#range-group-datatypes').hide();
     	$('#range-group-fieldrange2').hide();
-    	Neologism.createInverseSelecctionWidget.termsTree.enable();
+    	if( Neologism.inverseTermsTree !== undefined ) Neologism.inverseTermsTree.enable();
     }
   };
   
@@ -71,7 +90,7 @@ if( Drupal.jsEnabled ) {
     }
 	// A literal (string, number, date, ...)
     else if ( $('#edit-namespace-type-2').attr('checked') ) {
-    	$('#edit-field-custom-namespace-0-value').removeAttr("disabled");//.focus();//.val("editable now");
+    	$('#edit-field-custom-namespace-0-value').removeAttr("disabled").focus();//.val("editable now");
     }
   };
   

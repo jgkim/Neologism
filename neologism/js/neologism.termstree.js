@@ -618,11 +618,12 @@ Neologism.TermsTree.prototype.addObserver = function(observer){
         return;
     }   
    
-    //console.log('addObserver modified');
+    console.log('addObserver');
     //this.relayEvents(observer, ['selectionchange']);
     this.observers.push(observer);
-    console.log('addObserver(%s)', observer);
-    console.info(observer);
+    console.info(this);
+    //console.log('addObserver(%s)', observer);
+    //console.info(observer);
 };  
 
 /**  
@@ -633,6 +634,11 @@ Neologism.TermsTree.prototype.notifyObservers = function(event, object){
 	if( typeof event == 'undefined' ) {   
         return;
     }  
+	
+	console.log('notify observers');
+	console.info(this);
+	console.info(observers);
+	console.info(object);
 	
 	for( var i = 0; i < this.observers.length; i++ ) {   
 		this.observers[i].fireEvent(event, object);

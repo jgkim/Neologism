@@ -19,9 +19,10 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
   Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
   baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
 
-  Neologism.rangeTermsTree = new Neologism.TermsTree({
+  Neologism.domainsTermsTree = new Neologism.TermsTree({
+  //Neologism.rangeTermsTree = new Neologism.TermsTree({
     renderTo: objectToRender,
-    title: Drupal.t('Domain'),
+    title: Drupal.t('Range'),
     disabled: false,
     
     loader: new Ext.tree.TreeLoader({
@@ -32,8 +33,6 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-          	
-    		console.log(node);
           	
     		var editingNode = null;
     		
@@ -48,7 +47,6 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 						this.getUI().checkbox.disabled = true;
 						this.getUI().checkbox.checked = false;
 						editingNode = this;
-						//this.remove();
 	              	}
 	              
 	              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
@@ -217,35 +215,11 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
         		}
 	        });
 	        
-	        this.fireEvent('selectionchange', node);
+	        //this.fireEvent('selectionchange', node);
+	        
+	        // notify Observers directly
+	    	//this.notifyObservers('selectionchange', {widget: 'range', rootNode: node.getOwnerTree().getRootNode(), selectedValues: baseParams.arrayOfValues});
   		} // checkchange  
-    }
-    
-  	// override method onSelectionChange called when a fireEvent('selectionchange', ...); is invoked
-  	,onSelectionChange:function(object) {
-    	// notify Observers if there is someone
-    	this.notifyObservers('selectionchange', object);
-    },
-    
-    updatselection: function(){
-      this.root.eachChild(function(currentNode){
-        currentNode.cascade(function(){
-          // expand the node to iterate over it
-          this.getOwnerTree().expandPath(this.getPath());
-          
-          if (this.id == editingValue) {
-            this.getUI().addClass('locked-for-edition');
-            this.getUI().checkbox.disabled = true;
-            this.getUI().checkbox.checked = false;
-          }
-          
-          for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-            if (this.id == baseParams.arrayOfValues[j]) {
-              this.getUI().toggleCheck(true);
-            }
-          }
-        }, null);
-      });
     }
     
   });
