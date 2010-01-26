@@ -1503,7 +1503,8 @@ function neologism_rdf_namespaces() {
     'vann' => 'http://purl.org/vocab/vann/',
   );
   while( $voc = db_fetch_object($vocs) ) {
-  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value.'/';
+  	//$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value.'/';
+  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/' : $voc->field_custom_namespace_value;
     $namespaces[$voc->title] = $uri.$voc->title.'#';
   }
   return $namespaces;
@@ -1652,7 +1653,7 @@ function theme_class_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $
   
   $URI ='';
   if ( !empty($vocabulary->custom_namespace) ) {
-  	$curi = $vocabulary->custom_namespace.'#'.$node->title;
+  	$curi = $vocabulary->custom_namespace.$node->title;
   	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
   }
@@ -1732,7 +1733,7 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
   
 	$URI ='';
   if ( !empty($vocabulary->custom_namespace) ) {
-  	$curi = $vocabulary->custom_namespace.'#'.$node->title;
+  	$curi = $vocabulary->custom_namespace.$node->title;
   	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
   }	
