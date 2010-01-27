@@ -174,7 +174,7 @@ function neologism_export_conneg($node) {
  */
 function neologism_menu() {
   $items = array();
-
+  
   $items['node/%neologism_vocabulary'] = array(
       'title' => 'View',
       'page callback' => 'neologism_export_conneg',
@@ -805,7 +805,7 @@ function &neologism_get_rdf_model($node) {
   // Set up model with all necessary namespaces
   $rdf = new neologism_rdf_writer();
   foreach ($required_namespaces as $prefix) {
-    $rdf->namespace($prefix, $namespaces[$prefix]);  
+    $rdf->namespace_($prefix, $namespaces[$prefix]);  
   }
     
   // export the ontology
@@ -2748,7 +2748,14 @@ class neologism_rdf_writer {
     $this->_model = ModelFactory::getDefaultModel();
   }
 
-  function namespace($prefix, $uri) {
+  /**
+   * The name of this function was changed from namespace to namespace_ to
+   * avoid the conflict with the keyword namespace in PHP 5.3. 
+   * @param $prefix
+   * @param $uri
+   * @return unknown_type
+   */
+  function namespace_($prefix, $uri) {
     $this->_namespaces[$prefix] = $uri;
     $this->_model->addNamespace($prefix, $uri);
   }
@@ -2836,4 +2843,3 @@ class neologism_rdf_writer {
     echo $ser->serialize($this->_model);
   }
 }
-
