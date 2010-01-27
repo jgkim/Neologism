@@ -332,7 +332,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   	
 	  $form['field_custom_namespace']['#theme'] = 'render_custom_namespace_field';
 	  $form['field_custom_namespace']['#default_namespace'] = $default_namespace.$form['title']['#default_value'];
-	  //$form['field_custom_namespace']['#default_id'] = $form['title']['#default_value']; 
 	  
   	// we never use the preview button
 		unset($form['buttons']['preview']);
@@ -406,6 +405,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
     $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
     $form['field_range2']['#weight'] = 2;
+    $form['field_range2']['#prefix'] = '<div id="range-treeview">';
+    $form['field_range2']['#suffix'] = '</div>';
     
     // add behaviours for evoc fields if they are using the MXCheckBox selection widget
     $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
