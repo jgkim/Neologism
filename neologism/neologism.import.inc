@@ -123,6 +123,11 @@ function neologism_import_form_validate($form, &$form_state) {
 
   // Extract information about classes, properties etc from the model
   $vocabulary = evoc_get_vocabulary_description($model, $ns_prefix, $ns_uri);
+  if ($source_field == 'uploaded_file') {
+    $vocabulary['body'] = '<p>This vocabulary has been imported from a file.</p>';
+  } else {
+    $vocabulary['body'] = '<p>This vocabulary has been imported from <a href="' . $vocabulary['uri'] . '">' . $vocabulary['uri'] . '</a>.</p>';
+  }
 
   // Sanity checks over the extracted vocabulary
   if (!$vocabulary['classes'] && !$vocabulary['properties']) {
@@ -253,8 +258,8 @@ function _neologism_new_node_vocabulary(array $vocabulary) {
   $node->field_authors[0]['uid'] = $node->uid;
   $node->field_abstract[0]['value'] = check_plain($vocabulary['description']);
   $node->field_custom_namespace[0]['value'] = $vocabulary['uri'];
-  $node->teaser = '<p>This vocabulary has been imported from <a href="' . $vocabulary['uri'] . '">' . $vocabulary['uri'] . '</a>.</p>';
-  $node->body = $node->teaser;
+  $node->teaser = $vocabulary['body'];
+  $node->body = $vocabulary['body'];
   $node->promote = 1;
   return _neologism_save_imported_node($node);
 }

@@ -12,9 +12,6 @@ define("N3", "n3");
 define("XML", "xml");
 define("LAYOUT", "layout");
 
-// this definition has been moved to the Evoc module whose is using RAP
-//define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'evoc') ."/includes/rap/");
-
 define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', NEOLOGISM)."/includes/content_negotiation/");
 define("NEOLOGISM_CT_VOCABULARY", "neo_vocabulary");
 define("NEOLOGISM_CT_CLASS", "neo_class");
@@ -178,14 +175,6 @@ function neologism_export_conneg($node) {
 function neologism_menu() {
   $items = array();
 
-  $items[NEOLOGISM] = array(
-    'title' => 'Neologism Vocabularies',
-    'description' => "Show a list of vocabularies.",
-    'page callback' => 'neologism_view_index',
-    'access arguments' => array('access content'),
-    'type' => MENU_LOCAL_TASK,
-  );
-
   $items['node/%neologism_vocabulary'] = array(
       'title' => 'View',
       'page callback' => 'neologism_export_conneg',
@@ -227,27 +216,6 @@ function neologism_menu() {
       'access arguments' => array('view', 1),
       'type' => MENU_CALLBACK,
   );
-  /*
-  $items['node/%neologism_vocabulary/image'] = array(
-      'title' => 'Diagram Image',
-      'page callback' => 'neologism_image',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      //'access arguments' => array('access content'),
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
-  );
-// TODO find a way to enable the diagram on smaller vocabulary (crashes on big vocabularies)
-  $items['node/%neologism_vocabulary/diagram'] = array(
-      'title' => 'Overview Diagram',
-      'page callback' => 'neologism_show_diagram',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      //'access arguments' => array('access content'),
-      'access arguments' => array('view', 1),
-      'type' => MENU_LOCAL_TASK,
-  );
-  */
   $items['neologism/import'] = array(
     'title' => 'Import vocabulary',
     'description' => 'Import an existing RDF vocabulary from the Web or from an RDF file for editing.',
@@ -641,7 +609,24 @@ function neologism_export_html($node) {
   $output .= '<div id="authors" ><h3>'.t('Author').':</h3>';
   foreach($node->field_authors as $author) {
     $author = user_load($author);
-    $output .= '<div id="author-value">'.l($author->name, 'user/'. $author->uid).'</div>';
+    $output .= '<div id="author-value">';
+    $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
+    if ($author->profile_neologism_homepage) {
+      $output .= l($name, $author->profile_neologism_homepage);
+    } else {
+      $output .= $name;
+    }
+    if ($author->profile_neologism_affiliation) {
+      if ($author->profile_neologism_affiliation_homepage) {
+        $output .= ' (' . l($author->profile_neologism_affiliation, $author->profile_neologism_affiliation_homepage) . ')';
+      } else {
+        $output .= ' (' . $author->profile_neologism_affiliation_homepage . ')';
+      }
+    }
+    if ($author->profile_neologism_show_email) {
+      $output .= ' <i>(' . l('Email', 'mailto:' . $author->mail) . ')</i>';
+    }
+    $output .= '</div>';
   }
   $output .= '</div>';
 
@@ -808,158 +793,102 @@ function neologism_export_html($node) {
  * using RAP (RDF API for PHP)
  * seeAlso http://www4.wiwiss.fu-berlin.de/bizer/rdfapi/
  */
-function neologism_get_rdf_model($node) {
-  include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-
-  global $rdf_namespaces;
+function &neologism_get_rdf_model($node) {
+  $required_namespaces = array($node->title, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'vann');
+  $classes = _neologism_get_all_classes($node, $required_namespaces);
+  $properties = _neologism_get_all_properties($node, $required_namespaces);
+  
   // this function execute all rdf_namespaces hook available in the drupal instance
-  // and update the global array $rdf_namespaces 
-  rdf_get_namespaces();
-  
-  $detected_namespaces = array();
-  $classes = _neologism_get_all_classes($node, $detected_namespaces);
-  $properties = _neologism_get_all_properties($node, $detected_namespaces);
-  
-  $namespace = $rdf_namespaces[$node->title];
+  $namespaces = rdf_get_namespaces();
+  $namespace = $namespaces[$node->title];
 
-  $model = ModelFactory::getDefaultModel();
-
-  // add necesary namespaces
-  $model->addNamespace($node->title, $namespace);
-  $model->addNamespace('rdf', $rdf_namespaces['rdf']);
-  $model->addNamespace('rdfs', $rdf_namespaces['rdfs']);
-  $model->addNamespace('dc', $rdf_namespaces['dc']);
-  $model->addNamespace('owl', $rdf_namespaces['owl']);
-  $model->addNamespace('foaf', $rdf_namespaces['foaf']);
-  $model->addNamespace('vann', $rdf_namespaces['vann']);
-  
-  // add namespaces detected in current vocabulary
-  foreach ( $detected_namespaces as $prefix ) {
-    $model->addNamespace($prefix, $rdf_namespaces[$prefix]);  
+  // Set up model with all necessary namespaces
+  $rdf = new neologism_rdf_writer();
+  foreach ($required_namespaces as $prefix) {
+    $rdf->namespace($prefix, $namespaces[$prefix]);  
   }
     
-  //export the ontology
-  $doc = new Resource($GLOBALS['base_url'] . '/' . $node->title);
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["foaf"], "Document")));
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["owl"], "Ontology")));
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["dc"], "title"), new Literal($node->field_title[0]['value'])));
-  $description = $node->field_abstract[0]['value'];
-  if (!empty($description)) {
-    $model->add(new Statement($doc, new Resource($rdf_namespaces["dc"], "description"), new Literal($description)));
-  }
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["vann"], "preferredNamespaceUri"), new Literal($namespace)));
-  $model->add(new Statement($doc, new Resource($rdf_namespaces["vann"], "preferredNamespacePrefix"), new Literal($node->title)));
+  // export the ontology
+  $doc = $GLOBALS['base_url'] . '/' . $node->title;
+  $rdf->triple_qname($doc, "rdf:type", 'foaf:Document');
+  $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
+  $rdf->triple_literal($doc, "dc:title", $node->field_title[0]['value']);
+  $rdf->triple_literal($doc, "dc:description", $node->field_abstract[0]['value']);
+  $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $namespace);
+  $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->title);
   
-  foreach ( $classes as $class) {
-    $classresource = new Resource($namespace, $class["id"]);
-    $model->add(new Statement($classresource, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["rdfs"], "Class")));
-    $model->add(new Statement($classresource, new Resource($rdf_namespaces["rdfs"], "isDefinedBy"), $doc));
-    $model->add(new Statement($classresource, new Resource($rdf_namespaces["rdfs"], "label"), new Literal($class["label"])));
-    if ( !empty($class["comment"]) ) {
-      $model->add(new Statement($classresource, new Resource($rdf_namespaces["rdfs"], "comment"), new Literal($class["comment"])));
+  // authors and affiliations
+  foreach ($node->field_authors as $uid) {
+    $author = user_load($uid);
+    $person = $doc . '#' . rawurlencode($author->name);
+    $rdf->triple_uri($doc, "dc:creator", $person);
+    $rdf->triple_qname($person, "rdf:type", 'foaf:Person');
+    if ($author->profile_neologism_fullname) {
+      $rdf->triple_literal($person, "foaf:name", $author->profile_neologism_fullname);
+    } else {
+      $rdf->triple_literal($person, "foaf:nick", $author->name);
     }
-    if ( !empty($class[SUPERCLASSES]) ) {
-      foreach( $class[SUPERCLASSES] as $value ) {
-        $qname_splitted = explode(':', $value);
-        $model->add( new Statement($classresource, new Resource($rdf_namespaces["rdfs"], "subClassOf"), new Resource($rdf_namespaces[$qname_splitted[0]], $qname_splitted[1])));
-      }
+    $rdf->triple_uri($person, "foaf:homepage", $author->profile_neologism_homepage);
+    if ($author->profile_neologism_show_email) {
+      $rdf->triple_uri($person, "foaf:mbox", "mailto:" . $author->mail);
     }
-    if ( !empty($class[DISJOINTS_WITH]) ) {
-      foreach( $class[DISJOINTS_WITH] as $value ) {
-        $qname_splitted = explode(':', $value);
-        $model->add( new Statement($classresource, new Resource($rdf_namespaces["owl"], "disjointWith"), new Resource($rdf_namespaces[$qname_splitted[0]], $qname_splitted[1])));
-      }
+    if ($author->profile_neologism_affiliation) {
+      $org = $doc . '#' . rawurlencode($author->profile_neologism_affiliation);
+      $rdf->triple_qname($org, 'rdf:type', 'foaf:Organization');
+      $rdf->triple_uri($org, 'foaf:member', $person);
+      $rdf->triple_literal($org, 'foaf:name', $author->profile_neologism_affiliation);
+      $rdf->triple_uri($org, 'foaf:homepage', $author->profile_neologism_affiliation_homepage);
     }
+  }
+
+  // classes
+  foreach ($classes as $class) {
+    $class_uri = $namespace . $class["id"];
+    $rdf->triple_qname($class_uri, "rdf:type", 'rdfs:Class');
+    $rdf->triple_uri($class_uri, "rdfs:isDefinedBy", $doc);
+    $rdf->triple_literal($class_uri, "rdfs:label", $class["label"]);
+    $rdf->triple_literal($class_uri, "rdfs:comment", $class["comment"]);
+    $rdf->triples_qname($class_uri, "rdfs:subClassOf", $class[SUPERCLASSES]);
+    $rdf->triples_qname($class_uri, "owl:disjointWith", $class[DISJOINTS_WITH]);
   }
  
-  //export all properties
-  foreach ( $properties as $property ) {
-    $property_source = new Resource($namespace, $property["id"]);
-    $model->add(new Statement($property_source, new Resource($rdf_namespaces["rdf"], "type"), new Resource($rdf_namespaces["rdf"], "Property")));
-    $model->add(new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "isDefinedBy"), $doc));
-    $model->add(new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "label"), new Literal($property["label"])));
-    
-    if ( !empty($property["comment"]) ) {
-      $model->add(new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "comment"), new Literal($property["comment"])));
+  // export all properties
+  foreach ($properties as $property) {
+    $property_uri = $namespace . $property["id"];
+    $rdf->triple_qname($property_uri, "rdf:type", 'rdf:Property');
+    $rdf->triple_uri($property_uri, "rdfs:isDefinedBy", $doc);
+    $rdf->triple_literal($property_uri, "rdfs:label", $property["label"]);
+    $rdf->triple_literal($property_uri, "rdfs:comment", $property["comment"]);
+    $rdf->triples_qname($property_uri, 'rdfs:domain', $property[DOMAINS]);
+    $rdf->triples_qname($property_uri, 'rdfs:range', $property[RANGES]);
+    $rdf->triples_qname($property_uri, 'rdfs:subPropertyOf', $property[SUBPROPERTYOF]);
+    if (!empty($property['isInverseFunctional'])) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:InverseFunctionalProperty');
     }
-    
-    if ( !empty($property[DOMAINS]) ) {
-      foreach( $property[DOMAINS] as $value ) {
-        $qname_splitted = explode(':', $value);
-        $model->add( new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "domain"), new Resource($rdf_namespaces[$qname_splitted[0]], $qname_splitted[1])));
-      }
+    if (!empty($property["isFunctional"])) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:FunctionalProperty');
     }
-    
-    if ( !empty($property[RANGES]) ) {
-      foreach( $property[RANGES] as $value ) {
-        $qname_splitted = explode(':', $value);
-        $model->add( new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "range"), new Resource($rdf_namespaces[$qname_splitted[0]], $qname_splitted[1])));
-      }
+    if (!empty($property[INVERSE])) {
+      $rdf->triple_qname($property_uri, 'owl:inverseOf', $property['inverse']);
     }
-    
-    if ( !empty($property["isInverseFunctional"]) ) {
-      $if_uri = "http://www.w3.org/2002/07/owl#InverseFunctionalProperty";
-      $model->add( new Statement( $property_source, new Resource($rdf_namespaces["rdf"], "type"), new Resource($if_uri)) );
-    }
-    
-    if ( !empty($property["isFunctional"]) ) {
-      $f_uri = "http://www.w3.org/2002/07/owl#FunctionalProperty";
-      $model->add( new Statement( $property_source, new Resource($rdf_namespaces["rdf"], "type"), new Resource($f_uri) ) );  
-    }
-    
-    if ( !empty($property[SUBPROPERTYOF]) ) {
-      foreach( $property[SUBPROPERTYOF] as $value ) {
-        $qname_splitted = explode(':', $value);
-        $model->add( new Statement($property_source, new Resource($rdf_namespaces["rdfs"], "subPropertyOf"), new Resource($rdf_namespaces[$qname_splitted[0]], $qname_splitted[1])));
-      }
-    }
-   
-    /*
-    if ($property["inverse"] != NULL)
-      $model->add(new Statement($propresource, new Resource($ns["owl"], "inverseOf"), new Resource($namespace.$property["inverse"])));
-      */            
   }
-
-  return $model;
+  return $rdf;
 }
 
 /**
  * Output the RDF/XML version of the vocabulary specified as input
  */
 function neologism_export_rdfxml($node) {
-
-		define('HIDE_ADVERTISE', true);
-    include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
-    
-    
-    $model = neologism_get_rdf_model($node);
-    $ser = new RDFSerializer();
-    $rdf = &$ser->serialize($model);
-    $model->close();
-
-    header("Content-Type: application/rdf+xml; charset=utf-8");
-    echo $rdf;
+    $rdf = neologism_get_rdf_model($node);
+    $rdf->write_rdfxml();
 }
 
 /**
  * Output the N3 version of the vocabulary specified as input
  */
 function neologism_export_n3($node) {
-
-    define('HIDE_ADVERTISE', true);
-    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include_once(RDFAPI_INCLUDE_DIR . "syntax/N3Serializer.php");
-
-    $model = neologism_get_rdf_model($node);
-    $ser = new N3Serializer();
-    $ser->setPrettyPrint(true);
-    $ser->addNoNSPrefix($GLOBALS['base_url'] . '/');
-    $n3 = &$ser->serialize($model);
-    $model->close();
-
-    header("Content-Type: text/rdf+n3; charset=utf-8");
-    echo $n3;
+    $rdf = neologism_get_rdf_model($node);
+    $rdf->write_n3();
 }
 
 /**
@@ -1124,21 +1053,6 @@ function neologism_image($node) {
 }
 
 /**
- * Output a list of all the vocabularies present on the site.
- */
-function neologism_view_index() {
-
-  $result = pager_query(db_rewrite_sql('SELECT n.nid, n.sticky, n.created FROM {node} n WHERE n.type = "'.NEOLOGISM_CT_VOCABULARY.'" AND n.status = 1 ORDER BY n.sticky DESC, n.created DESC'), variable_get('default_nodes_main', 10));
-  $output = '';
-  while ($node = db_fetch_object($result)) {
-    $output .= node_view(node_load($node->nid), 1);
-  }
-  $output .= theme('pager', NULL, variable_get('default_nodes_main', 10));
-
-  return $output;
-}
-
-/**
  * Implementation of hook_link().
  */
 function neologism_link($type, $node = NULL, $teaser = FALSE) {
@@ -1207,11 +1121,11 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         $node->authors = array();
         foreach($node->field_authors as $author) {
           $author = user_load($author);
-          if( empty($author->name) ) {
-            $node->authors[] = 'anonymous';
-          }
-          else {
-            $node->authors[] = l($author->name, 'user/'. $author->uid, array('attributes' => array('title' => $author->name)));
+          $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
+          if ($author->profile_neologism_homepage) {
+            $node->authors[] = l($name, $author->profile_neologism_homepage);
+          } else {
+            $node->authors[] = $name;
           }
         }
       }
@@ -1493,19 +1407,26 @@ function neologism_get_preferred_uri($uri, $accept) {
 * load all the vocabularies as namespaces
 */
 function neologism_rdf_namespaces() {
-  $ct = content_types();
-  if (!isset($ct[NEOLOGISM_CT_VOCABULARY])) {
-    return NULL; // Just a sanity check
-  }
 
-  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
+  // Start with the namespaces required in Neologism's RDF output
   $namespaces = array(
+// The rdf module behaves funny if the same prefix is assigned twice,
+// even if to the same URI. So we just hope that they are declared.
+//    'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+//    'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
+//    'dc' => 'http://purl.org/dc/elements/1.1/',
+//    'owl' => 'http://www.w3.org/2002/07/owl#',
+//    'foaf' => 'http://xmlns.com/foaf/0.1/',
     'vann' => 'http://purl.org/vocab/vann/',
   );
+
+  // Add namespaces of all user-created vocabularies
+  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
   while( $voc = db_fetch_object($vocs) ) {
   	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/'.$voc->title.'#' : $voc->field_custom_namespace_value;
     $namespaces[$voc->title] = $uri;
   }
+
   return $namespaces;
 }
 
@@ -1958,7 +1879,6 @@ function theme_neo_property_node_form($form) {
  * @return unknown_type
  */
 function theme_neo_class_node_form($form) {
-	//var_dump($form);
 	$output = '';
 	$buttons = drupal_render($form['buttons']);
 	$URI = drupal_render($form['title']);
@@ -2811,3 +2731,109 @@ function neologism_get_xsd_datatype_list() {
 	  );
 	return $neologism_xsd_datatypes;
 }
+
+/**
+ * A writer for RDF statements. Encapsulates RAP storage and serialisation,
+ * has its own namespace management, and provides a convenient API for
+ * generating RDF statements.
+ */
+class neologism_rdf_writer {
+  var $_model;
+  var $_namespaces = array();
+  var $_no_namespaces = array();
+
+  function __construct() {
+    define('HIDE_ADVERTISE', true);
+    require_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
+    $this->_model = ModelFactory::getDefaultModel();
+  }
+
+  function namespace($prefix, $uri) {
+    $this->_namespaces[$prefix] = $uri;
+    $this->_model->addNamespace($prefix, $uri);
+  }
+
+  function triple_literal($s, $p, $o) {
+    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_literal($o));
+  }
+
+  function triple_uri($s, $p, $o) {
+    // RAP's N3 serialiser eagerly tries to compress every URI it
+    // encounters. This is not desired for URIs like mailto: and
+    // web page URLs. We assume that all namespaces which we actually
+    // want are already declared, and that only declared namespaces
+    // will occur in subject positions. Everything else should not
+    // be compressed.
+    $this->_dont_compress($o);
+    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_uri($o));
+  }
+
+  function triple_qname($s, $p, $o) {
+    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_qname($o));
+  }
+
+  function triples_qname($s, $p, $os) {
+    if (empty($os)) return;
+    if (!is_array($os)) {
+      throw new Exception("Not an array: '$os'");
+    }
+    foreach ($os as $qname) {
+      $this->triple_qname($s, $p, $qname);
+    }
+  }
+
+  function &_uri($uri) {
+    if (empty($uri)) return null;
+    return new Resource($uri);
+  }
+
+  function &_qname($qname) {
+    if (empty($qname)) return null;
+    return $this->_uri($this->_expand_qname($qname));
+  }
+
+  function &_literal($s) {
+    if (empty($s)) return null;
+    return new Literal($s);
+  }
+
+  function _stmt($s, $p, $o) {
+    if (empty($s) || empty($p) || empty($o)) return;
+    $this->_model->add(new Statement($s, $p, $o));
+  }
+
+  function _expand_qname($qname) {
+    list($prefix, $local) = explode(':', $qname);
+    if (!isset($this->_namespaces[$prefix])) return null;
+    return $this->_namespaces[$prefix] . $local;
+  }
+
+  /**
+   * Checks if there already is a namespace declaration for this URI;
+   * if not, add it to the list of uncompressible namespaces.
+   */
+  function _dont_compress($uri) {
+    if (!preg_match('!^(.*[/#:]).*?$!', $uri, $match)) return;
+    if (in_array($match[1], $this->_no_namespaces)) return;
+    $this->_no_namespaces[] = $match[1];
+  }
+
+  function write_rdfxml() {
+    include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
+    header("Content-Type: application/rdf+xml; charset=utf-8");
+    $ser = new RDFSerializer();
+    echo $ser->serialize($this->_model);
+  }
+
+  function write_n3() {
+    include_once(RDFAPI_INCLUDE_DIR . "syntax/N3Serializer.php");
+    header("Content-Type: text/rdf+n3; charset=utf-8");
+    $ser = new N3Serializer();
+    $ser->setPrettyPrint(true);
+    foreach ($this->_no_namespaces as $uri) {
+      $ser->addNoNSPrefix($uri);
+    }
+    echo $ser->serialize($this->_model);
+  }
+}
+
