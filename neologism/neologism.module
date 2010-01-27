@@ -1689,9 +1689,9 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
   }
   
   $range = '';
-  if ( !empty($node->content['group_range']['group']['field_range2']['field']['items'][0]['#item']['evoc_term']) ) {
+  if ( !empty($node->content['field_range2']['field']['items'][0]['#item']['evoc_term']) ) {
     $range .= '<div class="row"><div class="column-title">Range:</div><div class="column-values">';
-    foreach ( $node->content['group_range']['group']['field_range2']['field']['items'] as $value ) {
+    foreach ( $node->content['field_range2']['field']['items'] as $value ) {
       $range .= theme('evocreference_formatter_default', $value).'&nbsp ';
     }
     $range .= '</div></div>';
