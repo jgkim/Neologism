@@ -18,6 +18,7 @@ function neologism_profile_modules() {
     'color', 'help', 'menu', 
     'path', 
     'taxonomy', 'dblog',
+    'profile',
 
     // Core - required
     'block', 'filter', 'node', 'system', 'user', 'trigger',
@@ -30,7 +31,6 @@ function neologism_profile_modules() {
   
     // Contrib
     'rdf', 
-    //'sparql', 
     //'evoc', 
     //'evocreference', 'ext', 'mxcheckboxselect',
     
@@ -123,7 +123,6 @@ function neologism_profile_tasks(&$task, $url) {
 	  variable_set('theme_settings', $theme_settings);
 	
 	  $modules_list = array(
-	    'sparql',
 	    'evoc', 
 	    'evocreference', 'ext', 'mxcheckboxselect',
 	    //'neologism'
@@ -156,10 +155,9 @@ function neologism_profile_tasks(&$task, $url) {
   	// create custom block, this kind of block are stored in the boxes table
   	$form_id = 'block_add_block_form';
   	
-  	$link = l('Login', 'user', array('attributes' => Array('title' => 'User Login form or User Account')));
+  	$link = l('Login', 'user');
   	$image = theme('image', drupal_get_path('module', 'neologism') .'/images/neologism-logo-80x16.png', 
-  		t('Powered by Neologism, an Ontology Editor based on Drupal.'), 
-  		t('Powered by Neologism, an Ontology Editor based on Drupal.'), array('class' => 'poweredby-logo'));
+  		t('Neologism'), '', array('class' => 'poweredby-logo'));
   	$imagelink = l($image, 'http://neologism.deri.ie/', array('html' => TRUE));
   	$form_state['values'] = array(
 			'module' => 'block',
@@ -194,18 +192,9 @@ function neologism_profile_tasks(&$task, $url) {
   	$form_id = 'system_theme_settings';
   	$form_state['values'] = array(
 			'toggle_logo' => '0',
-  		'toggle_mission' => '1',
   		'toggle_node_info_neo_class' => '0',
   		'toggle_node_info_neo_property' => '0',
   		'toggle_node_info_neo_vocabulary' => '0'
-  	);  	
-  	// submit the form using these values
-  	drupal_execute($form_id, $form_state);
-  	
-  	// set the default mission
-  	$form_id = 'system_site_information_settings';
-  	$form_state['values'] = array(
-			'site_mission' => 'Here should goes the mission\'s message (We are working in such a message...)'
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
@@ -338,10 +327,6 @@ function neologism_profile_tasks(&$task, $url) {
 										)"
   	);
   	drupal_execute($form_id, $form_state);
-  	
-  	// hidden the SPARQL links
-  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "sparql"');
-  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "node/add/sparql"');
   	
   	// return control to the installer
 	  $task = 'profile-finished';
