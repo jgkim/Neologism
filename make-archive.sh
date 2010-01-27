@@ -6,7 +6,7 @@ mv drupal-6.* neologism
 cd neologism
 
 # Download required modules
-drush dl cck rdf sparql ext rules
+drush dl cck rdf ext rules
 
 # Download and extract ARC, which is required as part of the RDF module
 mkdir sites/all/modules/rdf/vendor
