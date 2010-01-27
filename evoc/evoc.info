@@ -2,7 +2,6 @@
 name = External RDF Vocabulary Importer
 description = Allows to import external Vocabularies in order to map them to Drupal data objects.
 dependencies[] = rdf
-dependencies[] = sparql
 package = RDF
 core = 6.x
 php = 5.2

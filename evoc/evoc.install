@@ -193,7 +193,6 @@ function evoc_update_6100() {
   db_create_table($ret, 'evoc_rdf_superproperties', $schema['evoc_rdf_superproperties']);
   db_create_table($ret, 'evoc_rdf_propertiesdomains', $schema['evoc_rdf_propertiesdomains']);
   db_create_table($ret, 'evoc_rdf_propertiesranges', $schema['evoc_rdf_propertiesranges']);
-  db_create_table($ret, 'evoc_sparql_endpoints', $schema['evoc_sparql_endpoints']);
 
   // create all the superclasses in the table evoc_rdf_superclasses for each class 
   // in evoc_rdf_classes that its superclass column has some value

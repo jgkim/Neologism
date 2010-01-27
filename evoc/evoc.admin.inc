@@ -30,7 +30,6 @@ function evoc_manage_vocabularies() {
     $rows[] = array(
         array('data' => $prefix),
         array('data' => $uri),
-//        array('data' => l(t('edit'), 'evoc/edit/'.$prefix, array('attributes' => array('title' => 'Edit the prefix')))),
         array('data' => l(t('remove'), 'evoc/remove/'.$prefix, array('attributes' => array('title' => 'Remove this external vocabulary')))),
     );
   }
@@ -152,55 +151,6 @@ function evoc_add_vocabulary_submit($form, &$form_state) {
       array('%classcount' => count($vocabulary['classes']), '%propertycount' => count($vocabulary['properties']))));
   $form_state['redirect'] = 'evoc';
 }
-
-/*
-function evoc_edit_namespace(&$form_state, $prefix) {
-  $form['#theme'] = 'evoc_admin_edit_namespace_form';
-  $form['old_prefix'] = array('#type' => 'value', '#value' => $prefix);
-  $form['prefix'] = array(
-      '#type' => 'textfield',
-      '#title' => t('New namespace prefix'),
-      '#default_value' => $prefix,
-      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. It must be a prefix that is not yet in use.'),
-      '#size' => 10,
-      '#required' => TRUE,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-  $form['cancel'] = array(
-    '#type' => 'markup',
-    '#value' => l(t('Cancel'), 'evoc', array('attributes' => array('title' => 'Cancel the operation and return to the management page'))),
-    '#weight' => 11,
-  );
-  return $form;
-}
-
-function evoc_edit_namespace_validate($form, &$form_state) {
-  if (isset($form_state['values']['prefix'])) {
-    $ns_prefix = $form_state['values']['prefix'];
-    if (!rdf_is_valid_qname($ns_prefix . ':x')) {
-      form_set_error('ns_prefix', t('Invalid namespace.'));
-      return;
-    }
-    $namespaces = rdf_get_namespaces();
-    if (isset($namespaces[$ns_prefix])) {
-      form_set_error('ns_prefix', t('This prefix is alredy in use.'));
-      return;
-    }
-  }
-}
-
-function evoc_edit_namespace_submit($form, &$form_state) {
-  $old = $form_state['values']['old_prefix'];
-  $new = $form_state['values']['prefix'];
-  $values = $form_state['values'];
-  evoc_change_prefix($old, $new);
-  drupal_set_message(t('Prefix “%old” changed to “%new”.', array('%old' => $old, '%new' => $new)));
-  $form_state['redirect'] = 'evoc';
-}
-*/
 
 /**
  * Build a confirm form for deletion of a namespace.

@@ -140,6 +140,7 @@ function evoc_get_vocabulary_description(&$model, $ns_prefix, $ns_uri) {
       'uri' => $ns_uri,
       'title' => _evoc_query_for_title($model, $ns_uri),
       'description' => _evoc_query_for_description($model, $ns_uri),
+      'body' => null,   // string with detailed HTML description
       'classes' => array(),
       'properties' => array(),
       'ignored_ns' => array(),

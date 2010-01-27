@@ -46,15 +46,6 @@ function evoc_menu() {
     'file' => 'evoc.admin.inc',
     'weight' => 2,
   );
-//  $items['evoc/edit/%'] = array(
-//    'title callback' => 'evoc_edit_namespace_title',
-//    'title arguments' => array(2),
-//    'page callback' => 'drupal_get_form',
-//    'page arguments' => array('evoc_edit_namespace', 2),
-//    'access arguments' => array('manage external vocabularies'),
-//    'type' => MENU_CALLBACK,
-//    'file' => 'evoc.admin.inc',
-//  );
   $items['evoc/remove/%'] = array(
     'title' => 'Remove external vocabulary',
     'page callback' => 'drupal_get_form',
@@ -66,15 +57,8 @@ function evoc_menu() {
   return $items;
 }
 
-//function evoc_edit_namespace_title($prefix) {
-//  $namespaces = rdf_get_namespaces();
-//  if (!isset($namespaces[$prefix])) return false;
-//  $uri = $namespaces[$prefix];
-//  return t('Change prefix for') . ' ' . $uri;
-//}
-
 function evoc_import_vocabulary($uri, $prefix, $showdetails = false) {
-  require_once(drupal_get_path('module', 'evoc')."/evoc.load_vocab.inc");
+  module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
     $model = evoc_read_RDF_from_URI($uri);
     $vocabulary = evoc_get_vocabulary_description($model, $prefix, $uri);
