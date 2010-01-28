@@ -562,10 +562,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 function neologism_vocabulary_load($nid) {
   if ($nid) {
     $node = node_load($nid);
+    
+  	
     return $node;
-    //if ($node->type == 'neo_vocabulary') {
-      
-    //}
   }
   else {
     return FALSE;
@@ -1128,6 +1127,15 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
             $node->authors[] = $name;
           }
         }
+        
+       	$node->namespace_uri = $node->field_custom_namespace[0]['value'];
+			  if( $node->namespace_uri == '' ) {
+			  	$node->namespace_uri = url($node->path, array('absolute' => TRUE)) . '#';
+			  }
+	    	
+        // this is a fast solution to show the vocabulary statistic to the user
+	    	$node->count_classes = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS));
+	    	$node->count_properties = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY));
       }
       break;
       

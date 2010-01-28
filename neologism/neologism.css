@@ -816,7 +816,7 @@ img#legend {
 	}
 	
 .vocabulary-node .authors {
-  	font-size: 14px;
+  	font-size: 12px;
   	margin: 0px 0px 5px 0px;
 }
 
@@ -826,18 +826,41 @@ img#legend {
 }
 
 .vocabulary-node .authors h3 {
+		font-weight:bold;	
   	display: inline;
-  	font-size: 14px;
+  	font-size: 12px;
 }
 
 .vocabulary-node .abstract {
+		font-size: 12px;
   	margin: 7px 0 10px 0px;
   /*padding: 10px 0px 10px 0px;*/
 }
 
 .vocabulary-node .abstract h3 {
   	margin: 0px 0px 3px 0px;
-  	font-size: 14px;
+  	font-size: 12px;
+}
+
+.vocabulary-node .namespace-uri {
+ 	font-size: 12px; 
+	margin: 0px 0px 0px 0px;
+}
+
+.vocabulary-node .namespace-uri h3 {
+	display: inline;
+ 	font-size: 12px; 
+	font-weight:bold;
+}
+
+.vocabulary-node .terms-overview {
+ 	font-size: 12px; 
+}
+
+.vocabulary-node .terms-overview h3 {
+	font-weight:bold;
+	display: inline;
+ 	font-size: 12px; 
 }
 
 .poweredby-logo {

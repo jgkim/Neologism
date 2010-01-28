@@ -2,7 +2,7 @@
 // $Id:  $
 
 function neologism_install() {
-  _neologism_install_node_type('neo_vocabulary');
+	_neologism_install_node_type('neo_vocabulary');
   _neologism_install_node_type('neo_class');
   _neologism_install_node_type('neo_property');
   content_clear_type_cache();
@@ -126,4 +126,3 @@ function _neologism_uninstall_profile_field($name) {
   $form['values']['confirm'] = 1;
   drupal_execute('profile_field_delete', $form, $fid);
 }
-
