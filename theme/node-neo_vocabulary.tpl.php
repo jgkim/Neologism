@@ -30,6 +30,17 @@
         <?php print $node->field_abstract[0]['value']; ?>
       </div>
     <?php } ?>
+    
+    <div class="namespace-uri">
+        <h3>Namespace URI:</h3>
+				<span class="value"><a href="<?php print( $node->namespace_uri ); ?>"><?php print( $node->namespace_uri ); ?></a></span>
+    </div>
+    
+    <div class="terms-overview">
+        <h3>Terms overview:</h3>
+				<span class="value"><?php print( ($node->count_classes).' '.(($node->count_classes == 1) ? 'Class' : 'Classes').', '.($node->count_properties).' '.(($node->count_properties == 1) ? 'Property' : 'Properties').'.'); ?></span>
+    </div>
+    
     <!--<?php print $content ?>-->
   </div>
 
