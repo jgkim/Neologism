@@ -18,3 +18,9 @@ svn export https://neologism.googlecode.com/svn/tags/DRUPAL-6--1-0.33/ neologism
 # try the new package and upload it to googlecode
 
 # switch back the repository to the dev version by editing CHANGELOG.neologism.txt and sites/all/modules/neologism/neologism.info
+
+# update the version number in the "Download Neologism" button on the Neologism homepage (found in /website/content/home-intro.html)
+
+# update the link to the latest downloadable version ('download-latest' in /website/index.php)
+
+# republish the website (@@@ how?)
