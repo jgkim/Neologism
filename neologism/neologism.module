@@ -270,7 +270,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	
 	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
-    $form['#validate'][] = 'neo_vocabulary_node_form_validate';
+		$form['#validate'][] = 'neo_vocabulary_node_form_validate';
   	$form['title']['#theme'] = "render_URI_field";
   	
   	$default_namespace = _neologism_get_namespace();
@@ -297,6 +297,17 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    //'#theme' => "render_custom_namespace_field"
 	  );
 	  */
+  	
+  	// create a fieldset and make a copy of the field_additional_custom_rdf to locate it in a collapsable 
+  	// panel and unset it for the current position
+  	$form['aditional_custom_rdf_fieldset'] = array(
+	    '#type' => 'fieldset', 
+	    '#title' => t('Additional custom RDF'), 
+	    '#collapsible' => TRUE, 
+	    '#collapsed' => TRUE,
+  	);
+  	$form['aditional_custom_rdf_fieldset']['field_additional_custom_rdf'] = $form['field_additional_custom_rdf'];
+  	unset($form['field_additional_custom_rdf']);
   	
 	  $form['field_custom_namespace']['#theme'] = 'render_custom_namespace_field';
 	  $form['field_custom_namespace']['#default_namespace'] = $default_namespace.$form['title']['#default_value'];
@@ -871,6 +882,16 @@ function &neologism_get_rdf_model($node) {
       $rdf->triple_qname($property_uri, 'owl:inverseOf', $property['inverse']);
     }
   }
+  
+  if( !empty($node->field_additional_custom_rdf) ) {
+  	// TODO If the vocabulary's N3 or RDF/XML is viewed, and the custom RDF field is not empty, then the 
+		// content of that field will be parsed with an N3 parser and loaded into the model that is used to 
+		// generate the N3 or RDF/XML output. So the additional triples will show up when the model is 
+		// rendered.
+		// Add code to do such a thing here
+  }
+  
+  
   return $rdf;
 }
 
