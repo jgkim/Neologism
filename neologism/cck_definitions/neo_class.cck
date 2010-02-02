@@ -222,26 +222,18 @@ $content['fields']  = array (
     'label' => 'Superclass',
     'field_name' => 'field_superclass2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '-5',
     'description' => 'If every member of this class is also a member of another class, then that other class should be selected here.',
     'default_value' => 
     array (
-      0 => 
-      array (
-        'evoc_term' => 'rdfs:Resource',
-      ),
     ),
     'default_value_php' => '',
     'default_value_widget' => 
     array (
       'field_superclass2' => 
       array (
-        0 => 
-        array (
-          'evoc_term' => 'rdfs:Resource',
-        ),
         'evoc_term' => '',
       ),
     ),
@@ -255,7 +247,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 
@@ -288,7 +280,7 @@ $content['fields']  = array (
     'label' => 'Disjoint with',
     'field_name' => 'field_disjointwith2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '-4',
     'description' => 'If members of this class cannot logically also be members of another class, then that other class should be selected here.',
@@ -313,7 +305,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 

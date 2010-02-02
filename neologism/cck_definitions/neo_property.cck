@@ -222,26 +222,18 @@ $content['fields']  = array (
     'label' => 'Domain',
     'field_name' => 'field_domain2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '-5',
     'description' => 'If having this property makes something belong to a certain class, then the class should be selected here.',
     'default_value' => 
     array (
-      0 => 
-      array (
-        'evoc_term' => '',
-      ),
     ),
     'default_value_php' => '',
     'default_value_widget' => 
     array (
       'field_domain2' => 
       array (
-        0 => 
-        array (
-          'evoc_term' => '',
-        ),
         'evoc_term' => '',
       ),
     ),
@@ -255,7 +247,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 
@@ -296,7 +288,7 @@ $content['fields']  = array (
     'label' => 'Inverse',
     'field_name' => 'field_inverse2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '-2',
     'description' => '',
@@ -321,7 +313,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 
@@ -496,7 +488,7 @@ $content['fields']  = array (
     'label' => 'Superproperty',
     'field_name' => 'field_superproperty2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '1',
     'description' => '',
@@ -521,7 +513,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 
@@ -562,7 +554,7 @@ $content['fields']  = array (
     'label' => 'Range',
     'field_name' => 'field_range2',
     'type' => 'evocreference',
-    'widget_type' => 'mxcheckbox_select',
+    'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
     'weight' => '4',
     'description' => 'If all possible values of this property are members of a certain class, then the class should be selected here.',
@@ -587,7 +579,7 @@ $content['fields']  = array (
     ),
     'op' => 'Save field settings',
     'module' => 'evocreference',
-    'widget_module' => 'mxcheckboxselect',
+    'widget_module' => 'evocwidget_dynamic',
     'columns' => 
     array (
       'evoc_term' => 
