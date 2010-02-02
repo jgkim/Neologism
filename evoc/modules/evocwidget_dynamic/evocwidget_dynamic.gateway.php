@@ -4,21 +4,12 @@
  * Contruct a tree structure
  * @return json with the tree structure 
  */
-function mxcheckboxselect_get_full_classes_tree() {
- 
-  //include( drupal_get_path('module', 'neologism')."/neologism.gateway.php" );
-  
+function evocwidget_dynamic_get_full_classes_tree() {
   $nodes = array();
   
   $node = $_POST['node'];
   $nodes = array();
-  //$current_values = json_decode($_POST['arrayOfValues']);
   $current_values = explode(',', $_POST['arrayOfValues']);
-  
-  //if( !empty($current_values) )
-  //firep($current_values, "arrayOfValues");
-  //watchdog($type, $message)
-  //trace($current_values);
   
   if ( $node == 'root' ) {
 
@@ -28,12 +19,11 @@ function mxcheckboxselect_get_full_classes_tree() {
     while ($class = db_fetch_object($classes)) {
       $class->prefix = trim($class->prefix);
       $class->id = trim($class->id);
-      $root_superclasses = mxcheckboxselect_get_root_superclasses($class->prefix.':'.$class->id);
+      $root_superclasses = evocwidget_dynamic_get_root_superclasses($class->prefix.':'.$class->id);
     }
   
     foreach ($root_superclasses as $class) {
-      $leaf = (count($children_of_children = mxcheckboxselect_gateway_get_children($class)) == 0 );
-      //$checked = (!empty($classes_array) && in_array($class, $classes_array)) ? TRUE : FALSE;
+      $leaf = (count($children_of_children = evocwidget_dynamic_gateway_get_children($class)) == 0 );
       $checked = FALSE;
       if (!empty($current_values) ) {
         if ( in_array($class, $current_values) ) {
@@ -45,11 +35,10 @@ function mxcheckboxselect_get_full_classes_tree() {
     }
   }
   else {
-    $children = mxcheckboxselect_gateway_get_children($node);
+    $children = evocwidget_dynamic_gateway_get_children($node);
     foreach( $children as $child ) {
-      //if( $child['prefix'] == $voc['title'] ) {
         $class_qname = $child['prefix'].':'.$child['id'];
-        $leaf = (count($children_of_children = mxcheckboxselect_gateway_get_children($class_qname)) == 0 );
+        $leaf = (count($children_of_children = evocwidget_dynamic_gateway_get_children($class_qname)) == 0 );
         
         $checked = FALSE;
         if (!empty($current_values) ) {
@@ -59,18 +48,13 @@ function mxcheckboxselect_get_full_classes_tree() {
         }
      
         $nodes[] = array('text' => $class_qname, 'id' => $class_qname, 'leaf' => $leaf, 'iconCls' => 'class-samevoc', 'checked' => $checked);
-        
-        // used for ColumnTree class
-        //$nodes[] = array('classname' => $class_qname, 'label' => $class_qname, 
-        //  'description' => 'the description', 'uiProvider' => 'col', 'cls' => 'master-task', 'leaf' => $leaf, 'iconCls' => 'class-samevoc');
-      //}
     }
   }
 
   drupal_json($nodes);
 }
 
-function mxcheckboxselect_get_root_superclasses($class){
+function evocwidget_dynamic_get_root_superclasses($class){
   static $root_superclasses = array();
   
   $term_qname_parts = explode(':', $class);
@@ -85,17 +69,17 @@ function mxcheckboxselect_get_root_superclasses($class){
     $has_superclass = true;
     $term->superclass = trim($term->superclass);
     if( $term->superclass == '' ) {
-      if( !_mxcheckboxselect_gateway_in_array($class, $root_superclasses) ) {
+      if( !_evocwidget_dynamic_gateway_in_array($class, $root_superclasses) ) {
         $root_superclasses[] = $class;  
       }
     }
     else {
-      $root_superclasses = mxcheckboxselect_get_root_superclasses($term->superclass);  
+      $root_superclasses = evocwidget_dynamic_get_root_superclasses($term->superclass);  
     }
   }
   
   if( !$has_superclass ) {
-    if( !_mxcheckboxselect_gateway_in_array($class, $root_superclasses) ) {
+    if( !_evocwidget_dynamic_gateway_in_array($class, $root_superclasses) ) {
         $root_superclasses[] = $class;  
       }
   }
@@ -103,7 +87,7 @@ function mxcheckboxselect_get_root_superclasses($class){
   return $root_superclasses;
 }
 
-function _mxcheckboxselect_gateway_in_array($strclass, array $strarray_values) {
+function _evocwidget_dynamic_gateway_in_array($strclass, array $strarray_values) {
   foreach ($strarray_values as $str) {
     if( $str == $strclass ) {
       return true;
@@ -119,7 +103,7 @@ function _mxcheckboxselect_gateway_in_array($strclass, array $strarray_values) {
  * @param object $node
  * @return array of children belonging to $node 
  */
-function mxcheckboxselect_gateway_get_children($node) {
+function evocwidget_dynamic_gateway_get_children($node) {
   $children = db_query(db_rewrite_sql("select n.title, n.nid from content_field_superclass2 as c inner join node as n on c.nid = n.nid 
     where c.field_superclass2_evoc_term = '%s'"), $node);
    

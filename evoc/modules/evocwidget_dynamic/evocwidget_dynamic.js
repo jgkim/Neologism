@@ -3,6 +3,7 @@
  */
 
 var EvocWidget = {};
+console.log('EvocWidget definition');
 
 /**
 * appends a javascript array to a form
@@ -148,3 +149,7 @@ EvocWidget.createStandardClassSelecctionWidget = function( field_name ) {
     }
   });
 }
+
+$(document).ready( function() {
+	console.log('document ready for evoc');
+});

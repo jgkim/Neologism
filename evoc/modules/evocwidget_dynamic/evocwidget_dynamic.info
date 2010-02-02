@@ -1,0 +1,13 @@
+; $Id: evocwidget_dynamic.info, v 1.0.0.1 2009/08/28 16:26:17 guidocecilio Exp $
+name = EvocWidget Dynamic
+description = Defines a CCK multiple selection field widget for evoc terms, to allow easier multi-selection for users.
+dependencies[] = evocreference
+dependencies[] = ext
+package = CCK
+core = 6.x
+; Information added by drupal.org packaging script on 2009-05-29
+version = "6.x-1.5"
+core = "6.x"
+project = "neologism"
+
+

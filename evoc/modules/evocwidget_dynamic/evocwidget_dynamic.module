@@ -7,36 +7,36 @@
  */
 
 
-define(WIDGET_NAME, 'mxcheckbox_select');
+define(WIDGET_NAME, 'evocwidget_dynamic');
 define(EVOCWIDGET_BEHAVIOUR_HOOK_PREPROCESS, 'evoc_widgetbehaviour_preprocess');
 define(FIELDATTR_EXECUTE_PREPROCESS, 'execute_preprocess');
 
 /**
  * Implementation of hook_help().
  */
-function mxcheckboxselect_help($path, $arg) {
+function evocwidget_dynamic_help($path, $arg) {
   $output = '';
   switch ($path) {
-    case 'admin/help#mxcheckboxselect':
+    case 'admin/help#evocwidget_dynamic':
       $output = '<p>'. t('Provides a CCK widget for editing evocreference fields that allows users to select from a list of options in a left box and have them visually moved into the right box when options are chosen.') .'</p>';
       break;
   }
   return $output;
 }
 
-function mxcheckboxselect_init() {
+function evocwidget_dynamic_init() {
   ext_load_library();
-  
+  drupal_add_js(drupal_get_path('module', 'evocwidget_dynamic') . '/evocwidget_dynamic.js');
 }
 
-function mxcheckboxselect_menu() {
-  $items['mxcheckboxselection/json/getfullclasstree'] = array(
+function evocwidget_dynamic_menu() {
+  $items['evocwidget_dynamic/json/getfullclasstree'] = array(
     'title' => 'Neologism AJAX gateway',
     'description' => 'Neologism Ajax Gateway.',
-    'page callback' => 'mxcheckboxselect_get_full_classes_tree',
+    'page callback' => 'evocwidget_dynamic_get_full_classes_tree',
     'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
-    'file' => 'mxcheckboxselect.gateway.php'
+    'file' => 'evocwidget_dynamic.gateway.php'
   );
 
   return $items;
@@ -46,7 +46,7 @@ function mxcheckboxselect_menu() {
 /**
  * Implementation of hook_form_alter().
  */
-function mxcheckboxselect_form_alter(&$form, $form_state, $form_id) {
+function evocwidget_dynamic_form_alter(&$form, $form_state, $form_id) {
   // Provide additional help for the field settings form.
   if ($form_id == 'content_field_edit_form' && isset($form['widget'])) {
     $widget_type = $form['#field']['widget']['type'];
@@ -60,7 +60,7 @@ function mxcheckboxselect_form_alter(&$form, $form_state, $form_id) {
     }
   }
   
-  // add the validation handler to any form that containt a mxcheckboxselect widget
+  // add the validation handler to any form that containt a evocwidget_dynamic widget
   if ( isset($form['#field_info']) ) {
     foreach ( $form['#field_info'] as $field_name => $value ) {
       if ( ($value['type'] == 'evocreference') && ($value['widget']['type'] == WIDGET_NAME) ) {
@@ -71,24 +71,16 @@ function mxcheckboxselect_form_alter(&$form, $form_state, $form_id) {
     }    
   }
   
-  
-  // add the validation handler to both content type
-  /*
-  if( $form_id == NEOLOGISM_CT_CLASS.'_node_form' )
-  {
-     $form['#attributes']['onsubmit'] = 'return EvocWidget.onsubmitCreateInputFields("'.$form['#id'].'");';
-  }
-  */
 }
 
 /**
  * Implementation of hook_widget_info().
  * This specifies the label and that it is a widget for the different field types.
  */
-function mxcheckboxselect_widget_info() {
+function evocwidget_dynamic_widget_info() {
   return array(
     WIDGET_NAME => array(
-      'label' => t('MXCheckboxSelect on a tree'),
+      'label' => t('evocwidget Dynamic behaviors'),
       'field types' => array('evocreference'),
       'multiple values' => CONTENT_HANDLE_MODULE,
       'callbacks' => array(
@@ -104,12 +96,12 @@ function mxcheckboxselect_widget_info() {
  * Any FAPI callbacks needed for individual widgets can be declared here,
  * and the element will be passed to those callbacks for processing.
  */
-function mxcheckboxselect_elements() {
+function evocwidget_dynamic_elements() {
   return array(
     WIDGET_NAME => array(
       '#input' => TRUE,
       '#columns' => array('name'), '#delta' => 0,
-      '#process' => array('mxcheckboxselect_process'),
+      '#process' => array('evocwidget_dynamic_process'),
     )
   );
 }
@@ -144,7 +136,7 @@ function mxcheckboxselect_elements() {
  * @return
  *   the form item for a single element for this field
  */
-function mxcheckboxselect_widget(&$form, &$form_state, $field, $items, $delta = 0) {
+function evocwidget_dynamic_widget(&$form, &$form_state, $field, $items, $delta = 0) {
   switch ($field['widget']['type']) {
     case WIDGET_NAME:
       $element = array(
@@ -164,7 +156,7 @@ function mxcheckboxselect_widget(&$form, &$form_state, $field, $items, $delta = 
  * Substitute in the node title for the node nid.
  */
 /*
-function mxcheckboxselect_value($element, $edit = FALSE) {
+function evocwidget_dynamic_value($element, $edit = FALSE) {
   //$field_key  = $element['#columns'][0];
   //if (!empty($element['#default_value'][$field_key])) {
     //$nid = $element['#default_value'][$field_key];
@@ -187,15 +179,11 @@ function mxcheckboxselect_value($element, $edit = FALSE) {
  *
  * The $fields array is in $form['#field_info'][$element['#field_name']].
  * 
- * All the transformation to save the field's value are executed in the hook_validate (mxcheckboxselect_validate)
- * we might use the hook_value (mxcheckboxselect_value) but is only important to transform the data at validation
+ * All the transformation to save the field's value are executed in the hook_validate (evocwidget_dynamic_validate)
+ * we might use the hook_value (evocwidget_dynamic_value) but is only important to transform the data at validation
  * time. 
  */
-function mxcheckboxselect_process($element, $edit, $form_state, $form) {
-  // Insert Javascript and CSS for this widget.
-  $path = drupal_get_path('module', 'mxcheckboxselect');
-  drupal_add_js($path.'/mxcheckboxselect.js');
-  
+function evocwidget_dynamic_process($element, $edit, $form_state, $form) {
   $field_name = $element['#field_name'];
   $field = $form['#field_info'][$field_name];
   $field_key  = $element['#columns'][0];
@@ -260,32 +248,23 @@ function mxcheckboxselect_process($element, $edit, $form_state, $form) {
   // many instance of the widget and we need to know all information about each one using the keyed array
   drupal_add_js( 
     array(
-      'neologism' => array(
+      //'neologism' => array(
+      'evocwidget' => array(
         // the url of the gateway that create the tree's data 
         'json_url' => Array($field_name => $json_url),
         // this hold the object where the tree will be rendered
         'field_id' => Array($field_name => $obj_to_render_id),
         // this hold the field values
-        'field_values' => Array($field_name => json_encode($selected_values)), //Array()),
+        'field_values' => Array($field_name => json_encode($selected_values)), 
         'editing_value' => Array($field_name => $editing_value),
       )
     ), 'setting');
 
   $js = '';
   if( !empty($element['#mxcbs_behaviour']['handler']) ) {
-    $js = '
-      Ext.onReady( function() {
-        Ext.QuickTips.init();
-        '.$element['#mxcbs_behaviour']['handler'].'("'.$field_name.'");
-      });
-    ';  
+    $js = $element['#mxcbs_behaviour']['handler'].'("'.$field_name.'");';
   } else { // add default behaviour
-    $js = '
-      Ext.onReady( function() {
-        Ext.QuickTips.init();
-        EvocWidget.createStandardClassSelecctionWidget("'.$field_name.'");
-      });
-    ';
+    $js = 'EvocWidget.createStandardClassSelecctionWidget("'.$field_name.'");';
   }
   drupal_add_js($js, 'inline');
   
@@ -312,7 +291,7 @@ function mxcheckboxselect_process($element, $edit, $form_state, $form) {
   if (empty($element['#element_validate'])) {
     $element['#element_validate'] = array();
   }
-  array_unshift($element['#element_validate'], 'mxcheckboxselect_validate');
+  array_unshift($element['#element_validate'], 'evocwidget_dynamic_validate');
   
   return $element;
 }
@@ -324,7 +303,7 @@ function mxcheckboxselect_process($element, $edit, $form_state, $form) {
  * @param object $form_state
  * @return 
  */
-function mxcheckboxselect_validate($element, &$form_state) {
+function evocwidget_dynamic_validate($element, &$form_state) {
   $field_key = $element['#columns'][0];
   $field_name = $element['#field_name'];
  
@@ -343,7 +322,7 @@ function mxcheckboxselect_validate($element, &$form_state) {
 /**
  * Implementation of hook_theme().
  */
-function mxcheckboxselect_theme() {
+function evocwidget_dynamic_theme() {
   return array(
     WIDGET_NAME => array(
       'arguments' => array('element' => NULL),
@@ -362,6 +341,6 @@ function mxcheckboxselect_theme() {
  * $element['#field_name'] contains the field name
  * $element['#delta]  is the position of this element in the group
  */
-function theme_mxcheckbox_select($element) {
+function theme_evocwidget_dynamic($element) {
   return $element['#children'];
 }
