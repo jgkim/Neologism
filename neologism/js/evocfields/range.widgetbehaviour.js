@@ -9,19 +9,18 @@
  */
 Neologism.createRangeSelecctionWidget = function( field_name ) {
   
-  var objectToRender = Drupal.settings.neologism.field_id[field_name];
-  var dataUrl = Drupal.settings.neologism.json_url[field_name];
-  var editingValue = Drupal.settings.neologism.editing_value[field_name];
+  var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
+  var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
+  var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
   // we need to past the baseParams as and object, that is why we creat the baseParams object
   // and add the arrayOfValues array 
   var baseParams = {};
   //Drupal.settings.neologism.field_values[field_name] = Drupal.parseJson(Drupal.settings.neologism.field_values[field_name]);
-  Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
-  baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
+  Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
+  baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
 
-  Neologism.domainsTermsTree = new Neologism.TermsTree({
-  //Neologism.rangeTermsTree = new Neologism.TermsTree({
-    renderTo: objectToRender,
+  Neologism.rangeTermsTree = new Neologism.TermsTree({
+    //renderTo: objectToRender,
     title: Drupal.t('Range'),
     disabled: false,
     
@@ -215,13 +214,26 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
         		}
 	        });
 	        
-	        //this.fireEvent('selectionchange', node);
+	        // fire the event to execute the onSelectionChange handler and notify to observers
+	        this.fireEvent('selectionchange', node);
 	        
 	        // notify Observers directly
 	    	//this.notifyObservers('selectionchange', {widget: 'range', rootNode: node.getOwnerTree().getRootNode(), selectedValues: baseParams.arrayOfValues});
   		} // checkchange  
     }
+  
+	  ,onSelectionChange:function(object) {
+	      // do whatever is necessary to assign the employee to position
+		// notify Observers directly
+	  	console.log('range on select');
+		  this.notifyObservers('selectionchange', {
+			  widget: 'range', 
+			  rootNode: this.getRootNode(), 
+			  selectedValues: baseParams.arrayOfValues}
+		  );
+	  }
     
   });
 
+  Neologism.rangeTermsTree.objectToRender = objectToRender;
 };

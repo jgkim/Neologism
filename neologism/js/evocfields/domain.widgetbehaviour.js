@@ -9,18 +9,17 @@
  */
 Neologism.createDomainSelecctionWidget = function( field_name ) {
   
-  var objectToRender = Drupal.settings.neologism.field_id[field_name];
-  var dataUrl = Drupal.settings.neologism.json_url[field_name];
-  var editingValue = Drupal.settings.neologism.editing_value[field_name];
+  var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
+  var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
+  var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
   // we need to past the baseParams as and object, that is why we creat the baseParams object
   // and add the arrayOfValues array 
   var baseParams = {};
-  //Drupal.settings.neologism.field_values[field_name] = Drupal.parseJson(Drupal.settings.neologism.field_values[field_name]);
-  Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
-  baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
+  Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
+  baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
 
-  Neologism.domainsTermsTree = new Neologism.TermsTree({
-    renderTo: objectToRender,
+  Neologism.domainTermsTree = new Neologism.TermsTree({
+    //renderTo: objectToRender,
     title: Drupal.t('Domain'),
     disabled: false,
     
@@ -32,8 +31,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-          	
-    		console.log(node);
           	
     		var editingNode = null;
     		
@@ -218,9 +215,10 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 	        });
 	        
 	        this.fireEvent('selectionchange', node);
-	        
-	        
-  		} // checkchange  
+  		} // checkchange
+  		,selectionchange: function(objectSender) {
+  			console.log('domain widget selectionchange event');
+  		}
     }
     
   ,onSelectionChange:function(object) {
@@ -236,4 +234,5 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
     
   });
 
+  Neologism.domainTermsTree.objectToRender = objectToRender;
 };

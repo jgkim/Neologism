@@ -5,18 +5,25 @@
  */
 Neologism.createInverseSelecctionWidget = function( field_name ) {
   
-	var objectToRender = Drupal.settings.neologism.field_id[field_name];
-	var dataUrl = Drupal.settings.neologism.json_url[field_name];
-	var editingValue = Drupal.settings.neologism.editing_value[field_name];
+	console.log('Neologism.createInverseSelecctionWidget');
+	console.info(Drupal.settings);
+	
+	var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
+	var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
+	var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
    
 	// we need to past the baseParams as and object, that is why we creat the baseParams object
 	// and add the arrayOfValues array 
 	var baseParams = {};
-	Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
-	baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
+	Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
+	baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
+	
+	var domain = [];
+	var range = [];
+	var lastSender = null;
 	 
 	Neologism.inverseTermsTree = new Neologism.TermsTree({
-	    renderTo: objectToRender,
+	    //renderTo: objectToRender,
 	    title: Drupal.t('Classes'),
 	    disabled: false,
 	    height: 200,
@@ -30,18 +37,21 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        // Fires when the node has been successfuly loaded.
 	        // added event to refresh the checkbox from its parent 
 	        load: function(loader, node, response){
-	          node.eachChild(function(currentNode){
-	            node.getOwnerTree().expandPath(currentNode.getPath());
-	            currentNode.cascade( function() {
-	              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-	                if (this.id == baseParams.arrayOfValues[j]) {
-	                  this.getUI().toggleCheck(true);
-	                }
-	              }
-	            }, null);
-	          });
 	          
-	          node.getOwnerTree().enable();
+	    		var treeview = node.getOwnerTree();
+	    		node.eachChild(function(currentNode){
+		    		treeview.expandPath(currentNode.getPath());
+		            currentNode.cascade( function() {
+		              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+		                if (this.id == baseParams.arrayOfValues[j]) {
+		                  this.getUI().toggleCheck(true);
+		                }
+		              }
+		            }, null);
+		          });
+	          
+	    		treeview.enable();
+	    		treeview.fireEvent('selectionchange', null);
 	        }
 	      }
 	    }),
@@ -92,13 +102,53 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        });
 	        
 	      } // checkchange
-	
-		  	
-		  	,onSelectionChange:function(node) {
-			      // do whatever is necessary to assign the employee to position
-			  	console.log('in onUpdate from disjoint class');
-			  	//console.info(object);
-		  	}
 	    }
+	
+		,onSelectionChange:function(objectSender) {
+		      // do whatever is necessary to assign the employee to position
+		  	console.log('implemented in inverse selection widget');
+		  	console.info(objectSender);
+		  	//console.info(object);
+		  	
+		  	if( objectSender != null ) {
+		  		lastSender = objectSender;
+			  	if( objectSender.widget == 'domain' )
+			  		domain = objectSender.selectedValues; 
+			  	if( objectSender.widget == 'range' )
+			  		range = objectSender.selectedValues;
+		  	}
+		  	
+		  	if( domain.length > 0 && range.length > 0 ) {
+			  	var allowedAsInverseProperties = this.computeInverses(lastSender.rootNode, domain, range);
+			  	// TODO add code to show the new values in the treeview for inverse selection widget
+			  	this.getRootNode().eachChild(function(currentNode) {
+			        currentNode.cascade(function() {
+			        	//console.log(this.text);
+			        	// we need to expand the node to traverse it
+			        	this.expand();
+			        	
+			        	if ( allowedAsInverseProperties.indexOf(this.text) == -1 ) {
+			        		this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;
+							this.getUI().addClass('class-bloked');
+						}
+			        	else {
+			        		this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+							this.getUI().removeClass('class-bloked');
+			        	}
+			        	
+			        	this.getUI().checkbox.disabled = (this.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.NORMAL);
+			        	
+			        });
+			    });
+			  	
+			  	this.enable();
+		  	}
+		  	else {
+		  		this.disable();
+		  	}
+		}
+		
 	  });
+	
+	Neologism.inverseTermsTree.objectToRender = objectToRender;
 };

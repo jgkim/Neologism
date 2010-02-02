@@ -9,18 +9,18 @@
  */
 Neologism.createSuperclassSelecctionWidget = function( field_name ) {
   
-  var objectToRender = Drupal.settings.neologism.field_id[field_name];
-  var dataUrl = Drupal.settings.neologism.json_url[field_name];
-  var editingValue = Drupal.settings.neologism.editing_value[field_name];
+  var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
+  var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
+  var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
   // we need to past the baseParams as and object, that is why we creat the baseParams object
   // and add the arrayOfValues array 
   var baseParams = {};
   //Drupal.settings.neologism.field_values[field_name] = Drupal.parseJson(Drupal.settings.neologism.field_values[field_name]);
-  Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
-  baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
+  Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
+  baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
 
   Neologism.superclassesTreePanel = new Neologism.TermsTree({
-    renderTo: objectToRender,
+    //renderTo: objectToRender,
     title: Drupal.t('Classes'),
     disabled: false,
     
@@ -255,4 +255,5 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
     
   });
 
+  Neologism.superclassesTreePanel.objectToRender = objectToRender;
 };

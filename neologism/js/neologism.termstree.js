@@ -2,7 +2,7 @@
  * @author guicec
  */
 
-Ext.ns('Neologism');
+//Ext.ns('Neologism');
 
 /**
  * Override TreePanel onClick and onDblClick events
@@ -306,7 +306,9 @@ Ext.tree.TreePanel.prototype.isSomeChildCheckedOrStatus = function(node, status)
 	});
 	
 	return someoneChecked;
-};
+}
+
+;
  
 //Ext.extend(Ext.tree.CheckboxNodeUI, Ext.tree.TreeNodeUI, {   
     /**  
@@ -512,10 +514,16 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
       hiddenNodes: [],
       
       // this property is just for an urgent solution
-      observers: []
+      //observers: [],
+      
+      // array of selected values
+      arrayOfValues: []
       
     };
   
+    // public property
+    this.observers = [];
+    
     // Config object has already been applied to 'this' so properties can 
     // be overriden here or new properties (e.g. items, tools, buttons) 
     // can be added, eg:
@@ -609,6 +617,9 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
   
 });
 
+//this to register our component as xtype, but we really don't need that
+Ext.reg('termstree', Neologism.TermsTree);
+
 /**  
  * Add observer TermsTree component that its data depend of this one  
  * @return nothing  
@@ -619,9 +630,11 @@ Neologism.TermsTree.prototype.addObserver = function(observer){
     }   
    
     console.log('addObserver');
+    //console.info(this);
     //this.relayEvents(observer, ['selectionchange']);
     this.observers.push(observer);
-    console.info(this);
+    //console.log('addObserver added observer');
+    //console.info(this);
     //console.log('addObserver(%s)', observer);
     //console.info(observer);
 };  
@@ -636,15 +649,247 @@ Neologism.TermsTree.prototype.notifyObservers = function(event, object){
     }  
 	
 	console.log('notify observers');
-	console.info(this);
-	console.info(observers);
-	console.info(object);
+	//console.info(this);
+	//console.info(this.observers);
+	//console.info(object);
 	
 	for( var i = 0; i < this.observers.length; i++ ) {   
 		this.observers[i].fireEvent(event, object);
     } 
 };
 
-// this to register our component as xtype, but we really don't need that
-Ext.reg('termstree', Neologism.TermsTree);
+/**
+ * 
+ */
+Neologism.TermsTree.prototype.findNodeByText = function(text){   
+    var node = null;
+    //console.log('Id: %s', id);
+    
+	this.getRootNode().eachChild(function(currentNode){
+        currentNode.cascade(function(){
+        	if( this.attributes.text == text ) {
+        		node = this;
+        		return false;
+        	}
+        }, null);
+        
+        if( node !== null ) {
+        	node.setOwnerTree(this.getOwnerTree());
+        	return false;
+        }
+        
+    },  null);
+	
+	return node;
+};
+
+/**
+ * Compute the posible inverse properties for a property with domain "domain" and range "range"
+ * 
+ * @param rootNodeClasses current classes tree structure.
+ * @param domain current domain for the property whose inverse going to be computed.
+ * @param range current range for the property whose inverse going to be computed.
+ * @return an array containing all the allowed as inverse properties
+ */
+Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain, range){   
+	console.log('computeInverses');
+	// TODO: all parameter are obligatory, so we need to check for them.
+	
+	// Domain
+	// add all classes that are disjoint with domain
+	// and also add all classes that are disjoint with any superclass of domain
+	var domainSet = [];
+	for ( var i = 0; i < domain.length; i++ ) {
+		console.info(domain[i]);
+		var node = rootNodeClasses.getOwnerTree().findNodeByText(domain[i]);
+		console.log(node);
+		if( node != null ) {
+			// this could be solved mean this way but I have to fix some bug that I found
+			// regarding some class was repeated
+			//domainSet = domainSet.concat(node.attributes.disjointwith);
+			var d = node.attributes.disjointwith;
+			for ( var j = 0; j < d.length; j++ ) {
+				if ( domainSet.indexOf(d[j]) == -1 ) {
+					domainSet.push(d[j]);
+				}
+			}
+		}
+	}
+	
+	// include also all subclasses of any of the classes added above
+	var finalDomainSet = [];
+	for ( var i = 0; i < domainSet.length; i++ ) {
+		var node = rootNodeClasses.getOwnerTree().findNodeByText(domainSet[i]);
+		if( node != null ) {
+			// all child also are disjoint
+			node.eachChild( function(currentNode) {
+	            currentNode.cascade( function() {
+	            	if ( finalDomainSet.indexOf(this.text) == -1 ) {
+	            		finalDomainSet.push(this.text);
+					}
+	            }, null);
+	        });
+		}
+	}
+	
+	finalDomainSet = finalDomainSet.concat(domainSet);
+	
+	// Range
+	// add all classes that are disjoint with range
+	// and also add all classes that are disjoint with any superclass of range
+	var rangeSet = [];
+	for ( var i = 0; i < range.length; i++ ) {
+		console.info(range[i]);
+		var node = rootNodeClasses.getOwnerTree().findNodeByText(range[i]);
+		console.log(node);
+		if( node != null ) {
+			// this could be solved mean this way but I have to fix some bug that I found
+			// regarding some class was repeated
+			//domainSet = domainSet.concat(node.attributes.disjointwith);
+			var d = node.attributes.disjointwith;
+			for ( var j = 0; j < d.length; j++ ) {
+				if ( rangeSet.indexOf(d[j]) == -1 ) {
+					rangeSet.push(d[j]);
+				}
+			}
+		}
+	}
+	
+	// include also all subclasses of any of the classes added above
+	var finalRangeSet = [];
+	for ( var i = 0; i < rangeSet.length; i++ ) {
+		var node = rootNodeClasses.getOwnerTree().findNodeByText(rangeSet[i]);
+		if( node != null ) {
+			// all child also are disjoint
+			node.eachChild( function(currentNode) {
+	            currentNode.cascade( function() {
+	            	if ( finalRangeSet.indexOf(this.text) == -1 ) {
+	            		finalRangeSet.push(this.text);
+					}
+	            }, null);
+	        });
+		}
+	}
+	
+	finalRangeSet = finalRangeSet.concat(rangeSet);
+	
+	// check for rules
+	// A property i is allowed as an inverse of p if it fulfills all of the conditions below:
+	
+	// The domain of i is not any of the classes in finalRangeSet
+	var allowedAsInverseProperties = [];
+	// traverse the tree
+	this.getRootNode().eachChild(function(currentNode){
+        currentNode.cascade(function(){
+        	
+        	var allowed = true;
+        	
+        	var d = this.attributes.domain;
+        	for ( var i = 0; i < d.length; i++ ) {
+        		// The domain of i=this is not any of the classes in finalRangeSet
+        		if ( finalRangeSet.indexOf(d[i]) != -1 ) {
+        			allowed = false;
+        			break;
+				}
+        	}
+        	
+        	if( allowed ) {
+	        	var r = this.attributes.range;
+	        	var rangeHasOnlyLiterals = true;
+	        	for ( var i = 0; i < r.length; i++ ) {
+	        		// The range of this is not any of the classes in finalDomainSet
+	        		if ( finalDomainSet.indexOf(r[i]) != -1 ) {
+	        			allowed = false;
+	        			break;
+					}
+	        		
+	        		if ( rangeHasOnlyLiterals ) {
+	        			if( Neologism.TermsTree.getXSDDatatype().indexOf(r[i]) == -1 ) {
+	        				rangeHasOnlyLiterals = false;
+	        			}
+	        		}
+	        	}
+	        	
+	        	// if this only contain literal it is not allowed
+	        	if ( rangeHasOnlyLiterals ) {
+	        		allowed = false;
+	        	}
+        	}
+        	
+        	// if the property was allowed as an inverse all its superproperties also fulfill the conditions
+        	if( allowed ) {
+        		// add this to the resulting array
+        		if ( allowedAsInverseProperties.indexOf(this.text) == -1 ) {
+        			allowedAsInverseProperties.push(this.text);
+				}
+        		
+        		if ( !this.parentNode.isRoot ) {
+	            	this.bubble( function() {
+	            		if ( allowedAsInverseProperties.indexOf(this.text) == -1 ) {
+	            			allowedAsInverseProperties.push(this.text);
+	    				}
+		                // if this node is the root node then return false to stop the bubble process
+		                if ( this.parentNode.isRoot ) {
+		                	return false;
+		                }
+	            	});
+	            }
+        	}
+        	
+        }, null);
+        
+    },  null);
+	
+	return allowedAsInverseProperties;
+}
+
+/**
+ * Static method that return the xsd datatype.
+ * This is a fast solution, but the idea is to update that list from the server because now
+ * the developer should update both function and this could bring some errors.
+ */
+Neologism.TermsTree.getXSDDatatype = function() {
+	return [
+				'rdfs:Literal',
+				'xsd:string',
+				'xsd:boolean',
+				'rdf:XMLLiteral',	
+				'xsd:date',
+				'xsd:dateTime',
+				'xsd:time',
+				'xsd:gYearMonth',
+				'xsd:gYear',
+				'xsd:gMonthDay',
+				'xsd:time',
+				'xsd:gDay',
+				'xsd:gMonth',
+				'xsd:decimal',
+				'xsd:float',
+				'xsd:double',
+				'xsd:integer',
+				'xsd:nonPositiveInteger',
+				'xsd:negativeInteger',
+				'xsd:long',
+				'xsd:int',
+				'xsd:short',
+				'xsd:byte',
+				'xsd:nonNegativeInteger',
+				'xsd:unsignedLong',
+				'xsd:unsignedInt',
+				'xsd:unsignedShort',
+				'xsd:unsignedByte',
+				'xsd:unsignedInt',
+				'xsd:hexBinary',
+				'xsd:base64Binary',
+				'xsd:anyURI',
+				'xsd:normalizedString',
+				'xsd:token',
+				'xsd:language',
+				'xsd:NMTOKEN',
+				'xsd:Name',
+				'xsd:NCName'
+				];
+};
+
+
 
