@@ -31,7 +31,7 @@ function evoc_schema() {
       'superproperties' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
       'domains' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
       'ranges' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
-  		'inverseof' => array('type' => 'varchar', 'length' => '265', 'not null' => FALSE)
+  		'inverses' => array('type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0),
     ),
     'primary key' => array(
       'prefix',
@@ -85,6 +85,16 @@ function evoc_schema() {
       'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
       'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
       'rdf_range' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
+    ),
+    'primary key' => array('id'),
+  );
+  
+  $schema['evoc_rdf_inversesproperties'] = array(
+    'fields' => array(
+      'id' => array('type' => 'serial', 'unsigned' => 'TRUE','size' => 'normal', 'not null' => TRUE),
+      'prefix' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'reference' => array('type' => 'varchar', 'length' => '132', 'not null' => TRUE, 'description' => 'this is the CURIE reference or Id'),
+      'inverseof' => array('type' => 'varchar', 'length' => '265', 'not null' => TRUE),
     ),
     'primary key' => array('id'),
   );
@@ -261,4 +271,42 @@ function evoc_update_6101() {
   
   return ret;
 }
+
+/**
+ * Update to enable multiple inverses in properties
+ * @return unknown_type
+ */
+function evoc_update_6102() {
+  $ret = array('#finished' => 0);
+  
+  $schema = evoc_schema();
+  
+  db_add_field($ret, 'evoc_rdf_properties', 'inverses', $schema['evoc_rdf_properties']['fields']['inverses']);
+  db_create_table($ret, 'evoc_rdf_inversesproperties', $schema['evoc_rdf_inversesproperties']);
+
+  if (!isset($sandbox['progress'])) {
+    $sandbox['progress'] = 0;
+    $sandbox['max'] = db_result(db_query('SELECT COUNT(*) FROM {evoc_rdf_properties}'));
+  }
+  
+  $properties = db_query("SELECT prefix, id, inverseof FROM {evoc_rdf_properties}");
+  while ($property = db_fetch_object($properties)) {
+    $has_inverse = FALSE;
+    if( !empty($property->inverseof) ) {
+      $query = 'INSERT INTO {evoc_rdf_inversesproperties} (prefix, reference, inverseof) VALUES ("'.$property->prefix.'", "'.$property->id.'", "'.$property->inverseof.'")';  
+      $ret[] = update_sql($query);
+      $has_inverse = TRUE;
+    }
+   
+    $ret[] = update_sql('UPDATE {evoc_rdf_properties} SET inverses = "'.$has_inverse.'" WHERE prefix = "'.$property->prefix.'" AND  id = "'.$property->id.'"');
+    $sandbox['progress']++;
+  }
+  
+  $ret['#finished'] = empty($sandbox['max']) ? 1 : ($sandbox['progress'] / $sandbox['max']);
+  
+  db_drop_field($ret, 'evoc_rdf_properties', 'inverseof');
+  
+  return $ret;
+}
+
 

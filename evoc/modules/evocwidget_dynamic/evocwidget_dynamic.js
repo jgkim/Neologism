@@ -39,13 +39,13 @@ EvocWidget.onsubmitCreateInputFields = function(formId){
 
   //alert('onsubmitCreateInputFields(' + formId.toString() + ')');
  
-  for (field in Drupal.settings.neologism.field_values ) {
+  for (field in Drupal.settings.evocwidget.field_values ) {
     //alert(field);
     // it's very important know that we are using field.toString() + "_values" to hold the values.
     // so, we need to access it from the server side (PHP) as $field_name."_values"
     //alert(Drupal.settings.neologism.field_values[field]);
     EvocWidget.convertJsArrayToPhpArray(
-      Drupal.settings.neologism.field_values[field], 
+      Drupal.settings.evocwidget.field_values[field], 
       field.toString() + "_values", 
       formId
     );    
@@ -61,19 +61,19 @@ EvocWidget.onsubmitCreateInputFields = function(formId){
  */ 
 EvocWidget.createStandardClassSelecctionWidget = function( field_name ) {
   
-  var objectToRender = Drupal.settings.neologism.field_id[field_name];
-  var dataUrl = Drupal.settings.neologism.json_url[field_name];
-  var editingValue = Drupal.settings.neologism.editing_value[field_name];
+  var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
+  var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
+  var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
    
   // we need to past the baseParams as and object, that is why we creat the baseParams object
   // and add the arrayOfValues array 
   var baseParams = {};
-  Drupal.settings.neologism.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.neologism.field_values[field_name]);
-  baseParams.arrayOfValues = Drupal.settings.neologism.field_values[field_name];
+  Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
+  baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
  
   // TODO fix that dependency between Neologism TermsTree and Evoc
-  var termsTree = new Neologism.TermsTree({
-    renderTo: objectToRender,
+  EvocWidget.termsTree = new Neologism.TermsTree({
+    //renderTo: objectToRender,
     title: Drupal.t('Classes'),
     disabled: false,
     
@@ -148,8 +148,13 @@ EvocWidget.createStandardClassSelecctionWidget = function( field_name ) {
       } // checkchange
     }
   });
+  
+  EvocWidget.termsTree.objectToRender = objectToRender;
 }
 
 $(document).ready( function() {
+	if( EvocWidget.termsTree !== undefined ) {
+		EvocWidget.termsTree.render(EvocWidget.termsTree.objectToRender);
+	}
 	console.log('document ready for evoc');
 });
