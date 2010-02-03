@@ -51,9 +51,14 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
 						editingNode = this;
 						//this.remove();
 	              	}
+	              	
+	              	if( editingNode != null ) {
+	              		editingNode.remove();
+	              		editingNode = null;
+	              	}
 	              
 	              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-	              		if ( id == baseParams.arrayOfValues[j] ) {
+	              		if ( this.attributes.text == baseParams.arrayOfValues[j] ) {
 	              			this.getUI().toggleCheck(true);
 	              		}
 	              	}

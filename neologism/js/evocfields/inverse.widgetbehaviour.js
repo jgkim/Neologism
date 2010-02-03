@@ -5,13 +5,10 @@
  */
 Neologism.createInverseSelecctionWidget = function( field_name ) {
   
-	console.log('Neologism.createInverseSelecctionWidget');
-	console.info(Drupal.settings);
-	
 	var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
 	var dataUrl = Drupal.settings.evocwidget.json_url[field_name];
 	var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
-   
+	
 	// we need to past the baseParams as and object, that is why we creat the baseParams object
 	// and add the arrayOfValues array 
 	var baseParams = {};
@@ -40,8 +37,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	          
 	    		var treeview = node.getOwnerTree();
 	    		node.eachChild(function(currentNode){
-		    		treeview.expandPath(currentNode.getPath());
 		            currentNode.cascade( function() {
+		            	this.getOwnerTree().expandPath(this.getPath());
+		                
+		            	if (this.text == editingValue) {
+		              	  this.remove();
+		                }
+		                
 		              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
 		                if (this.id == baseParams.arrayOfValues[j]) {
 		                  this.getUI().toggleCheck(true);
@@ -106,9 +108,6 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	
 		,onSelectionChange:function(objectSender) {
 		      // do whatever is necessary to assign the employee to position
-		  	console.log('implemented in inverse selection widget');
-		  	console.info(objectSender);
-		  	//console.info(object);
 		  	
 		  	if( objectSender != null ) {
 		  		lastSender = objectSender;
@@ -126,6 +125,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 			        	//console.log(this.text);
 			        	// we need to expand the node to traverse it
 			        	this.expand();
+			        	
+			        	/*
+			        	console.info(this.id);
+			        	if (this.id == editingValue) {
+			        		this.remove();
+			            }
+			            */
 			        	
 			        	if ( allowedAsInverseProperties.indexOf(this.text) == -1 ) {
 			        		this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;

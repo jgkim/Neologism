@@ -81,7 +81,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	  		//console.info(node);
 	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
 	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
@@ -90,7 +89,7 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 	            	baseParams.arrayOfValues.push(id);
 	            }
 	            
-        		console.log(baseParams.arrayOfValues);
+        		//console.log(baseParams.arrayOfValues);
         		
         		// check if this node has more than 1 super class, so we need to checked it 
         		// in other places in the tree.
@@ -166,8 +165,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 		        		for ( var i = 0; i < len; i++ ) {
 		        			if( c[i] != node.parentNode.id ) {
 		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
-		        				//console.info(currentNode);
-		        				//console.log('Path: %s, c[i]: %s', rootnode.findChild('id', c[i]), c[i]); //.getPath());
 		        				if ( currentNode !== null ) {
 		        					var n = currentNode.findChild('text', id);
 		        					if( n.getUI().checkbox.checked == true ) {
@@ -224,7 +221,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
   ,onSelectionChange:function(object) {
       // do whatever is necessary to assign the employee to position
 	// notify Observers directly
-  	console.log('domain on select');
 	  this.notifyObservers('selectionchange', {
 		  widget: 'domain', 
 		  rootNode: this.getRootNode(), 

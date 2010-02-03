@@ -122,14 +122,10 @@ Ext.tree.TreePanel.prototype.getChecked = function(node){
 
 Ext.tree.TreePanel.prototype.findNodeById = function(id){   
     var node = null;
-	
-    //console.log('Id: %s', id);
     
 	this.getRootNode().eachChild(function(currentNode){
         currentNode.cascade(function(){
-        	//console.log(this.id);
         	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-        	//console.log('var_dump --- cid: %s --- id: %s', cid, id);
         	if( cid == id ) {
         		node = this;
         		return false;
@@ -222,7 +218,6 @@ Ext.tree.TreePanel.prototype.checkDisjointWith = function(node){
 		// traverse the tree 
 		rootnode.eachChild( function(currentNode) {
 			currentNode.cascade( function() {
-				console.log(this.text);
 				for ( var i = 0; i < len; i++ ) {
 					if ( this.text == disjointwith[i] ) {
 						if( checked ) {
@@ -629,14 +624,8 @@ Neologism.TermsTree.prototype.addObserver = function(observer){
         return;
     }   
    
-    console.log('addObserver');
-    //console.info(this);
     //this.relayEvents(observer, ['selectionchange']);
     this.observers.push(observer);
-    //console.log('addObserver added observer');
-    //console.info(this);
-    //console.log('addObserver(%s)', observer);
-    //console.info(observer);
 };  
 
 /**  
@@ -648,11 +637,6 @@ Neologism.TermsTree.prototype.notifyObservers = function(event, object){
         return;
     }  
 	
-	console.log('notify observers');
-	//console.info(this);
-	//console.info(this.observers);
-	//console.info(object);
-	
 	for( var i = 0; i < this.observers.length; i++ ) {   
 		this.observers[i].fireEvent(event, object);
     } 
@@ -663,8 +647,6 @@ Neologism.TermsTree.prototype.notifyObservers = function(event, object){
  */
 Neologism.TermsTree.prototype.findNodeByText = function(text){   
     var node = null;
-    //console.log('Id: %s', id);
-    
 	this.getRootNode().eachChild(function(currentNode){
         currentNode.cascade(function(){
         	if( this.attributes.text == text ) {
@@ -692,7 +674,6 @@ Neologism.TermsTree.prototype.findNodeByText = function(text){
  * @return an array containing all the allowed as inverse properties
  */
 Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain, range){   
-	console.log('computeInverses');
 	// TODO: all parameter are obligatory, so we need to check for them.
 	
 	// Domain
@@ -700,9 +681,7 @@ Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain
 	// and also add all classes that are disjoint with any superclass of domain
 	var domainSet = [];
 	for ( var i = 0; i < domain.length; i++ ) {
-		console.info(domain[i]);
 		var node = rootNodeClasses.getOwnerTree().findNodeByText(domain[i]);
-		console.log(node);
 		if( node != null ) {
 			// this could be solved mean this way but I have to fix some bug that I found
 			// regarding some class was repeated
@@ -739,9 +718,7 @@ Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain
 	// and also add all classes that are disjoint with any superclass of range
 	var rangeSet = [];
 	for ( var i = 0; i < range.length; i++ ) {
-		console.info(range[i]);
 		var node = rootNodeClasses.getOwnerTree().findNodeByText(range[i]);
-		console.log(node);
 		if( node != null ) {
 			// this could be solved mean this way but I have to fix some bug that I found
 			// regarding some class was repeated

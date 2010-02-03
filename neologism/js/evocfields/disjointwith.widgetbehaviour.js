@@ -39,20 +39,19 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
                 editingNode = this;
               }
               
+              if( editingNode != null ) {
+        		editingNode.remove();
+        		editingNode = null;
+              }
+              
               for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-                if (this.id == baseParams.arrayOfValues[j]) {
+                if (this.text == baseParams.arrayOfValues[j]) {
                   this.getUI().toggleCheck(true);
                 }
               }
             }, null);
           });
           
-          	// we remove the editing node from treeview for edition 
-    		// TODO at this point we also need to configure the treeview because could be possible that the editing
-    		// class be disjoint with some future superclass
-    		if( editingNode != null ) {
-    			editingNode.remove();
-    		}
     		
           // enable disjointwith treepanel
           //node.getOwnerTree().enable();

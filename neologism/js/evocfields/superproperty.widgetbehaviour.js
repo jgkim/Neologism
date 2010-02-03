@@ -29,20 +29,19 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-        
+    		
           node.eachChild(function(currentNode){
             //alert(currentNode.id);
             //node.getOwnerTree().expandPath(currentNode.getPath());
             currentNode.expand();
             currentNode.cascade(function(){
-              if (this.id == editingValue) {
-                this.getUI().addClass('locked-for-edition');
-                this.getUI().checkbox.disabled = true;
-                this.getUI().checkbox.checked = false;
+              //console.log(this.id);
+              if (this.text == editingValue) {
+            	  this.remove();
               }
               
               for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-                if (this.id == baseParams.arrayOfValues[j]) {
+                if (this.text == baseParams.arrayOfValues[j]) {
                   this.getUI().toggleCheck(true);
                 }
               }
