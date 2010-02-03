@@ -305,6 +305,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    '#title' => t('Additional custom RDF'), 
 	    '#collapsible' => TRUE, 
 	    '#collapsed' => TRUE,
+  		'#description' => t('Here you can provide additional RDF statements that will be included in the RDF description of the vocabulary. Statements must be provided in N3 syntax.')
   	);
   	$form['aditional_custom_rdf_fieldset']['field_additional_custom_rdf'] = $form['field_additional_custom_rdf'];
   	unset($form['field_additional_custom_rdf']);
@@ -378,14 +379,14 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
     $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
     $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
-    $form['field_range2']['#weight'] = 1;
+    $form['field_domain2']['#weight'] = 1;
     
     $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
     $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
     $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
-    $form['field_range2']['#weight'] = 2;
     $form['field_range2']['#prefix'] = '<div id="range-treeview">';
     $form['field_range2']['#suffix'] = '</div>';
+    $form['field_range2']['#weight'] = 2;
     
     // add behaviours for evoc fields if they are using the MXCheckBox selection widget
     $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
@@ -453,10 +454,21 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       
       // why need to inform to the widget that there is comming an edition for a value, so the widget can
       // handle the situation.
+      $form['field_domain2']['#mxcbs_behaviour']['editing_value'] = $qname;
+      $form['field_range2']['#mxcbs_behaviour']['editing_value'] = $qname;
       $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
+      $form['field_inverse2']['#mxcbs_behaviour']['editing_value'] = $qname;
       
       // for the prefix
     	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title);
+    	
+    	// set the default value depending of the current property range value
+    	$range = $form['#node']->field_range2[0]['evoc_term'];
+    	if( isset($range) && _neologism_is_xsd_datatype($range) ) {
+	    	$form['range_group']['data_types']['#default_value'] = $range;
+	    	// set the radio button to The value of this property is a literal (string, number, date, ...).
+	    	$form['range_group']['resource_type']['#default_value'] = 2;
+    	}
     }
     else if( arg(3) == 'parent' ) { // Select the parent class if provided in the url of type node/add/property/parent/11
     	$nproperty = (object) node_load(arg(4));
@@ -481,11 +493,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
     	$form['field_vocabulary']['#access'] = FALSE;
     }
-    
-    // Select the domain of a property if provided in the url of type node/add/property/classparent/3
-    //else if( arg(3) == 'classparent' && isset($form['field_domain']['#default_value']) ) {
-    //  $form['field_domain']['#default_value'][0]['nid'] = arg(4);
-    //} 
     
   }
   
@@ -573,8 +580,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 function neologism_vocabulary_load($nid) {
   if ($nid) {
     $node = node_load($nid);
-    
-  	
     return $node;
   }
   else {
@@ -1121,7 +1126,6 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
  * Implementation of hook_nodeapi().
  */
 function neologism_nodeapi(&$node, $op, $teaser, $page) {
-  
   switch ($op) {
     case 'prepare':
       if( $node->type == NEOLOGISM_CT_CLASS ) {
@@ -1200,7 +1204,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         evoc_update_class($term);  
       }
       elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
-        $term = array();
+      	$term = array();
         // $node->update_by_reference is used when an update comes from other references than a normal update
         $term['previous_id'] = !isset($node->update_by_reference) ? variable_get('previous_property_title', $node->title) : $node->title;
         $term['id'] = $node->title;
@@ -1728,7 +1732,7 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
   
   $inverse = '';
   if ( !empty($node->content['field_inverse2']['field']['items'][0]['#item']['evoc_term']) ) {
-    $inverse .= '<div class="row"><div class="column-title">Inverse:</div><div class="column-values">';
+    $inverse .= '<div class="row"><div class="column-title">Inverse-of:</div><div class="column-values">';
     foreach ( $node->content['field_inverse2']['field']['items'] as $value ) {
       $inverse .= theme('evocreference_formatter_default', $value).'&nbsp ';
     }
@@ -2296,9 +2300,8 @@ function neo_class_node_form_validate($form, &$form_state) {
  * @return 
  */
 function neo_property_node_form_validate($form, &$form_state) {
-//function _neologism_neo_property_node_form_validate($form, &$form_state) {
   // check for a new property
-  if( !$form_state['values']['nid'] ) {
+	//if( !$form_state['values']['nid'] ) {
     $vocabulary_nid = $form_state['values']['field_vocabulary'][0]['nid'];
     $property_title = $form_state['values']['title'];
     
@@ -2315,8 +2318,9 @@ function neo_property_node_form_validate($form, &$form_state) {
     }
     
     // if $form_state['values']['resource_type'] == '1' everithing come fine
-  	if( $form_state['values']['resource_type'] == '2' ) {
-    	$form_state['values']['field_range2'][0]['evoc_term'] = $form_state['values']['data_types']; 
+    if( $form_state['values']['resource_type'] == '2' ) {
+    	$form_state['values']['field_range2'][0]['evoc_term'] = $form_state['values']['data_types'];
+    	$form_state['values']['field_inverse2'] = array();
     }
   	else if( $form_state['values']['resource_type'] == '3' ) {
     	$form_state['values']['field_range2'][0] = NULL;
@@ -2350,7 +2354,7 @@ function neo_property_node_form_validate($form, &$form_state) {
         form_set_error('field_superproperty2', t('There is some error selecting your superproperty, the term does not exists in the system.'));
       }
     }
-  }
+  //}
 }
 
 /**
@@ -2676,6 +2680,21 @@ function _neologism_cmp_2array_alphabetically($a, $b)
 	return strcmp($a['id'], $b['id']);
 }
 
+/**
+ * 
+ * @param $value
+ * @return unknown_type
+ */
+function _neologism_is_xsd_datatype( $value ) {
+  $xsd_datatypes = neologism_get_xsd_datatype_list();
+  foreach ( array_values($xsd_datatypes) as $group ) {
+  	if( isset($group[$value]) ) {
+  		return TRUE;
+  	}	
+  }
+  
+  return FALSE;
+}
 /**
  * 
  * @param $path
