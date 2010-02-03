@@ -222,6 +222,23 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
       $property->prefix = trim($property->prefix);
       $property->id = trim($property->id); 
       $qname = $property->prefix.':'.$property->id;
+      
+    	$domain = array();
+      if( $property->domains > 0 ) {
+      	$domains = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesdomains} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
+      	while ($obj = db_fetch_object($domains)) {
+      		$domain[]	= $obj->rdf_domain;
+      	}
+      }
+      
+    	$range = array();
+      if( $property->ranges > 0 ) {
+      	$ranges = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesranges} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
+      	while ($obj = db_fetch_object($ranges)) {
+      		$range[]	= $obj->rdf_range;
+      	}
+      }
+      
       $children_nodes = neologism_gateway_get_property_children($qname, $voc, $add_checkbox);  
       if( $voc ) {
         if( $property->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
@@ -234,7 +251,9 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
             'iconCls' => ($property->prefix == $voc) ? 'property-samevoc' : 'property-diffvoc', 
             'cls' => ($property->prefix == $voc) ? 'currentvoc' : '',
             'children' => $children_nodes, 
-            'qtip' => $qtip
+            'qtip' => $qtip,
+          	'domain' => $domain,
+      			'range' => $range	
           );
           
           if( $add_checkbox ) {
@@ -250,7 +269,9 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
           'leaf' => $leaf, 
           'iconCls' => 'property-samevoc', 
           'children' => $children_nodes, 
-          'qtip' => $qtip
+          'qtip' => $qtip,
+	        'domain' => $domain,
+	      	'range' => $range
         );
         
         if( $add_checkbox ) {
@@ -462,9 +483,26 @@ function neologism_gateway_get_full_properties_tree() {
     
   if ( $node == 'root' ) {
     $properties = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_properties} where superproperties = "0"'));
-
+    
     while ($property = db_fetch_object($properties)) {
       $qname = $property->prefix.':'.$property->id;
+      
+      $domain = array();
+      if( $property->domains > 0 ) {
+      	$domains = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesdomains} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
+      	while ($obj = db_fetch_object($domains)) {
+      		$domain[]	= $obj->rdf_domain;
+      	}
+      }
+      
+    	$range = array();
+      if( $property->ranges > 0 ) {
+      	$ranges = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesranges} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
+      	while ($obj = db_fetch_object($ranges)) {
+      		$range[]	= $obj->rdf_range;
+      	}
+      }
+      
       $children = neologism_gateway_get_property_children($qname, NULL, TRUE);
       $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;
       $leaf = count($children) == 0;
@@ -475,7 +513,9 @@ function neologism_gateway_get_full_properties_tree() {
         'iconCls' => 'property-samevoc', 
         'children' => $children, 
         'checked' => false,
-        'qtip' => $qtip
+        'qtip' => $qtip,
+      	'domain' => $domain,
+      	'range' => $range
       );        
     }
   }
