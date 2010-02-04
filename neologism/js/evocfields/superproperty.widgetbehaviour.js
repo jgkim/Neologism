@@ -47,9 +47,8 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
               }
             }, null);
           });
-          
-          node.getOwnerTree().enable();
         }
+    
       }
     }),
     
