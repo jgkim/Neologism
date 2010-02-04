@@ -37,19 +37,22 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	          
 	    		var treeview = node.getOwnerTree();
 	    		node.eachChild(function(currentNode){
-		            currentNode.cascade( function() {
-		            	this.getOwnerTree().expandPath(this.getPath());
-		                
-		            	if (this.text == editingValue) {
-		              	  this.remove();
-		                }
-		                
-		              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-		                if (this.id == baseParams.arrayOfValues[j]) {
-		                  this.getUI().toggleCheck(true);
-		                }
-		              }
-		            }, null);
+	    			if ( currentNode !== undefined ) {
+	    	        	currentNode.expand();
+			            currentNode.cascade( function() {
+			            	//this.getOwnerTree().expandPath(this.getPath());
+			                
+			            	if (this.text == editingValue) {
+			              	  this.remove();
+			                }
+			                
+			              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+			                if (this.id == baseParams.arrayOfValues[j]) {
+			                  this.getUI().toggleCheck(true);
+			                }
+			              }
+			            }, null);
+	    			}
 		          });
 	          
 	    		treeview.enable();
