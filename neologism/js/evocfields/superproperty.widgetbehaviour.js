@@ -18,7 +18,7 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
   Neologism.superpropertyTermsTree = new Neologism.TermsTree({
     //renderTo: objectToRender,
     title: Drupal.t('Subproperty of'),
-    disabled: true,
+    disabled: false,
     
     loader: new Ext.tree.TreeLoader({
       dataUrl: dataUrl,
