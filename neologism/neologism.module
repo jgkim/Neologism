@@ -273,7 +273,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 		$form['#validate'][] = 'neo_vocabulary_node_form_validate';
   	$form['title']['#theme'] = "render_URI_field";
   	
-  	$default_namespace = _neologism_get_namespace();
+  	$default_namespace = _neologism_get_namespace(NULL, FALSE);
   	$form['title']['#namespace'] = $default_namespace; 
   	// fix the size of the Id field to 20
   	$form['title']['#size'] = 20;
@@ -333,34 +333,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  }
 	}
     
-  // Select the vocabulary when adding a class or a property from a vocabulary page
-  if (($form_id == NEOLOGISM_CLASS_FORM_ID || $form_id == NEOLOGISM_PROPERTY_FORM_ID)
-      && isset($_GET['v']) && isset($form['field_vocabulary']['#default_value'])) {
-    $vocabulary_id = (int)$_GET['v'];
-    $form['field_vocabulary']['#default_value'][0]['nid'] = $vocabulary_id;
-    
-    $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $vocabulary_id, NEOLOGISM_CT_VOCABULARY));
-		if( $prefix ) {
-			// for the prefix
-			$uri = _neologism_get_namespace($prefix->title);
-    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
-    	$form['holder'] = array(
-    		'#type' => 'value',
-    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
-    	);
-		}
-		
-		//add a Cancel button
-	  $form['buttons']['cancel'] = array(
-	  	'#type' => 'button',
-	  	'#value' => t('Cancel'),
-	  	'#weight' => 20,
-	  	'#attributes' => array('onclick' => 'window.location = \''.base_path().$prefix->title.'/\'; return false;'),
-	  );
-  }
-  
   if( $form_id == NEOLOGISM_PROPERTY_FORM_ID ) {
-  	//kpr($form);
   	// hide the field
 	  $form['field_vocabulary']['#access'] = FALSE;
 	  
@@ -439,30 +412,53 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    $form['body_field']['body']['#rows'] = 4;
 	  }
   	
-    // add validation function for create or edition of properties form
-    if( arg(2) == 'edit' && isset($form['#node']) ) {
-      $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
-      $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nid, NEOLOGISM_CT_VOCABULARY));
-      $id = $form['#node']->title;
-      $qname = $prefix->title.':'.$id;
-      
-      // create the holder with the values that we need to process/render the form
-      $form['holder'] = array(
-    		'#type' => 'value',
-    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'edit', 'qname' => $qname)		
-    	);
-      
-      // why need to inform to the widget that there is comming an edition for a value, so the widget can
-      // handle the situation.
-      $form['field_domain2']['#mxcbs_behaviour']['editing_value'] = $qname;
-      $form['field_range2']['#mxcbs_behaviour']['editing_value'] = $qname;
-      $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
-      $form['field_inverse2']['#mxcbs_behaviour']['editing_value'] = $qname;
-      
-      // for the prefix
-    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title);
-    	
-    	// set the default value depending of the current property range value
+	  if ( isset($_GET['v']) && isset($form['field_vocabulary']['#default_value']) ) {
+	    $vocabulary_id = (int)$_GET['v'];
+	    $form['field_vocabulary']['#default_value'][0]['nid'] = $vocabulary_id;
+	    
+	    // this method is wonderful but slower 
+	    $current_voc = node_load($vocabulary_id);
+	    // so we need to decide a direct query execution
+	    //$current_voc = db_fetch_object(db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {node} n INNER JOIN {content_type_neo_vocabulary} c ON n.nid = c.nid WHERE n.nid = %d AND n.type = '%s'"), 
+	    //	$vocabulary_id, NEOLOGISM_CT_VOCABULARY));
+			if( $current_voc ) {
+				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
+	    	);
+	    	
+	    	//add a Cancel button
+			  $form['buttons']['cancel'] = array(
+			  	'#type' => 'button',
+			  	'#value' => t('Cancel'),
+			  	'#weight' => 20,
+			  	'#attributes' => array('onclick' => 'window.location = \''.base_path().$current_voc->title.'/\'; return false;'),
+			  );
+			}
+	  }
+	  else if( arg(2) == 'edit' && isset($form['#node']) ) {
+    	// add validation function for create or edition of properties form
+      $vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
+    	$current_voc = node_load($vocabulary_id);
+    	if( $current_voc ) {
+	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
+	      
+				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				// create the holder with the values that we need to process/render the form
+	      $form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'edit', 'qname' => $qname)		
+	    	);
+	      // why need to inform to the widget that there is comming an edition for a value, so the widget can
+	      // handle the situation.
+	      $form['field_domain2']['#mxcbs_behaviour']['editing_value'] = $qname;
+	      $form['field_range2']['#mxcbs_behaviour']['editing_value'] = $qname;
+	      $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $qname;
+	      $form['field_inverse2']['#mxcbs_behaviour']['editing_value'] = $qname;
+			}
+
+			// set the default value depending of the current property range value
     	$range = $form['#node']->field_range2[0]['evoc_term'];
     	if( isset($range) && _neologism_is_xsd_datatype($range) ) {
 	    	$form['range_group']['data_types']['#default_value'] = $range;
@@ -471,29 +467,27 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	}
     }
     else if( arg(3) == 'parent' ) { // Select the parent class if provided in the url of type node/add/property/parent/11
-    	$nproperty = (object) node_load(arg(4));
+    	$node_property = node_load(arg(4));
     	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
-    	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nproperty->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
-      $qname = $prefix->title.':'.$nproperty->title;
-      
-      // create the holder with the values that we need to process/render the form
-      $form['holder'] = array(
-    		'#type' => 'value',
-    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
-    	);
-      	
-      	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
-    	$form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($qname);
-    	$form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
-    	
-    	// fill the field with thw default value
-      $form['field_vocabulary']['#default_value'][0]['nid'] = $nproperty->field_vocabulary[0]['nid'];
-    	
-    	// for the prefix
-    	$form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
-    	$form['field_vocabulary']['#access'] = FALSE;
+      $current_voc = node_load($node_property->field_vocabulary[0]['nid']);
+    	if ( $current_voc ) {
+	      $qname = $current_voc->title.':'.$node_property->title;
+	      
+	      $form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+	    	// create the holder with the values that we need to process/render the form
+	      $form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
+	    	);
+	      	
+	      // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
+	    	$form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($qname);
+	    	$form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+	    	
+	    	// fill the field with thw default value
+	      $form['field_vocabulary']['#default_value'][0]['nid'] = $current_voc->field_vocabulary[0]['nid'];
+    	}
     }
-    
   }
   
   // add the validation handler to both content type
@@ -533,46 +527,67 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    $form['body_field']['body']['#rows'] = 4;
 	  }
     
-    if( arg(2) == 'edit' && isset($form['#node']) ) {
-      $nid = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
-      $prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nid, NEOLOGISM_CT_VOCABULARY));
-      $id = $form['#node']->title;
-      $qname = $prefix->title.':'.$id;
-      
-      // create the holder with the values that we need to process/render the form
-      $form['holder'] = array(
-    		'#type' => 'value',
-    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'edit', 'qname' => $qname)		
-    	);
-      
-      $form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';
-      
-      // why need to inform to the widget that there is comming an edition for a value, so the widget can
-      // handle the situation.
-      $form['field_superclass2']['#mxcbs_behaviour']['editing_value'] = $qname;
-      $form['field_disjointwith2']['#mxcbs_behaviour']['editing_value'] = $qname;
+	  if ( isset($_GET['v']) && isset($form['field_vocabulary']['#default_value']) ) {
+	    $vocabulary_id = (int)$_GET['v'];
+	    $form['field_vocabulary']['#default_value'][0]['nid'] = $vocabulary_id;
+	    
+	    $current_voc = node_load($vocabulary_id);
+			if( $current_voc ) {
+				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
+	    	);
+			}
+			
+			//add a Cancel button
+		  $form['buttons']['cancel'] = array(
+		  	'#type' => 'button',
+		  	'#value' => t('Cancel'),
+		  	'#weight' => 20,
+		  	'#attributes' => array('onclick' => 'window.location = \''.base_path().$current_voc->title.'/\'; return false;'),
+		  );
+	  }
+	  else if( arg(2) == 'edit' && isset($form['#node']) ) {
+	   	$vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
+    	$current_voc = node_load($vocabulary_id);
+    	if( $current_voc ) {
+	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
+	      
+				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				// create the holder with the values that we need to process/render the form
+	      $form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'edit', 'qname' => $qname)		
+	    	);
+	      // why need to inform to the widget that there is comming an edition for a value, so the widget can
+	      // handle the situation.
+	      $form['field_superclass2']['#mxcbs_behaviour']['editing_value'] = $qname;
+	      $form['field_disjointwith2']['#mxcbs_behaviour']['editing_value'] = $qname;
+    	}
     }
     // the user has click over the "Create new subclass" link
     // Select the parent class if provided in the url of type node/add/class/parent/9
     else if( arg(3) == 'parent' ) {
-    	$nclass = (object) node_load(arg(4));
-    	// we can use node_load($nclass->field_vocabulary[0]['nid']) but gain speed just execute the following query
-    	$prefix = db_fetch_object(db_query(db_rewrite_sql('select title from {node} where nid = "%d" and type = "%s"'), $nclass->field_vocabulary[0]['nid'], NEOLOGISM_CT_VOCABULARY));
-      $qname = $prefix->title.':'.$nclass->title;
-      
-      // create the holder with the values that we need to process/render the form
-      $form['holder'] = array(
-    		'#type' => 'value',
-    		'#value' => array('vocabulary_title' => $prefix->title, 'operation' => 'create')		
-    	);
-      
-      // fill the field with thw default value
-      $form['field_vocabulary']['#default_value'][0]['nid'] = $nclass->field_vocabulary[0]['nid'];
-      
-      $form['title']['#namespace'] = _neologism_get_namespace($prefix->title).'#';	
-      	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
-    	$form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($qname);
-    	$form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+    	$node_class = node_load(arg(4));
+      $current_voc = node_load($node_class->field_vocabulary[0]['nid']);
+      if( $current_voc ) {
+	    	$qname = $current_voc->title.':'.$node_class->title;
+	      
+	      $form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+	    	// create the holder with the values that we need to process/render the form
+	      $form['holder'] = array(
+	    		'#type' => 'value',
+	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
+	    	);
+	    	
+	      // fill the field with thw default value
+	      $form['field_vocabulary']['#default_value'][0]['nid'] = $node_class->field_vocabulary[0]['nid'];
+	      
+	     	// extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
+	    	$form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($qname);
+	    	$form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+      }
   	}
   }
 }
@@ -645,11 +660,7 @@ function neologism_export_html($node) {
   }
   $output .= '</div>';
 
-  $namespace_url = $node->field_custom_namespace[0]['value'];
-  if( $namespace_url == '' ) {
-  	$namespace_url = url($node->path, array('absolute' => TRUE)) . '#';
-  }
-  
+  $namespace_url = ($node->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($node->path) : $node->field_custom_namespace[0]['value'];
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'</div></div>';
 
   // Abstract
@@ -2700,10 +2711,8 @@ function _neologism_is_xsd_datatype( $value ) {
  * @param $path
  * @return unknown_type
  */
-function _neologism_get_namespace($path = NULL) {
-	$opts = array('absolute' => TRUE);
-  $namespace_url = url($path, $opts);
-  return $namespace_url;
+function _neologism_get_namespace($path = NULL, $append_sharp = TRUE) {
+  return url($path, array('absolute' => TRUE)) . ($append_sharp == TRUE ? '#' : '');
 }
 
 /**
