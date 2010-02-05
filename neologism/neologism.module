@@ -826,7 +826,7 @@ function &neologism_get_rdf_model($node) {
   
   // this function execute all rdf_namespaces hook available in the drupal instance
   $namespaces = rdf_get_namespaces();
-  $namespace = $namespaces[$node->title];
+  $namespace = ($node->field_custom_namespace[0]['value'] == '') ? $namespaces[$node->title] : $node->field_custom_namespace[0]['value'];
 
   // Set up model with all necessary namespaces
   $rdf = new neologism_rdf_writer();
