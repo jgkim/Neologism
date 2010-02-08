@@ -40,17 +40,15 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    			if ( currentNode !== undefined ) {
 	    	        	currentNode.expand();
 			            currentNode.cascade( function() {
-			            	//this.getOwnerTree().expandPath(this.getPath());
-			                
 			            	if (this.text == editingValue) {
 			              	  this.remove();
 			                }
 			                
-			              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-			                if (this.id == baseParams.arrayOfValues[j]) {
-			                  this.getUI().toggleCheck(true);
-			                }
-			              }
+						  for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+						    if (this.text == baseParams.arrayOfValues[j]) {
+						      this.getUI().toggleCheck(true);
+						    }
+						  }
 			            }, null);
 	    			}
 		          });

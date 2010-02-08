@@ -25,40 +25,23 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
       listeners: {
     	load: function(loader, node, response){
     	
-    		var editingNode = null;
-    	
           node.eachChild(function(currentNode){
-            currentNode.cascade(function(){
-              // expand the node to iterate over it
-              this.getOwnerTree().expandPath(this.getPath());
-              
-              if (this.id == editingValue) {
-                this.getUI().addClass('locked-for-edition');
-                this.getUI().checkbox.disabled = true;
-                this.getUI().checkbox.checked = false;
-                editingNode = this;
-              }
-              
-              if( editingNode != null ) {
-        		editingNode.remove();
-        		editingNode = null;
-              }
-              
-              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-                if (this.text == baseParams.arrayOfValues[j]) {
-                  this.getUI().toggleCheck(true);
-                }
-              }
-            }, null);
+        	  if ( currentNode !== undefined ) {
+  	        	currentNode.expand();
+	            currentNode.cascade(function(){
+	              if (this.text == editingValue) {
+	            	  this.remove();
+		          }
+	              
+	              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+	                if (this.text == baseParams.arrayOfValues[j]) {
+	                  this.getUI().toggleCheck(true);
+	                }
+	              }
+	            }, null);
+        	 }
           });
           
-    		
-          // enable disjointwith treepanel
-          //node.getOwnerTree().enable();
-          // refresh the superclasswaTreePanel to synchronize nodes between both treepanel
-          //Neologism.superclassesTreePanel.updatselection();
-          // enable superclasses treepanel
-          //Neologism.superclassesTreePanel.enable();
         }
       }
     }),

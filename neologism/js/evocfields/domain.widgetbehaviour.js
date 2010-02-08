@@ -32,39 +32,23 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
           	
-    		var editingNode = null;
-    		
     		node.eachChild(function(currentNode){
-	            currentNode.cascade( function() {
-	            	// expand the node to iterate over it
-	            	var id = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-	            	this.getOwnerTree().expandPath(this.getPath());
-	              
-	              	if ( id == editingValue ) {
-						this.getUI().addClass('locked-for-edition');
-						this.getUI().checkbox.disabled = true;
-						this.getUI().checkbox.checked = false;
-						editingNode = this;
-						//this.remove();
-	              	}
-	              
-	              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-	              		if ( id == baseParams.arrayOfValues[j] ) {
-	              			this.getUI().toggleCheck(true);
-	              		}
-	              	}
-	            }, null);
+    			if ( currentNode !== undefined ) {
+    	        	currentNode.expand();
+	    			currentNode.cascade( function() {
+		            	if (this.text == editingValue) {
+		            		this.remove();
+			            }
+		            	
+		              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+		              		if ( this.text == baseParams.arrayOfValues[j] ) {
+		              			this.getUI().toggleCheck(true);
+		              		}
+		              	}
+		            }, null);
+    			}
 	         });
     		
-    		// we remove the editing node from treeview for edition 
-    		// TODO at this point we also need to configure the treeview because could be possible that the editing
-    		// class be disjoint with some future superclass
-    		if( editingNode != null ) {
-    			 editingNode.remove();
-    		}
-	          
-    		// disjoiness depend from classes selection
-    		//Neologism.disjointWithTreePanel.render(Neologism.objectToRender);
         }
       }
     }),
