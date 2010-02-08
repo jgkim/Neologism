@@ -167,7 +167,11 @@ img#legend {
   margin: 10px 0px 25px 0px;
   padding: 0px;
   display: block;
-  border-bottom: #ccc solid 2px;
+  /*border-bottom: #ccc solid 1px;*/
+}
+
+.teaser {
+	border-bottom: #ccc solid 1px;	
 }
 
 #classview h3 {
@@ -224,7 +228,7 @@ img#legend {
   margin: 10px 0px 25px 0px;
   padding: 0px;
   display: block;
-  border-bottom: #ccc solid 2px;
+  /*border-bottom: #ccc solid 2px;*/
 }
 
 #propertyview h3 {

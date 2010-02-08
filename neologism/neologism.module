@@ -83,18 +83,15 @@ function neologism_perm() {
 function neologism_theme() {
   return array(
     'class_view' => array(
-      'arguments' => array('node' => array(), 'vocabulary' => NULL, 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
+      'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
     ),
     
     'property_view' => array(
-      'arguments' => array('node' => array(), 'vocabulary' => NULL, 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
+      'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
     ),
     
     'neologism_item_list' => array(
       'arguments' => array('items' => array(), 'title' => NULL, 'type' => 'ul', 'attribute' => NULL),
-    ),
-    'neo_property_node_view' => array(
-      'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL),
     ),
     NEOLOGISM_VOCABULARY_FORM_ID => array(
     	'arguments' => array('from' => NULL)
@@ -151,7 +148,6 @@ function neologism_export_conneg($node) {
 	  if ($preferred_variant == HTML) {
 	    return neologism_export_html($node);	
 	  } else if ($preferred_variant == RDF) {
-	  	kpr($node);
 	    neologism_export_rdfxml($node);
 	  } else if ($preferred_variant == N3) {
 	    neologism_export_n3($node);
@@ -161,11 +157,15 @@ function neologism_export_conneg($node) {
 	    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_export_conneg()");
 	  }
 	}
-	else {
-		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));
-		drupal_set_title($node->title);
-		$output = theme('node', $node, FALSE, TRUE);
-		return $output;
+	else if( $node->type == NEOLOGISM_CT_CLASS ) {
+		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
+		drupal_set_title($node->vocabulary->title.':'.$node->title);
+		return theme('class_view', $node, FALSE, FALSE, FALSE);
+	}
+	else if( $node->type == NEOLOGISM_CT_PROPERTY ) {
+		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
+		drupal_set_title($node->vocabulary->title.':'.$node->title);
+		return theme('property_view', $node, FALSE, FALSE, FALSE);
 	}
 }
 
@@ -267,7 +267,6 @@ function neologism_menu() {
  * Implementation of hook_form_alter().
  */
 function neologism_form_alter(&$form, &$form_state, $form_id) {
-	
 	if ( $form_id == NEOLOGISM_VOCABULARY_FORM_ID ) {
     // add validation function for create or edition of properties form
 		$form['#validate'][] = 'neo_vocabulary_node_form_validate';
@@ -439,8 +438,15 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	  }
 	  else if( arg(2) == 'edit' && isset($form['#node']) ) {
     	// add validation function for create or edition of properties form
-      $vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
-    	$current_voc = node_load($vocabulary_id);
+      $current_voc = NULL;
+	  	if( !isset($form['#node']->vocabulary) ) {
+		  	$vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
+	    	$current_voc = node_load($vocabulary_id);
+      }
+      else {
+      	$current_voc = $form['#node']->vocabulary;
+      }
+      
     	if( $current_voc ) {
 	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
 	      
@@ -549,8 +555,15 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 		  );
 	  }
 	  else if( arg(2) == 'edit' && isset($form['#node']) ) {
-	   	$vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
-    	$current_voc = node_load($vocabulary_id);
+	  	$current_voc = NULL;
+	  	if( !isset($form['#node']->vocabulary) ) {
+		  	$vocabulary_id = $form['#node']->field_vocabulary[0]['nid']; // there is different way to get this value
+	    	$current_voc = node_load($vocabulary_id);
+      }
+      else {
+      	$current_voc = $form['#node']->vocabulary;
+      }
+      	
     	if( $current_voc ) {
 	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
 	      
@@ -794,7 +807,7 @@ function neologism_export_html($node) {
   if ($classes) {
     $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Classes</h2>';
     foreach ($classes as $class) {
-      $output .= theme('class_view', node_load($class['nid']), $vocabulary, TRUE );
+      $output .= theme('class_view', node_load($class['nid']), TRUE );
       //  $output .= node_view(node_load($class['nid']), 1, $vocabulary_title);
     }
   }
@@ -803,7 +816,7 @@ function neologism_export_html($node) {
     $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Properties</h2>';
     foreach ($properties as $property) {
         //$output .= theme('neo_property_node_view', node_load($property['nid']), 1, $node->title);
-        $output .= theme('property_view', node_load($property['nid']), $vocabulary, TRUE );
+        $output .= theme('property_view', node_load($property['nid']), TRUE );
     }
   }
   
@@ -1137,22 +1150,53 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
  * Implementation of hook_nodeapi().
  */
 function neologism_nodeapi(&$node, $op, $teaser, $page) {
-  switch ($op) {
-    case 'prepare':
-      if( $node->type == NEOLOGISM_CT_CLASS ) {
-      	variable_set('previous_class_title', $node->title);
+	//var_dump('neologism_nodeapi');
+	//var_dump($op, $node->type);
+	switch ($op) {
+  	case 'prepare':
+  		if( $node->type == NEOLOGISM_CT_CLASS ) {
+  			variable_set('previous_class_title', $node->title);
+      	
+  			// TODO working in this commented code, tvm guidocecilio
+  			/*
+  			if( !isset($node->vocabulary) ) {
+      		$vocabulary_nid = NULL;
+  				if( arg(2) == 'edit' ) {
+      			$vocabulary_nid = $node->field_vocabulary[0]['nid']; // there is different way to get this value
+      		}
+      		else if( arg(3) == 'parent' ) {
+      			$node_class = node_load(arg(4));
+      			$vocabulary_nid = $node_class->field_vocabulary[0]['nid'];
+      		}
+      		else if( isset($_GET['v']) ) {
+      			$vocabulary_nid = (int)$_GET['v'];
+      		}
+      		
+      		$vocabulary = node_load($vocabulary_nid);	
+      	}
+      	kpr($node);
+      	*/
+      	
       }
-      elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
-      	drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));
-				drupal_set_title($node->title);
+      else if( $node->type == NEOLOGISM_CT_PROPERTY ) {
         variable_set('previous_property_title', $node->title);
       }
  
   	  break;
-      
-    // catching the view event
+  	  
+  	case 'load':
+  		if( $node->type == NEOLOGISM_CT_CLASS ) {
+				$node->vocabulary = node_load($node->field_vocabulary[0]['nid']);
+  		} 
+  		else if( $node->type == NEOLOGISM_CT_PROPERTY ) {
+				$node->vocabulary = node_load($node->field_vocabulary[0]['nid']);
+  		}
+  		break;
+  		
+
+  	// catching the view event
     case 'view':
-      if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
+    	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
         $node->authors = array();
         foreach($node->field_authors as $author) {
           $author = user_load($author);
@@ -1173,6 +1217,9 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 	    	$node->count_classes = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS));
 	    	$node->count_properties = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY));
       }
+      //else if( $node->type == NEOLOGISM_CT_CLASS ) {
+      //	drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path));
+      //}
       break;
       
     case 'update':
@@ -1609,15 +1656,15 @@ function theme_neologism_item_list($items = array(), $title = NULL, $type = 'ul'
   return $output;
 }
 
-function theme_class_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
+function theme_class_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) {
 	$node = (object)$node;
   $output = '';
   
   $node = node_build_content($node, $teaser, $page);
   
   $URI ='';
-  if ( !empty($vocabulary->custom_namespace) ) {
-  	$curi = $vocabulary->custom_namespace.$node->title;
+  if ( !empty($node->vocabulary->field_custom_namespace[0]['value']) ) {
+  	$curi = $node->vocabulary->field_custom_namespace[0]['value'].$node->title;
   	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
   }
@@ -1651,9 +1698,10 @@ function theme_class_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $
     $label .= $node->field_label[0]['value'];
   }
   
+  $teaser_class = ($teaser == TRUE) ? ' class="teaser"' : '';
   $output .= '
-  <div id="classview">
-    <h3 id="'.$node->title.'">Class: '.$vocabulary->id.':'.$node->title.'</h3>';
+  <div id="classview"'.$teaser_class.'">
+    <h3 id="'.$node->title.'">Class: '.$node->vocabulary->title.':'.$node->title.'</h3>';
   
   if(empty($comment) ) {    
     $output .= '<div class="abstract"><em>'.$label.'</em></div>';
@@ -1688,7 +1736,7 @@ function theme_class_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $
   return $output; 
 }
 
-function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE, $page = FALSE, $links = TRUE) {
+function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) {
 	$node = (object)$node;
   $output = '';
   
@@ -1696,8 +1744,8 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
   $node = node_build_content($node, $teaser, $page);
   
 	$URI ='';
-  if ( !empty($vocabulary->custom_namespace) ) {
-  	$curi = $vocabulary->custom_namespace.$node->title;
+  if ( !empty($node->vocabulary->field_custom_namespace[0]['value']) ) {
+  	$curi = $node->vocabulary->field_custom_namespace[0]['value'].$node->title;
   	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
   }	
@@ -1774,9 +1822,10 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
     $description = $node->body_field;
   }
   
+  $teaser_property = ($teaser == TRUE) ? ' class="teaser"' : '';
   $output .= '
-  <div id="propertyview">
-    <h3 id="'.$node->title.'">Property: '.$vocabulary->id.':'.$node->title.'</h3>';
+  <div id="propertyview" '.$teaser_property.'>
+    <h3 id="'.$node->title.'">Property: '.$node->vocabulary->title.':'.$node->title.'</h3>';
 	
   if(empty($comment) ) {    
     $output .= '<div class="abstract"><em>'.$label.'</em></div>';
@@ -1812,49 +1861,6 @@ function theme_property_view($node, stdClass $vocabulary = NULL, $teaser = FALSE
   $output .= '</div>';
  
   return $output; 
-}
-
-/**
- * Deprecated... 
- * @param object $node
- * @param object $teaser [optional]
- * @param object $page [optional]
- * @param object $links [optional]
- * @return 
- */
-function theme_neo_property_node_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) {
-  $node = (object)$node;
-
-  $node = node_build_content($node, $teaser, $page);
-
-  if ($links) {
-    $node->links = module_invoke_all('link', 'node', $node, $teaser);
-    drupal_alter('link', $node->links, $node);
-  }
-
-  // commend by guidocecilio - 30 july 2009
-  // create content usign drupal_render for all fields. 
-  // we are creating a bridge over field_literal_as_range to avoid its representation.
-  $content = '';
-  foreach( element_children($node->content) as $key ) {
-    if( $key != 'group_range' ) {
-      $content .= drupal_render($node->content[$key]);
-    }
-    else {
-      $content .= drupal_render($node->content[$key]['group']['field_range2']);
-    }
-  }
-  
-  if ($teaser) {
-    $node->teaser = $content;
-    unset($node->body);
-  }
-  else {
-    $node->body = $content;
-    unset($node->teaser);
-  }
-
-  return theme('node', $node, $teaser, $page);
 }
 
 /**
@@ -2737,6 +2743,7 @@ function neologism_menu_link_alter(&$item, $menu) {
 function neologism_get_xsd_datatype_list() {
 	$neologism_xsd_datatypes = array(
 			t('Standard datatypes') => array(
+				'rdfs:Literal' => 'rdfs:Literal',
 				'xsd:string' => 'xsd:string',
 				'xsd:decimal' => 'xsd:decimal',
 				'xsd:integer' => 'xsd:integer',
