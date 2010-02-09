@@ -10,7 +10,7 @@
  */
 function evoc_read_RDF_from_URI($uri) {
     include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
+    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfParser.php");
     
     $uri = trim($uri);
     // check if it's an HTTP URI
@@ -105,9 +105,10 @@ function evoc_read_RDF_from_URI($uri) {
 
     // Create a RAP model and parse the content
     $model = ModelFactory::getDefaultModel();
+    $parser = new RdfParser();
     set_error_handler('evoc_read_RDF_from_URI__error_handler', E_USER_ERROR);
     try {
-        $model->loadFromString($content, 'rdf');
+        $parser->generateModel($content, $uri, $model);
         restore_error_handler();
         return $model;
     } catch (Exception $ex) {
