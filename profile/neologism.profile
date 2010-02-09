@@ -30,7 +30,7 @@ function neologism_profile_modules() {
     'rules',
   
     // Contrib
-    'rdf', 
+    'ext','rdf'
     //'evoc', 
     //'evocreference', 'ext', 'mxcheckboxselect',
     
@@ -124,7 +124,7 @@ function neologism_profile_tasks(&$task, $url) {
 	
 	  $modules_list = array(
 	    'evoc', 
-	    'evocreference', 'ext', 'mxcheckboxselect',
+	    'evocreference', 'evocwidget_dynamic',
 	    //'neologism'
 	  );
 	  
@@ -142,11 +142,11 @@ function neologism_profile_tasks(&$task, $url) {
   	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext-3.0.0');
   	
   	// disabled the user login block
-  	db_query('update {blocks} set status = 0 where bid = 1' /*module = "user" and delta = 0'*/);
+  	db_query('update {blocks} set status = 0 where bid = 1');
   	// disabled the powered by drupal block
   	db_query('update {blocks} set status = 0 where bid = 3');
   	// move the navegation block to right region
-  	db_query('update {blocks} set region = "right" where bid = 2' /*module = "user" and delta = 1'*/);
+  	db_query('update {blocks} set region = "right" where bid = 2');
 
   	require_once 'modules/block/block.admin.inc';
   	require_once 'modules/block/block.module';
@@ -154,7 +154,6 @@ function neologism_profile_tasks(&$task, $url) {
   	
   	// create custom block, this kind of block are stored in the boxes table
   	$form_id = 'block_add_block_form';
-  	
   	$link = l('Login', 'user');
   	$image = theme('image', drupal_get_path('module', 'neologism') .'/images/neologism-logo-80x16.png', 
   		t('Neologism'), '', array('class' => 'poweredby-logo'));
@@ -327,7 +326,11 @@ function neologism_profile_tasks(&$task, $url) {
 										)"
   	);
   	drupal_execute($form_id, $form_state);
-  	
+
+  	// hidden the SPARQL links
+  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "sparql"');
+  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "node/add/sparql"');
+	  
   	// return control to the installer
 	  $task = 'profile-finished';
   }
