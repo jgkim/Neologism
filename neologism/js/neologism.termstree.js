@@ -120,27 +120,7 @@ Ext.tree.TreePanel.prototype.getChecked = function(node){
 //-------------------------------------------------------
 // especifies methods for TermsTree
 
-Ext.tree.TreePanel.prototype.findNodeById = function(id){   
-    var node = null;
-    
-	this.getRootNode().eachChild(function(currentNode){
-        currentNode.cascade(function(){
-        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-        	if( cid == id ) {
-        		node = this;
-        		return false;
-        	}
-        }, null);
-        
-        if( node !== null ) {
-        	node.setOwnerTree(this.getOwnerTree());
-        	return false;
-        }
-        
-    },  null);
-	
-	return node;
-};
+
 
 /**
  * Note: we are working with node.text becuase the id could be modified or had not the right value
@@ -507,17 +487,13 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
       //-------------------------------------------
       // custom TermsTree properties 
       hiddenNodes: [],
-      
-      // this property is just for an urgent solution
-      //observers: [],
-      
       // array of selected values
       arrayOfValues: []
-      
     };
   
     // public property
     this.observers = [];
+    
     
     // Config object has already been applied to 'this' so properties can 
     // be overriden here or new properties (e.g. items, tools, buttons) 
@@ -818,6 +794,48 @@ Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain
     },  null);
 	
 	return allowedAsInverseProperties;
+}
+
+/**
+ * 
+ */
+Neologism.TermsTree.prototype.findNodeByText = function(text){   
+    var node = null;
+	this.getRootNode().eachChild(function(currentNode){
+		currentNode.cascade(function(){
+			if( this.text == text ) {
+        		node = this;
+        		return false;
+        	}
+        }, null);
+        
+        if( node !== null ) {
+        	//node.setOwnerTree(this.getOwnerTree());
+        	return false;
+        }
+        
+    },  null);
+	
+	return node;
+};
+
+/**
+ * Finds the first child that has the attribute with the specified value using the children array.
+ * @param {Node} node containing children
+ * @param {String} attribute The attribute name
+ * @param {Mixed} value The value to search for
+ * @return {Node} The found child or null if none was found
+ */
+Neologism.TermsTree.prototype.findChildInNode = function(node, value) { 
+    console.log('my findChild');
+    console.info(node);
+	var cs = node.attributes.children;
+    for(var i = 0, len = cs.length; i < len; i++) {
+        if(cs[i].text == value){
+            return cs[i];
+        }
+    }
+    return null;
 }
 
 /**

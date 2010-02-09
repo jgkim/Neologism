@@ -23,6 +23,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
     //renderTo: objectToRender,
     title: Drupal.t('Range'),
     disabled: false,
+    arrayOfValues: baseParams.arrayOfValues,
     
     loader: new Ext.tree.TreeLoader({
       dataUrl: dataUrl,
@@ -33,38 +34,32 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
           	
-    		var editingNode = null;
+			// check the first element of the baseParams.arrayOfValues if this is a literal then we need to clear it from the
+	    	// list of value
+    		if( Neologism.TermsTree.getXSDDatatype().indexOf(baseParams.arrayOfValues[0]) != -1 ) {
+				baseParams.arrayOfValues.length = 0;
+			}
     		
     		node.eachChild(function(currentNode){
-	            currentNode.cascade( function() {
-	            	// expand the node to iterate over it
-	            	var id = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-	            	this.getOwnerTree().expandPath(this.getPath());
-	              
-	              	if ( id == editingValue ) {
-						this.getUI().addClass('locked-for-edition');
-						this.getUI().checkbox.disabled = true;
-						this.getUI().checkbox.checked = false;
-						editingNode = this;
-	              	}
-	              
-	              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-	              		if ( id == baseParams.arrayOfValues[j] ) {
-	              			this.getUI().toggleCheck(true);
-	              		}
-	              	}
-	            }, null);
+    			if ( currentNode !== undefined ) {
+	    			currentNode.cascade( function() {
+	    				this.expand();
+		            	if (this.text == editingValue) {
+		            		this.remove();
+			            }
+		            	
+		              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+		              		if ( this.text == baseParams.arrayOfValues[j] ) {
+		              			this.getUI().toggleCheck(true);
+		              		}
+		              	}
+		            }, null);
+    			}
 	         });
-    		
-    		// we remove the editing node from treeview for edition 
-    		// TODO at this point we also need to configure the treeview because could be possible that the editing
-    		// class be disjoint with some future superclass
-    		if( editingNode != null ) {
-    			 editingNode.remove();
-    		}
-	          
-    		// disjoiness depend from classes selection
-    		//Neologism.disjointWithTreePanel.render(Neologism.objectToRender);
+    	
+    		 // we need to create the reference to arrayOfValues eventhough the array reside in the loader object
+    		 // for a better use. The reference in creation time it is not working.
+    		 node.getOwnerTree().arrayOfValues = baseParams.arrayOfValues;
         }
       }
     }),
@@ -216,16 +211,12 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 	        
 	        // fire the event to execute the onSelectionChange handler and notify to observers
 	        this.fireEvent('selectionchange', node);
-	        
-	        // notify Observers directly
-	    	//this.notifyObservers('selectionchange', {widget: 'range', rootNode: node.getOwnerTree().getRootNode(), selectedValues: baseParams.arrayOfValues});
   		} // checkchange  
     }
   
 	  ,onSelectionChange:function(object) {
 	      // do whatever is necessary to assign the employee to position
 		// notify Observers directly
-	  	console.log('range on select');
 		  this.notifyObservers('selectionchange', {
 			  widget: 'range', 
 			  rootNode: this.getRootNode(), 
@@ -236,4 +227,13 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
   });
 
   Neologism.rangeTermsTree.objectToRender = objectToRender;
+  
+  /**
+   * this function is used to clear the arrayOfValues and notify the observe 
+   */
+  Neologism.rangeTermsTree.clearValues = function() {
+	  this.arrayOfValues.length = 0;
+	  this.fireEvent('selectionchange', null);
+  };
+  
 };

@@ -78,49 +78,42 @@ if( Drupal.jsEnabled ) {
 		if ( $('#edit-resource-type-1').attr('checked') ) {
 			$('#range-group-datatypes').hide();
 			$('#range-treeview').show();
-			// the inverse selection widget should be shown if the range field also are shown
-			if( Neologism.inverseTermsTree !== undefined ) 
-				Neologism.inverseTermsTree.enable();
-				//$('#inverse-treeview').show();
 		}
 		// A literal (string, number, date, ...)
 		else if ( $('#edit-resource-type-2').attr('checked') ) {
 			$('#range-treeview').hide();
 			$('#range-group-datatypes').show();
 			// the inverse selection widget should be hidden if the range field also are hidden
-			//$('#inverse-treeview').hide();
-			if( Neologism.inverseTermsTree !== undefined ) 
-				Neologism.inverseTermsTree.disable();
+			Neologism.rangeTermsTree.clearValues();
 		}
 		// Either
 		else if ( $('#edit-resource-type-3').attr('checked') ) {
 			$('#range-group-datatypes').hide();
 			$('#range-treeview').hide();
-		    	if( Neologism.inverseTermsTree !== undefined ) 
-		    		Neologism.inverseTermsTree.enable();
+			Neologism.rangeTermsTree.clearValues();
 	    }
 	  };
 	  
 	  Neologism.neoVocabularyFormOnSubmit = function() {
 		  if ( $('#edit-namespace-type-1').attr('checked') ) {
-	  $('#edit-field-custom-namespace-0-value').val('');
-	  } else {
-		  // TODO: handle what happen when the user select custom namespace and the field it is empty
-	  if ( $('#edit-field-custom-namespace-0-value').val() == '' ) {
-	  $('#edit-field-custom-namespace-0-value').val('error_field_required_empty')
+			  $('#edit-field-custom-namespace-0-value').val('');
+		  } else {
+			  // TODO: handle what happen when the user select custom namespace and the field it is empty
+			  if ( $('#edit-field-custom-namespace-0-value').val() == '' ) {
+				  $('#edit-field-custom-namespace-0-value').val('error_field_required_empty')
 			  }
 		  }
 	  };
 	  
-	  Neologism.neoVocabularyFormToggleNamespace = function() {
-	    // Another resource
-	if ( $('#edit-namespace-type-1').attr('checked') ) {
-	$('#edit-field-custom-namespace-0-value').attr('disabled', true);
-	}
-	// A literal (string, number, date, ...)
-	else if ( $('#edit-namespace-type-2').attr('checked') ) {
-	$('#edit-field-custom-namespace-0-value').removeAttr("disabled").focus();//.val("editable now");
-	    }
-	  };
+	Neologism.neoVocabularyFormToggleNamespace = function() {
+		// Another resource
+		if ( $('#edit-namespace-type-1').attr('checked') ) {
+		$('#edit-field-custom-namespace-0-value').attr('disabled', true);
+		}
+		// A literal (string, number, date, ...)
+		else if ( $('#edit-namespace-type-2').attr('checked') ) {
+			$('#edit-field-custom-namespace-0-value').removeAttr("disabled").focus();//.val("editable now");
+		}
+	};
   
 }

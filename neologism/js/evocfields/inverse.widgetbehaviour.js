@@ -38,8 +38,9 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    		var treeview = node.getOwnerTree();
 	    		node.eachChild(function(currentNode){
 	    			if ( currentNode !== undefined ) {
-	    	        	currentNode.expand();
 			            currentNode.cascade( function() {
+			            	this.expand();
+			            	
 			            	if (this.text == editingValue) {
 			              	  this.remove();
 			                }
@@ -53,7 +54,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    			}
 		          });
 	          
-	    		treeview.enable();
+	    		//treeview.enable();
 	    		treeview.fireEvent('selectionchange', null);
 	        }
 	      }
@@ -105,34 +106,30 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        });
 	        
 	      } // checkchange
-	    }
+	}
 	
 		,onSelectionChange:function(objectSender) {
 		      // do whatever is necessary to assign the employee to position
-		  	
 		  	if( objectSender != null ) {
 		  		lastSender = objectSender;
-			  	if( objectSender.widget == 'domain' )
-			  		domain = objectSender.selectedValues; 
-			  	if( objectSender.widget == 'range' )
+			  	if( objectSender.widget == 'domain' ) {
+			  		domain = objectSender.selectedValues;
+			  	}
+			  	if( objectSender.widget == 'range' ) {
 			  		range = objectSender.selectedValues;
+			  		console.log(range);
+			  	}
 		  	}
 		  	
 		  	if( domain.length > 0 && range.length > 0 ) {
 			  	var allowedAsInverseProperties = this.computeInverses(lastSender.rootNode, domain, range);
 			  	// TODO add code to show the new values in the treeview for inverse selection widget
 			  	this.getRootNode().eachChild(function(currentNode) {
-			        currentNode.cascade(function() {
+			  		// we need to expand the node to traverse it
+			  		currentNode.cascade(function() {
 			        	//console.log(this.text);
 			        	// we need to expand the node to traverse it
 			        	this.expand();
-			        	
-			        	/*
-			        	console.info(this.id);
-			        	if (this.id == editingValue) {
-			        		this.remove();
-			            }
-			            */
 			        	
 			        	if ( allowedAsInverseProperties.indexOf(this.text) == -1 ) {
 			        		this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;

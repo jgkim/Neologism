@@ -31,12 +31,10 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
         load: function(loader, node, response){
     		
           node.eachChild(function(currentNode){
-            //alert(currentNode.id);
-            //node.getOwnerTree().expandPath(currentNode.getPath());
             if ( currentNode !== undefined ) {
-        	  currentNode.expand();
+        	  
         	  currentNode.cascade(function(){
-	              //console.log(this.id);
+        		  this.expand();
 	              if (this.text == editingValue) {
 	            	  this.remove();
 	              }

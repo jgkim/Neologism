@@ -34,8 +34,9 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
           	
     		node.eachChild(function(currentNode){
     			if ( currentNode !== undefined ) {
-    	        	currentNode.expand();
 	    			currentNode.cascade( function() {
+	    				this.expand();
+	    				
 		            	if (this.text == editingValue) {
 		            		this.remove();
 			            }

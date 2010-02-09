@@ -27,11 +27,12 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
     	
           node.eachChild(function(currentNode){
         	  if ( currentNode !== undefined ) {
-  	        	currentNode.expand();
+  	        	
 	            currentNode.cascade(function(){
-	              if (this.text == editingValue) {
-	            	  this.remove();
-		          }
+	            	this.expand();
+	                if (this.text == editingValue) {
+	                	this.remove();
+		            }
 	              
 	              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
 	                if (this.text == baseParams.arrayOfValues[j]) {
@@ -59,29 +60,29 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 	  	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
     	checkchange: function(node, checked) {
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	  		//console.info(node);
-	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
 	  		
-	        if ( checked /*&& node.parentNode !== null*/ ) {
+	        if ( checked  ) {
 		        // add selection to array of values
-      		if ( baseParams.arrayOfValues.indexOf(id) == -1 ) {
-	            	baseParams.arrayOfValues.push(id);
+	        	if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+	            	baseParams.arrayOfValues.push(node.text);
 	            }
 	            
-      		console.log(baseParams.arrayOfValues);
+	        	console.log(baseParams.arrayOfValues);
       		
-      		// check if this node has more than 1 super class, so we need to checked it 
-      		// in other places in the tree.
+	      		// check if this node has more than 1 super class, so we need to checked it 
+	      		// in other places in the tree.
 	      		if( node.attributes.superclasses !== undefined ) {
-	        		var c = node.attributes.superclasses;
+	    			var c = node.attributes.superclasses;
 	        		var len = c.length;
 	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
+	        			var tree = node.getOwnerTree(); 
+		        		var rootnode = tree.getRootNode(); 
 		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        			if( c[i] != node.parentNode.text ) {
+		        				var currentNode = tree.findNodeByText(c[i]);
 		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
+		        					currentNode.expand();
+		        					var n = currentNode.findChild('text', node.text);
 		        					if( n.getUI().checkbox.checked == false ) {
 		        						n.getUI().toggleCheck(true);
 		        					}
@@ -89,13 +90,12 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 		        			}
 		        		}
 	        		}
-	      		}
-      		
+	    		}
+	      		
 	            // disabled all the parent of the selection
-      		if ( !node.parentNode.isRoot ) {
+	      		if ( !node.parentNode.isRoot ) {
 	            	node.bubble( function() {
-		                var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-	            		if (id != cid && this.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
+	            		if (node.text != this.text && this.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
 	            			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;
 	            			this.getUI().addClass('class-bloked');
 		                	this.getUI().checkbox.disabled = true;
@@ -106,12 +106,12 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 		                	return false;
 		                }
 	            	});
-	            }
-	    	} 
+		         }
+		    } 
 	        else {
 	    		// if we are unchecked a checkbox
 	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-	    			if ( baseParams.arrayOfValues[i] == id ) {
+	    			if ( baseParams.arrayOfValues[i] == node.text ) {
 	    				baseParams.arrayOfValues.splice(i, 1);
 	    			}
 	    		}
@@ -120,9 +120,9 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 				if (!node.parentNode.isRoot) {
 				    // search for someone checked
 					node.bubble( function() {
-						console.log('bubble...id: %s, this.id: %s', id, this.id);
-						console.log(node);
-						if ( id != this.id ) {
+						//console.log('bubble...id: %s, this.id: %s', id, this.id);
+						//console.log(node);
+						if ( node.text != this.text ) {
 				    		// now we need to check for checked and BLOCKED status, so we need 
 				    		// to write a function to check both action
 				    		if ( this.getOwnerTree().isSomeChildCheckedOrStatus(this, Ext.tree.TreePanel.nodeStatus.BLOCKED) ) {
@@ -150,14 +150,14 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 	        		var c = node.attributes.superclasses;
 	        		var len = c.length;
 	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
+	        			var tree = node.getOwnerTree();
+		        		var rootnode = tree.getRootNode(); 
 		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
-		        				//console.info(currentNode);
-		        				//console.log('Path: %s, c[i]: %s', rootnode.findChild('id', c[i]), c[i]); //.getPath());
+		        			if( c[i] != node.parentNode.text ) {
+		        				var currentNode = tree.findNodeByText(c[i]);
 		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
+		        					currentNode.expand();
+		        					var n = currentNode.findChild('text', node.text);
 		        					if( n.getUI().checkbox.checked == true ) {
 		        						n.getUI().toggleCheck(false);
 		        					}
@@ -177,30 +177,29 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 	        		this.expand();
 	        	}
 	        	
-	        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-      		if ( id != cid  ) {
-      			if ( checked ) {
-      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
-      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;
-      				}
-      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL ) {
-      					//this.getUI().addClass('class-bloked');
-	        			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.IMPLICIT;
-	        			this.getUI().checkbox.checked = true;
-      				}
-      			}
-      			else {
-      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT ) {
-      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.INCONSISTENT;
-      				}
-      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.IMPLICIT ) {
-	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	        				this.getUI().checkbox.checked = false;
-      				}
-      			}
-      			
-      			this.getUI().checkbox.disabled = !this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL;
-      		}
+	        	if ( node.text != this.text  ) {
+	      			if ( checked ) {
+	      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
+	      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;
+	      				}
+	      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL ) {
+	      					//this.getUI().addClass('class-bloked');
+		        			this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.IMPLICIT;
+		        			this.getUI().checkbox.checked = true;
+	      				}
+	      			}
+	      			else {
+	      				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT ) {
+	      					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.INCONSISTENT;
+	      				}
+	      				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.IMPLICIT ) {
+		        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+		        				this.getUI().checkbox.checked = false;
+	      				}
+	      			}
+	      			
+	      			this.getUI().checkbox.disabled = !this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL;
+	        	}
 	        });
 	        
 	        this.fireEvent('selectionchange', node);

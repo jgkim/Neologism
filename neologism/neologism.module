@@ -22,7 +22,8 @@ define("DEFAULT_RDFS_SUPERCLASS", "rdfs:Resource");
 define("MSG_INVALID_ID", "is not a valid identifier. It should start with a letter, and should contain only letters, 
 													numbers, dashes, and underscores.");
 
-define("MSG_ID_ALREADY_IN_USE", "is a duplicate identifier.");      
+define("MSG_ID_ALREADY_IN_USE", "is a duplicate identifier."); 
+define("MSG_ID_ALREADY_EXISTS", "Already exists into the system. Please try with other vocabulary Id.");     
 
 define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
@@ -2238,6 +2239,11 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
   $title = $form_state['values']['title'];
   if ( !_neologism_is_valid_id($title) ) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
+  }
+  
+  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE title="%s" AND type = "%s"'), $title, NEOLOGISM_CT_VOCABULARY ));
+  if( $count > 0 ) {
+  	form_set_error('title', t('"'.$title.'" - '.MSG_ID_ALREADY_EXISTS));	
   }
   
   $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
