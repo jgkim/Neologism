@@ -23,7 +23,6 @@ define("MSG_INVALID_ID", "is not a valid identifier. It should start with a lett
 													numbers, dashes, and underscores.");
 
 define("MSG_ID_ALREADY_IN_USE", "is a duplicate identifier."); 
-define("MSG_ID_ALREADY_EXISTS", "Already exists into the system. Please try with other vocabulary Id.");     
 
 define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
@@ -278,7 +277,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 		$form['#validate'][] = 'neo_vocabulary_node_form_validate';
   	$form['title']['#theme'] = "render_URI_field";
   	
-  	$default_namespace = _neologism_get_namespace(NULL, FALSE);
+  	$default_namespace = url('', array('absolute' => TRUE));
   	$form['title']['#namespace'] = $default_namespace; 
   	// fix the size of the Id field to 20
   	$form['title']['#size'] = 20;
@@ -427,7 +426,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    //$current_voc = db_fetch_object(db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {node} n INNER JOIN {content_type_neo_vocabulary} c ON n.nid = c.nid WHERE n.nid = %d AND n.type = '%s'"), 
 	    //	$vocabulary_id, NEOLOGISM_CT_VOCABULARY));
 			if( $current_voc ) {
-				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 				$form['holder'] = array(
 	    		'#type' => 'value',
 	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
@@ -456,7 +455,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	if( $current_voc ) {
 	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
 	      
-				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 				// create the holder with the values that we need to process/render the form
 	      $form['holder'] = array(
 	    		'#type' => 'value',
@@ -485,7 +484,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	if ( $current_voc ) {
 	      $qname = $current_voc->title.':'.$node_property->title;
 	      
-	      $form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+	      $form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 	    	// create the holder with the values that we need to process/render the form
 	      $form['holder'] = array(
 	    		'#type' => 'value',
@@ -545,7 +544,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    
 	    $current_voc = node_load($vocabulary_id);
 			if( $current_voc ) {
-				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 				$form['holder'] = array(
 	    		'#type' => 'value',
 	    		'#value' => array('vocabulary_title' => $current_voc->title, 'operation' => 'create')		
@@ -573,7 +572,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     	if( $current_voc ) {
 	      $qname = $current_voc->title.':'.$form['#node']->title; // create the qname for the property
 	      
-				$form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+				$form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 				// create the holder with the values that we need to process/render the form
 	      $form['holder'] = array(
 	    		'#type' => 'value',
@@ -593,7 +592,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       if( $current_voc ) {
 	    	$qname = $current_voc->title.':'.$node_class->title;
 	      
-	      $form['title']['#namespace'] = ($current_voc->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($current_voc->path) : $current_voc->field_custom_namespace[0]['value'];
+	      $form['title']['#namespace'] = _neologism_get_namespace_uri($current_voc);
 	    	// create the holder with the values that we need to process/render the form
 	      $form['holder'] = array(
 	    		'#type' => 'value',
@@ -630,7 +629,6 @@ function neologism_export_html($node) {
 	$vocabulary = new stdClass();
 	$vocabulary->id = $node->title;
   $vocabulary->title = $node->field_title[0]['value'];
-  $vocabulary->custom_namespace = $node->field_custom_namespace[0]['value'];
   $vocabulary->description = $node->body;
   $vocabulary->authors = $node->field_authors;
   
@@ -679,7 +677,7 @@ function neologism_export_html($node) {
   }
   $output .= '</div>';
 
-  $namespace_url = ($node->field_custom_namespace[0]['value'] == '') ? _neologism_get_namespace($node->path) : $node->field_custom_namespace[0]['value'];
+  $namespace_url = _neologism_get_namespace_uri($node);
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'</div></div>';
 
   // Abstract
@@ -843,14 +841,17 @@ function &neologism_get_rdf_model($node) {
   $classes = _neologism_get_all_classes($node, $required_namespaces);
   $properties = _neologism_get_all_properties($node, $required_namespaces);
   
-  // this function execute all rdf_namespaces hook available in the drupal instance
-  $namespaces = rdf_get_namespaces();
-  $namespace = ($node->field_custom_namespace[0]['value'] == '') ? $namespaces[$node->title] : $node->field_custom_namespace[0]['value'];
+  $namespace = _neologism_get_namespace_uri($vocabulary);
 
   // Set up model with all necessary namespaces
+  $namespaces = rdf_get_namespaces();
   $rdf = new neologism_rdf_writer();
   foreach ($required_namespaces as $prefix) {
-    $rdf->namespace_($prefix, $namespaces[$prefix]);  
+    $ns = $namespaces[$prefix];
+    if (is_array($ns)) {
+      $ns = $ns[0];
+    }
+    $rdf->register_namespace($prefix, $ns);
   }
     
   // export the ontology
@@ -1214,10 +1215,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
           }
         }
         
-       	$node->namespace_uri = $node->field_custom_namespace[0]['value'];
-			  if( $node->namespace_uri == '' ) {
-			  	$node->namespace_uri = url($node->path, array('absolute' => TRUE)) . '#';
-			  }
+       	$node->namespace_uri = _neologism_get_namespace_uri($node);
 	    	
         // this is a fast solution to show the vocabulary statistic to the user
 	    	$node->count_classes = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS));
@@ -1518,10 +1516,10 @@ function neologism_rdf_namespaces() {
   );
 
   // Add namespaces of all user-created vocabularies
-  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
+  // TODO Use the node's path instead of title when no custom namespace is defined
+  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value AS custom FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
   while( $voc = db_fetch_object($vocs) ) {
-  	$uri = ($voc->field_custom_namespace_value == NULL) ? $GLOBALS['base_url'].'/'.$voc->title.'#' : $voc->field_custom_namespace_value;
-    $namespaces[$voc->title] = $uri;
+    $namespaces[$voc->title] = $voc->custom ? $voc->custom : url($voc->title, array('absolute' => TRUE)) . '#';
   }
 
   return $namespaces;
@@ -1670,8 +1668,8 @@ function theme_class_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) 
   
   $URI ='';
   if ( !empty($node->vocabulary->field_custom_namespace[0]['value']) ) {
-  	$curi = $node->vocabulary->field_custom_namespace[0]['value'].$node->title;
-  	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
+  	$curi = _neologism_get_namespace_uri($node->vocabulary) . $node->title;
+  	$link = l($curi, $curi);
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
   }
   
@@ -1749,12 +1747,12 @@ function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRU
   // build context to use the evoc fields values
   $node = node_build_content($node, $teaser, $page);
   
-	$URI ='';
+  $URI ='';
   if ( !empty($node->vocabulary->field_custom_namespace[0]['value']) ) {
-  	$curi = $node->vocabulary->field_custom_namespace[0]['value'].$node->title;
-  	$link = l($curi, $curi, array('attributes' => array('title' => 'change this title message')));
+  	$curi = _neologism_get_namespace_uri($node->vocabulary) . $node->title;
+  	$link = l($curi, $curi);
   	$URI = '<div class="row"><div class="column-title">URI:</div><div class="column-values">'.$link.'</div></div>';
-  }	
+  }
   
   $owl_type = '';
   $owl_type_value = '';
@@ -2246,9 +2244,9 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
   }
   
-  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE title="%s" AND type = "%s"'), $title, NEOLOGISM_CT_VOCABULARY ));
+  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"'), $form_state['values']['nid'], $title, NEOLOGISM_CT_VOCABULARY ));
   if( $count > 0 ) {
-  	form_set_error('title', t('"'.$title.'" - '.MSG_ID_ALREADY_EXISTS));	
+  	form_set_error('title', t('The prefix “%prefix” is already in use. Please choose a different prefix.', array('%prefix' => $title)));
   }
   
   $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
@@ -2723,13 +2721,21 @@ function _neologism_is_xsd_datatype( $value ) {
   
   return FALSE;
 }
+
 /**
- * 
- * @param $path
- * @return unknown_type
+ * Returns the namespace URI for a given vocabulary node, taking into
+ * account the base URI of the site and the possibility of custom
+ * namespaces.
+ *
+ * param $node object
+ *   A node of content type neo_vocabulary
+ * return string
+ *   The full namespace URI of the vocabulary, including trailing hash
  */
-function _neologism_get_namespace($path = NULL, $append_sharp = TRUE) {
-  return url($path, array('absolute' => TRUE)) . ($append_sharp == TRUE ? '#' : '');
+function _neologism_get_namespace_uri($node) {
+  $custom = $node->field_custom_namespace[0]['value'];
+  if ($custom) return $custom;
+  return url($node->path, array('absolute' => TRUE)) . '#';
 }
 
 /**
@@ -2824,13 +2830,15 @@ class neologism_rdf_writer {
   }
 
   /**
-   * The name of this function was changed from namespace to namespace_ to
-   * avoid the conflict with the keyword namespace in PHP 5.3. 
+   * Registers a namespace mapping that will be added to the written
+   * RDF file.
+   *
    * @param $prefix
+   *   A namespace prefix, such as 'foaf'
    * @param $uri
-   * @return unknown_type
+   *   A namespace URI, such as 'http://xmlns.com/foaf/0.1/'
    */
-  function namespace_($prefix, $uri) {
+  function register_namespace($prefix, $uri) {
     $this->_namespaces[$prefix] = $uri;
     $this->_model->addNamespace($prefix, $uri);
   }
