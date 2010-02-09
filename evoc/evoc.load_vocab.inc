@@ -386,6 +386,9 @@ function _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, &$model) {
   $prefixes = array();
   $namespaces = rdf_get_namespaces();
   foreach ($namespaces as $p => $u) {
+    if (is_array($u)) {
+      $u = $u[0];
+    }
     $evoc_import_namespaces[$u] = array('prefix' => $p);
     $prefixes[] = $p;
   }
