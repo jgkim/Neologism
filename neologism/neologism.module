@@ -168,6 +168,9 @@ function neologism_export_conneg($node) {
 		drupal_set_title($node->vocabulary->title.':'.$node->title);
 		return theme('property_view', $node, FALSE, FALSE, FALSE);
 	}
+	else {
+		return theme('node', $node, FALSE, TRUE);	
+	}
 }
 
 /**
