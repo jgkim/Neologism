@@ -169,6 +169,8 @@ function neologism_export_conneg($node) {
 		return theme('property_view', $node, FALSE, FALSE, FALSE);
 	}
 	else {
+		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));	
+		drupal_set_title($node->title);
 		return theme('node', $node, FALSE, TRUE);	
 	}
 }
