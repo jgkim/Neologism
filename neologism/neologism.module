@@ -667,7 +667,7 @@ function neologism_export_html($node) {
       if ($author->profile_neologism_affiliation_homepage) {
         $output .= ' (' . l($author->profile_neologism_affiliation, $author->profile_neologism_affiliation_homepage) . ')';
       } else {
-        $output .= ' (' . $author->profile_neologism_affiliation_homepage . ')';
+        $output .= ' (' . $author->profile_neologism_affiliation . ')';
       }
     }
     if ($author->profile_neologism_show_email) {
@@ -841,7 +841,7 @@ function &neologism_get_rdf_model($node) {
   $classes = _neologism_get_all_classes($node, $required_namespaces);
   $properties = _neologism_get_all_properties($node, $required_namespaces);
   
-  $namespace = _neologism_get_namespace_uri($vocabulary);
+  $namespace = _neologism_get_namespace_uri($node);
 
   // Set up model with all necessary namespaces
   $namespaces = rdf_get_namespaces();
