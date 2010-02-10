@@ -343,13 +343,13 @@ function _evoc_query_find_uris(&$model, $queries) {
     list($s, $p, $o) = $query;
     $result = _evoc_query_find_all($model, $s, $p, $o);
     foreach ($result as $stmt) {
-      if ($s == '?' && is_a($stmt->getSubject(), 'Resource')) {
+      if ($s == '?' && is_a($stmt->getSubject(), 'Resource') && !is_a($stmt->getSubject(), 'Blanknode')) {
         $uris[] = $stmt->getSubject()->getURI();
       }
-      if ($p == '?' && is_a($stmt->getPredicate(), 'Resource')) {
+      if ($p == '?' && is_a($stmt->getPredicate(), 'Resource') && !is_a($stmt->getPredicate(), 'Blanknode')) {
         $uris[] = $stmt->getPredicate()->getURI();
       }
-      if ($o == '?' && is_a($stmt->getObject(), 'Resource')) {
+      if ($o == '?' && is_a($stmt->getObject(), 'Resource') && !is_a($stmt->getObject(), 'Blanknode')) {
         $uris[] = $stmt->getObject()->getURI();
       }
     }
