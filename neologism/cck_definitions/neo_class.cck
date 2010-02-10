@@ -53,6 +53,7 @@ $content['fields']  = array (
       'sparql' => 0,
       'page' => false,
       'story' => false,
+      'vocabulary_documentation' => false,
     ),
     'op' => 'Save field settings',
     'module' => 'nodereference',
@@ -228,25 +229,17 @@ $content['fields']  = array (
     'description' => 'If every member of this class is also a member of another class, then that other class should be selected here.',
     'default_value' => 
     array (
-      0 => 
-      array (
-        'evoc_term' => 'rdfs:Resource',
-      ),
     ),
     'default_value_php' => '',
     'default_value_widget' => 
     array (
       'field_superclass2' => 
       array (
-        0 => 
-        array (
-          'evoc_term' => 'rdfs:Resource',
-        ),
         'evoc_term' => '',
       ),
     ),
     'group' => false,
-    'required' => 1,
+    'required' => 0,
     'multiple' => '1',
     'referenceable_term_types' => 
     array (

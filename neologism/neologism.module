@@ -2311,14 +2311,7 @@ function neo_class_node_form_validate($form, &$form_state) {
       form_set_error('title', t('"'.$class_title.'" - '.MSG_INVALID_ID));
     }
     
-    if( $form_state['values']['field_label'][0]['value'] == '' ) {
-      form_set_error('field_label', t('You must specify a label for this class.'));
-    }
-  
-    if( empty($form_state['values']['field_superclass2']) ) {
-      form_set_error('field_superclass2', t('You must select a superclass for this class.'));
-    }
-    else {
+    if(!empty($form_state['values']['field_superclass2']) ) {
       // TODO do a global select and then compare with the selected value. 
       // This way consume too much resources whether there exist many classes.
       foreach( $form_state['values']['field_superclass2'] as $value ) {
