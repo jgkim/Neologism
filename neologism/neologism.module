@@ -2905,6 +2905,7 @@ class neologism_rdf_writer {
   function _dont_compress($uri) {
     if (!preg_match('!^(.*[/#:]).*?$!', $uri, $match)) return;
     if (in_array($match[1], $this->_no_namespaces)) return;
+    if (in_array($match[1], $this->_namespaces)) return;
     $this->_no_namespaces[] = $match[1];
   }
 
