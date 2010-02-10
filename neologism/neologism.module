@@ -23,6 +23,8 @@ define("MSG_INVALID_ID", "is not a valid identifier. It should start with a lett
 													numbers, dashes, and underscores.");
 
 define("MSG_ID_ALREADY_IN_USE", "is a duplicate identifier."); 
+define("MSG_ID_ALREADY_EXISTS", "Already exists into the system. Please try with other vocabulary Id.");   
+define("MSG_ID_ALREADY_IN_USE_FOR_DRUPAL", "This vocabulary Id is being used by the system path. Please try with other vocabulary Id.");
 
 define("DISJOINTS_WITH", "disjointwith");
 define("SUPERCLASSES", "superclasses");
@@ -170,7 +172,7 @@ function neologism_export_conneg($node) {
 	else {
 		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));	
 		drupal_set_title($node->title);
-		return theme('node', $node, FALSE, TRUE);	
+		return theme('node', $node, FALSE, TRUE, FALSE);	
 	}
 }
 
@@ -2244,12 +2246,7 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
     form_set_error('title', t('"'.$title.'" - '.MSG_INVALID_ID));
   }
   
-  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"'), $form_state['values']['nid'], $title, NEOLOGISM_CT_VOCABULARY ));
-  if( $count > 0 ) {
-  	form_set_error('title', t('The prefix “%prefix” is already in use. Please choose a different prefix.', array('%prefix' => $title)));
-  }
-  
-  $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
+	$custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
   // the cosntant error_field_required_empty is handled in Neologism.js file
   if( $custom_namespace != '' ) {
     if( $custom_namespace == 'error_field_required_empty' ) {
@@ -2264,6 +2261,23 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
       form_set_error('field_custom_namespace', t('The custom namespace URI must end in “#” or “/”.'));
       return;
     }
+  }
+  
+  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE title="%s" AND type = "%s"'), $title, NEOLOGISM_CT_VOCABULARY ));
+  if( $count > 0 ) {
+  	form_set_error('title', t('"'.$title.'" - '.MSG_ID_ALREADY_EXISTS));	
+  }
+  
+	// check the route table
+  $array_of_path = array();
+  $result = db_query( db_rewrite_sql('SELECT path FROM menu_router'));
+  while( $row = db_fetch_object($result)) {
+  	if( strpos($row->path, '/') === FALSE ) {
+  		if( $row->path === $title ) {
+	  		form_set_error('title', t('"'.$title.'" - '.MSG_ID_ALREADY_IN_USE_FOR_DRUPAL));
+	  		return;	
+	  	}
+  	}
   }
 }
 
