@@ -2263,11 +2263,6 @@ function neo_vocabulary_node_form_validate($form, &$form_state) {
     }
   }
   
-  $count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE title="%s" AND type = "%s"'), $title, NEOLOGISM_CT_VOCABULARY ));
-  if( $count > 0 ) {
-  	form_set_error('title', t('"'.$title.'" - '.MSG_ID_ALREADY_EXISTS));	
-  }
-  
 	$count = db_result( db_query( db_rewrite_sql('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"'), $form_state['values']['nid'], $title, NEOLOGISM_CT_VOCABULARY ));
   if( $count > 0 ) {
   	form_set_error('title', t('The prefix “%prefix” is already in use. Please choose a different prefix.', array('%prefix' => $title)));
