@@ -106,6 +106,17 @@ function neologism_profile_tasks(&$task, $url) {
 	      'help' => '',
 	      'min_word_count' => '',
 	    ),
+	    array(
+	      'type' => 'vocabulary_documentation',
+	      'name' => st('Vocabulary documentation'),
+	      'module' => 'node',
+	      'description' => st("<em>Vocabulary documentation</em> pages can contain additional material related to a vocabulary that does not fit into the main vocabulary specification for some reason. Unlike normal pages, vocabulary documentation pages can be created by any vocabulary editor, and are listed along with the vocabularies on the home page."),
+	      'custom' => TRUE,
+	      'modified' => TRUE,
+	      'locked' => FALSE,
+	      'help' => '',
+	      'min_word_count' => '',
+	    ),
 	  );
 	
 	  foreach ($types as $type) {
@@ -116,10 +127,15 @@ function neologism_profile_tasks(&$task, $url) {
 	  // Default page to not be promoted and have comments disabled.
 	  variable_set('node_options_page', array('status'));
 	  variable_set('comment_page', COMMENT_NODE_DISABLED);
+
+      // Default vocabulary_documentation to have comments disabled
+	  variable_set('node_options_vocabulary_documentation', array('status', 'promote'));
+	  variable_set('comment_vocabulary_documentation', COMMENT_NODE_DISABLED);
 	
-	  // Don't display date and author information for page nodes by default.
+	  // Don't display date and author information for page and vocab_doc nodes by default.
 	  $theme_settings = variable_get('theme_settings', array());
 	  $theme_settings['toggle_node_info_page'] = FALSE;
+	  $theme_settings['toggle_node_info_vocabulary_documentation'] = FALSE;
 	  variable_set('theme_settings', $theme_settings);
 	
 	  $modules_list = array(
@@ -198,16 +214,17 @@ function neologism_profile_tasks(&$task, $url) {
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
   	
-  	// Add the "vocabulary editor" Role
-  	$role = 'vocabulary editor';
-  	db_query('insert into {role} (name) values ("%s")', $role);
-  	$res = db_fetch_object(db_query('select rid from {role} where name = "%s"', $role));
-  	
-  	// Give all permissions for neologism, evoc and node to the vocabulary editor role
+  	// Give all permissions relevant to vocabulary editing to all authenticated users
+  	$res = db_fetch_object(db_query('select rid from {role} where name = "authenticated user"'));
     $permissions = join(', ', array_merge(
-        module_invoke('neologism','perm'),
-        module_invoke('node', 'perm'),
-        module_invoke('evoc', 'perm')));
+      array('access content'),
+      array('create url aliases'),
+      array('create neo_vocabulary content', 'delete any neo_vocabulary content', 'delete own neo_vocabulary content', 'edit any neo_vocabulary content', 'edit own neo_vocabulary content'),
+      array('create neo_class content', 'delete any neo_class content', 'delete own neo_class content', 'edit any neo_class content', 'edit own neo_class content'),
+      array('create neo_property content', 'delete any neo_property content', 'delete own neo_property content', 'edit any neo_property content', 'edit own neo_property content'),
+      array('create vocabulary_documentation content', 'delete any vocabulary_documentation content', 'delete own vocabulary_documentation content', 'edit any vocabulary_documentation content', 'edit own vocabulary_documentation content'),
+      module_invoke('neologism','perm'),
+      module_invoke('evoc', 'perm')));
     db_query('insert into {permission} (rid, perm) values (%d, "%s")', $res->rid, $permissions);
   	
 	  // Add a triggered rules
@@ -267,70 +284,7 @@ function neologism_profile_tasks(&$task, $url) {
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
-  	
-  	//New users become vocabulary editors
-  	$form_state['values'] = array(
-			'import' => "array (
-										  'rules' => 
-										  array (
-										    'rules_1' => 
-										    array (
-										      '#type' => 'rule',
-										      '#set' => 'event_user_insert',
-										      '#label' => 'New users become vocabulary editors',
-										      '#active' => 1,
-										      '#weight' => '0',
-										      '#categories' => 
-										      array (
-										      ),
-										      '#status' => 'custom',
-										      '#conditions' => 
-										      array (
-										      ),
-										      '#actions' => 
-										      array (
-										        0 => 
-										        array (
-										          '#weight' => 0,
-										          '#info' => 
-										          array (
-										            'label' => 'Add user role',
-										            'arguments' => 
-										            array (
-										              'user' => 
-										              array (
-										                'type' => 'user',
-										                'label' => 'User whos roles should be changed',
-										              ),
-										            ),
-										            'module' => 'User',
-										          ),
-										          '#name' => 'rules_action_user_addrole',
-										          '#settings' => 
-										          array (
-										            'roles' => 
-										            array (
-										              0 => 3,
-										            ),
-										            '#argument map' => 
-										            array (
-										              'user' => 'account',
-										            ),
-										          ),
-										          '#type' => 'action',
-										        ),
-										      ),
-										      '#version' => 6003,
-										    ),
-										  ),
-										)"
-  	);
-  	drupal_execute($form_id, $form_state);
 
-  	// hidden the SPARQL links
-  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "sparql"');
-  	db_query('update {menu_links} set hidden = "1", customized = "1" where link_path = "node/add/sparql"');
-	  
   	// return control to the installer
 	  $task = 'profile-finished';
   }
