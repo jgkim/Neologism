@@ -9,20 +9,17 @@
  * @throws Exception On network or parse error
  */
 function evoc_read_RDF_from_URI($uri) {
-    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfParser.php");
-    
     $uri = trim($uri);
     // check if it's an HTTP URI
     if (!preg_match('!^http://!', $uri)) {
         throw new Exception('Can only read from http:// URIs');
     }
-    // create a custom context that sends an Accept header that asks for RDF/XML, Turtle or N3
+    // create a custom context that sends an Accept header that asks for RDF/XML
     $context = stream_context_create(array('http' => array(
             'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
     )));
     // read file contents
-    set_error_handler('evoc_read_RDF_from_URI__error_handler', E_WARNING);
+    set_error_handler('_evoc_read_RDF_from_URI__error_handler', E_WARNING);
     try {
         $content = file_get_contents($uri, FILE_BINARY, $context);
     } catch (Exception $ex) {
@@ -104,9 +101,12 @@ function evoc_read_RDF_from_URI($uri) {
     }
 
     // Create a RAP model and parse the content
+    // @todo TODO Port this RAP-specific code to ARC2
+    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
+    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfParser.php");
     $model = ModelFactory::getDefaultModel();
     $parser = new RdfParser();
-    set_error_handler('evoc_read_RDF_from_URI__error_handler', E_USER_ERROR);
+    set_error_handler('_evoc_read_RDF_from_URI__error_handler', E_USER_ERROR);
     try {
         $parser->generateModel($content, $uri, $model);
         restore_error_handler();
@@ -117,7 +117,7 @@ function evoc_read_RDF_from_URI($uri) {
     }
 }
 
-function evoc_read_RDF_from_URI__error_handler($errno, $errstr) {
+function _evoc_read_RDF_from_URI__error_handler($errno, $errstr) {
     throw new Exception($errstr);
 }
 
@@ -188,92 +188,79 @@ function evoc_get_vocabulary_description(&$model, $ns_prefix, $ns_uri) {
 // ------ private helper functions ------------------------------------------
 
 function _evoc_query_for_title(&$model, $ns_uri) {
-  $queries = array();
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> rdfs:label ?title }';
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> dc:title ?title }';
-  $queries[] = 'SELECT ?title WHERE { <' . $ns_uri . '> dcterms:title ?title }';
+  $queries = array(
+    array($ns_uri, 'http://www.w3.org/2000/01/rdf-schema#label', '?'),
+    array($ns_uri, 'http://purl.org/dc/elements/1.1/title', '?'),
+    array($ns_uri, 'http://purl.org/dc/terms/title', '?'),
+  );
   if (substr($ns_uri, -1) == '#') {
     $uri = substr($ns_uri, 0, -1);
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> rdfs:label ?title }';
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> dc:title ?title }';
-    $queries[] = 'SELECT ?title WHERE { <' . $uri . '> dcterms:title ?title }';
+    $queries = array_merge($queries, array(
+      array($uri, 'http://www.w3.org/2000/01/rdf-schema#label', '?'),
+      array($uri, 'http://purl.org/dc/elements/1.1/title', '?'),
+      array($uri, 'http://purl.org/dc/terms/title', '?'),
+    ));
   }
-  $prefixes = '
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix dc: <http://purl.org/dc/elements/1.1/>
-    prefix dcterms: <http://purl.org/dc/terms/>';
-  return _evoc_sparql_get_first_literal($model, '?title', $queries, $prefixes);
+  return _evoc_query_find_literal($model, $queries);
 }
 
 function _evoc_query_for_description(&$model, $ns_uri) {
-  $queries = array();
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> rdfs:comment ?description }';
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> dc:description ?description }';
-  $queries[] = 'SELECT ?description WHERE { <' . $ns_uri . '> dcterms:description ?description }';
+  $queries = array(
+    array($ns_uri, 'http://www.w3.org/2000/01/rdf-schema#comment', '?'),
+    array($ns_uri, 'http://purl.org/dc/elements/1.1/description', '?'),
+    array($ns_uri, 'http://purl.org/dc/terms/description', '?'),
+  );
   if (substr($ns_uri, -1) == '#') {
     $uri = substr($ns_uri, 0, -1);
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> rdfs:comment ?description }';
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> dc:description ?description }';
-    $queries[] = 'SELECT ?description WHERE { <' . $uri . '> dcterms:description ?description }';
+    $queries = array_merge($queries, array(
+      array($uri, 'http://www.w3.org/2000/01/rdf-schema#comment', '?'),
+      array($uri, 'http://purl.org/dc/elements/1.1/description', '?'),
+      array($uri, 'http://purl.org/dc/terms/description', '?'),
+    ));
   }
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX dc: <http://purl.org/dc/elements/1.1/>
-    PREFIX dcterms: <http://purl.org/dc/terms/>';
-  return _evoc_sparql_get_first_literal($model, '?description', $queries, $prefixes);
+  return _evoc_query_find_literal($model, $queries);
 }
 
 function _evoc_query_for_class_uris(&$model) {
-  $queries = array();
-  $queries[] = 'SELECT ?class WHERE { ?class a rdfs:Class }';
-  $queries[] = 'SELECT ?class WHERE { ?class a owl:Class }';
-  $queries[] = 'SELECT ?class WHERE { ?class rdfs:subClassOf ?other }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:subClassOf ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?class owl:disjointWith ?other }';
-  $queries[] = 'SELECT ?class WHERE { ?other owl:disjointWith ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:domain ?class }';
-  $queries[] = 'SELECT ?class WHERE { ?other rdfs:range ?class }';
-  $prefixes = '
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix owl: <http://www.w3.org/2002/07/owl#>';
-  return _evoc_sparql_get_uris($model, '?class', $queries, $prefixes);
+  return _evoc_query_find_uris($model, array(
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2000/01/rdf-schema#Class'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#Class'),
+    array('?', 'http://www.w3.org/2000/01/rdf-schema#subClassOf', null),
+    array(null, 'http://www.w3.org/2000/01/rdf-schema#subClassOf', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#disjointWith', null),
+    array(null, 'http://www.w3.org/2002/07/owl#disjointWith', '?'),
+    array(null, 'http://www.w3.org/2000/01/rdf-schema#domain', '?'),
+    array(null, 'http://www.w3.org/2000/01/rdf-schema#range', '?'),
+  ));
 }
 
 function _evoc_query_for_property_uris(&$model) {
-  $queries = array();
-  $queries[] = 'SELECT ?property WHERE { ?property a rdf:Property }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:DatatypeProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:ObjectProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:FunctionalProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:InverseFunctionalProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property a owl:SymmetricProperty }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:domain ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:range ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?property rdfs:subPropertyOf ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?other rdfs:subPropertyOf ?property }';
-  $queries[] = 'SELECT ?property WHERE { ?property owl:inverseOf ?other }';
-  $queries[] = 'SELECT ?property WHERE { ?other owl:inverseOf ?property }';
-  $prefixes = '
-    prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-    prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    prefix owl: <http://www.w3.org/2002/07/owl#>
-    prefix foaf: <http://xmlns.com/foaf/0.1/>
-    prefix dc: <http://purl.org/dc/elements/1.1/>
-    prefix dcterms: <http://purl.org/dc/terms/>';
-  return _evoc_sparql_get_uris($model, '?property', $queries, $prefixes);
+  return _evoc_query_find_uris($model, array(
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#Property'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#DatatypeProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#ObjectProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#FunctionalProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#InverseFunctionalProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#SymmetricProperty'),
+    array('?', 'http://www.w3.org/2000/01/rdf-schema#domain', null),
+    array('?', 'http://www.w3.org/2000/01/rdf-schema#range', null),
+    array('?', 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf', null),
+    array(null, 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#inverseOf', null),
+    array(null, 'http://www.w3.org/2002/07/owl#inverseOf', '?'),
+  ));
 }
 
 function _evoc_query_for_term_description(&$model, $uri) {
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>';
-  $query = 'SELECT ?label WHERE { <' . $uri . '> rdfs:label ?label }';
-  $label = _evoc_sparql_get_first_literal($model, '?label', $query, $prefixes);
+  $label = _evoc_query_find_literal($model, array(
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#label', '?')
+  ));
 
-  $query = array(
-      'SELECT ?comment WHERE { <' . $uri . '> skos:definition ?comment }',
-      'SELECT ?comment WHERE { <' . $uri . '> rdfs:comment ?comment }');
-  $comment = _evoc_sparql_get_first_literal($model, '?comment', $query, $prefixes);
+  $comment = _evoc_query_find_literal($model, array(
+    array($uri, 'http://www.w3.org/2004/02/skos/core#definition', '?'),
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#comment', '?'),
+  ));
+
   $qname = _evoc_uri_to_qname($uri);
   return array(
       'uri' => $uri,
@@ -287,92 +274,117 @@ function _evoc_query_for_term_description(&$model, $uri) {
 
 function _evoc_query_for_class_description(&$model, $uri) {
   $class = _evoc_query_for_term_description($model, $uri);
-
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>';
-
-  $query = 'SELECT ?superclass WHERE { <' . $uri . '> rdfs:subClassOf ?superclass }';
-  $class['superclasses'] = _evoc_sparql_get_qnames($model, '?superclass', $query, $prefixes);
-
-  $query = array(
-      'SELECT ?disjoint WHERE { <' . $uri . '> owl:disjointWith ?disjoint }',
-      'SELECT ?disjoint WHERE { ?disjoint owl:disjointWith <' . $uri . '> }');
-  $class['disjoints'] = _evoc_sparql_get_qnames($model, '?disjoint', $query, $prefixes);
-
+  $class['superclasses'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#subClassOf', '?')
+  ));
+  $class['disjoints'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2002/07/owl#disjointWith', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#disjointWith', $uri),
+  ));
   return $class;
 }
 
 function _evoc_query_for_property_description(&$model, $uri) {
   $property = _evoc_query_for_term_description($model, $uri);
-
-  $prefixes = '
-    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>';
-
-  $query = 'SELECT ?domain WHERE { <' . $uri . '> rdfs:domain ?domain }';
-  $property['domains'] = _evoc_sparql_get_qnames($model, '?domain', $query, $prefixes);
-
-  $query = 'SELECT ?range WHERE { <' . $uri . '> rdfs:range ?range }';
-  $property['ranges'] = _evoc_sparql_get_qnames($model, '?range', $query, $prefixes);
-
-  $query = 'SELECT ?superproperty WHERE { <' . $uri . '> rdfs:subPropertyOf ?superproperty }';
-  $property['superproperties'] = _evoc_sparql_get_qnames($model, '?superproperty', $query, $prefixes);
-
-  $query = 'SELECT ?t WHERE { <' . $uri . '> a ?t . FILTER (?t = owl:FunctionalProperty) }';
-  $t = _evoc_sparql_get_uris($model, '?t', $query, $prefixes);
-  $property['is_functional'] = count($t) > 0;
-
-  $query = 'SELECT ?t WHERE { <' . $uri . '> a ?t . FILTER (?t = owl:InverseFunctionalProperty) }';
-  $t = _evoc_sparql_get_uris($model, '?t', $query, $prefixes);
-  $property['is_inverse_functional'] = count($t) > 0;
-
-  $query = array(
-    'SELECT ?inverse WHERE { <' . $uri . '> owl:inverseOf ?inverse }',
-    'SELECT ?inverse WHERE { ?inverse owl:inverseOf <' . $uri . '> }');
-  // We don't handle multiple inverses correctly everywhere yet, so store it both as an array and singleton
-  $property['inverses'] = _evoc_sparql_get_qnames($model, '?inverses', $query, $prefixes);
+  $property['domains'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#domain', '?')
+  ));
+  $property['ranges'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#range', '?')
+  ));
+  $property['superproperties'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf', '?')
+  ));
+  $property['is_functional'] = _evoc_query_ask($model, array(
+    array($uri, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#FunctionalProperty')
+  ));
+  $property['is_inverse_functional'] = _evoc_query_ask($model, array(
+    array($uri, 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#InverseFunctionalProperty')
+  ));
+  $property['inverses'] = _evoc_query_find_qnames($model, array(
+    array($uri, 'http://www.w3.org/2002/07/owl#inverseOf', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#inverseOf', $uri),
+  ));
+  // @todo TODO We don't handle multiple inverses correctly everywhere yet, so store it both as an array and singleton
   $property['inverse'] = count($property['inverses']) ? $property['inverses'][0] : null;
-
   return $property;
 }
 
-function _evoc_sparql_get_first_literal(&$model, $var, $queries, $prefixes = '') {
-  if (!is_array($queries)) {
-    $queries = array($queries);
-  }
+// @todo TODO RAP-specific stuff stats here, port to ARC2! ---------------
+function _evoc_query_ask(&$model, $queries) {
   foreach ($queries as $query) {
-    $result = $model->sparqlQuery($prefixes . "\n" . $query);
-    if (!$result || !isset($result[0]) || !isset($result[0][$var])) continue;
-    return $result[0][$var]->label;
+    list($s, $p, $o) = $query;
+    if (_evoc_query_find_first($model, $s, $p, $o)) return true;
+  }
+  return false;
+}
+
+function _evoc_query_find_literal(&$model, $queries) {
+  foreach ($queries as $query) {
+    list($s, $p, $o) = $query;
+    $stmt = _evoc_query_find_first($model, $s, $p, $o);
+    if (!$stmt) continue;
+    if ($s == '?' && is_a($stmt->getSubject(), 'Literal')) {
+      return $stmt->getSubject()->getLabel();
+    }
+    if ($p == '?' && is_a($stmt->getPredicate(), 'Literal')) {
+      return $stmt->getPredicate()->getLabel();
+    }
+    if ($o == '?' && is_a($stmt->getObject(), 'Literal')) {
+      return $stmt->getObject()->getLabel();
+    }
   }
   return null;
 }
 
-function _evoc_sparql_get_uris(&$model, $var, $queries, $prefixes = '') {
-  if (!is_array($queries)) {
-    $queries = array($queries);
-  }
+function _evoc_query_find_uris(&$model, $queries) {
   $uris = array();
   foreach ($queries as $query) {
-    $result = $model->sparqlQuery($prefixes . "\n" . $query);
-    if (!$result) continue;
-    foreach ($result as $binding) {
-      if (!isset($binding[$var]) || !isset($binding[$var]->uri) || is_a($binding[$var], 'BlankNode')) continue;
-      $uris[] = $binding[$var]->uri;
+    list($s, $p, $o) = $query;
+    $result = _evoc_query_find_all($model, $s, $p, $o);
+    foreach ($result as $stmt) {
+      if ($s == '?' && is_a($stmt->getSubject(), 'Resource')) {
+        $uris[] = $stmt->getSubject()->getURI();
+      }
+      if ($p == '?' && is_a($stmt->getPredicate(), 'Resource')) {
+        $uris[] = $stmt->getPredicate()->getURI();
+      }
+      if ($o == '?' && is_a($stmt->getObject(), 'Resource')) {
+        $uris[] = $stmt->getObject()->getURI();
+      }
     }
   }
   return array_unique($uris);
 }
 
-function _evoc_sparql_get_qnames(&$model, $var, $queries, $prefixes = '') {
-  $uris = _evoc_sparql_get_uris($model, $var, $queries, $prefixes);
+function _evoc_query_find_qnames(&$model, $queries) {
+  $uris = _evoc_query_find_uris($model, $queries);
   $qnames = array();
   foreach ($uris as $uri) {
     $qnames[] = _evoc_uri_to_qname($uri);
   }
   return $qnames;
 }
+
+function _evoc_to_rap_resource($s) {
+  if (is_null($s)) return null;
+  if ($s == '?') return null;
+  return new Resource($s);
+}
+
+function _evoc_query_find_first(&$model, $s, $p, $o) {
+  return $model->findFirstMatchingStatement(_evoc_to_rap_resource($s), _evoc_to_rap_resource($p), _evoc_to_rap_resource($o));
+}
+
+function _evoc_query_find_all(&$model, $s, $p, $o) {
+  $result = array();
+  $it = $model->findAsIterator(_evoc_to_rap_resource($s), _evoc_to_rap_resource($p), _evoc_to_rap_resource($o));
+  while ($it->hasNext()) {
+    $result[] = $it->next();
+  }
+  return $result;
+}
+// @todo TODO RAP-specific stuff ends here ---------------
 
 /**
  * Prepares the importer's namespace tracking.
