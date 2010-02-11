@@ -1,5 +1,14 @@
 /* $Id:  $ */
 
+/* These are default in browsers, but are overridden by ext-all.css, so we have to restore them. */
+ol {
+  list-style-type: decimal;
+}
+em, i {
+  font-style: italic;
+}
+/* End restoring of default CSS */
+
 h2.neologism {
   margin-top: 2em;
   margin-bottom: 1em;
