@@ -436,17 +436,23 @@ function _evoc_uri_to_qname($uri) {
   }
   if ($longest_match) {
     $qname = $evoc_import_namespaces[$longest_match]['prefix'] . ':' . substr($uri, strlen($longest_match));
-    if (rdf_is_valid_qname($qname)) {
-      $evoc_import_namespaces[$longest_match]['used'] = true;
-      return $qname;
-    }
+    $evoc_import_namespaces[$longest_match]['used'] = true;
+    return $qname;
   }
-  $qname = rdf_uri_to_qname($uri);
+  // The prefix is not known. Split it into NS and local.
+  if (!preg_match('!^(.*[:/#])[^:/#]*$!', $uri, $match)) {
+    throw new Exception('Could not generate namespace mapping for URI ' . $uri);
+  }
+  $ns = $match[1];
+  // Use the RDF API to generate a namespace prefix for us (g.1, g.2, etc)
+  // Note: We do the splitting ourselves above because the RDF API function
+  // doesn't have the proper regex, it doesn't allow certain characters such
+  // as dots in the local name, resulting in funky namespace URIs such as
+  // <http://...../foo.owl#Foo.>.
+  $qname = rdf_uri_to_qname($ns . 'local');
   if (!$qname) {
     throw new Exception('Could not generate namespace mapping for URI ' . $uri);
   }
-  $local = substr($qname, strpos($qname, ':') + 1);
-  $ns = substr($uri, 0, -strlen($local));
   $evoc_import_namespaces[$ns]['prefix'] = substr($qname, 0, strpos($qname, ':'));
   $evoc_import_namespaces[$ns]['new'] = true;
   $evoc_import_namespaces[$ns]['used'] = true;
