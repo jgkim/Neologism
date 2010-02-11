@@ -141,9 +141,8 @@ function _neologism_build_breadcrumb($path, $title = NULL) {
 function neologism_export_conneg($node) {
 	
 	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
-		$request_uri = $_SERVER["REQUEST_URI"];
 	  $accept = $_SERVER["HTTP_ACCEPT"];
-	  $redirect_uri = neologism_get_preferred_uri($request_uri, $accept);
+	  $redirect_uri = neologism_get_preferred_uri($accept);
 	  header("Vary: Accept");
 	  header("Content-Location: " . $redirect_uri);
 	  $preferred_variant = neologism_get_preferred_content($accept);
@@ -1488,13 +1487,14 @@ function neologism_get_preferred_content($accept) {
 /**
  * Get the best uri requested
  */
-function neologism_get_preferred_uri($uri, $accept) {
-    $uri = "http://" . $_SERVER["HTTP_HOST"] . $uri;
-    $preferred = neologism_get_preferred_content($accept);
-    if (substr($uri, -1)=="/")
-        return $uri . $preferred;
-    else
-        return $uri . "." . $preferred;
+function neologism_get_preferred_uri($accept) {
+  $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
+  $uri = url($path, array('absolute' => TRUE));
+  $preferred = neologism_get_preferred_content($accept);
+  if (substr($uri, -1)=="/") {
+    return $uri . $preferred;
+  }
+  return $uri . "." . $preferred;
 }
 
 
