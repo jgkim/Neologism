@@ -652,8 +652,6 @@ function neologism_export_html($node) {
   $properties = _neologism_get_all_properties($node);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
-  $output .= '<div id="last-update" ><h3>Last update:</h3><div id="last-update-value">'.format_date($node->changed, 'large').'</div></div>';
-  
   $output .= '<div id="authors" ><h3>'.t('Author').':</h3>';
   foreach($node->field_authors as $author) {
     $author = user_load($author);
@@ -678,6 +676,8 @@ function neologism_export_html($node) {
   }
   $output .= '</div>';
 
+  $output .= '<div id="last-update" ><h3>Last update:</h3><div id="last-update-value">'.format_date($node->changed, 'custom', 'd F Y').'</div></div>';
+  
   $namespace_url = _neologism_get_namespace_uri($node);
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$namespace_url.'</div></div>';
 
@@ -765,9 +765,6 @@ function neologism_export_html($node) {
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-darkgray.css');
   //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-slickness.css');
   
-  // embend the diagram
-  $output .= '';
-  
   $base = base_path();
   $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
   $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
@@ -810,7 +807,7 @@ function neologism_export_html($node) {
 
   //Display complete reference
   if ($classes) {
-    $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Classes</h2>';
+    $output .= '<h2 id="sec_reference" class="neologism">Classes</h2>';
     foreach ($classes as $class) {
       $output .= theme('class_view', node_load($class['nid']), TRUE );
       //  $output .= node_view(node_load($class['nid']), 1, $vocabulary_title);
@@ -818,7 +815,7 @@ function neologism_export_html($node) {
   }
    
   if ($properties) {
-    $output .= '<h2 id="sec_reference" class="neologism">' . $vocabulary_title . ' Properties</h2>';
+    $output .= '<h2 id="sec_reference" class="neologism">Properties</h2>';
     foreach ($properties as $property) {
         //$output .= theme('neo_property_node_view', node_load($property['nid']), 1, $node->title);
         $output .= theme('property_view', node_load($property['nid']), TRUE );
@@ -1678,7 +1675,7 @@ function theme_class_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) 
   
   $superclasses = '';
   if ( !empty($node->content['field_superclass2']['field']['items'][0]['#item']['evoc_term']) ) {
-    $superclasses .= '<div class="row"><div class="column-title">subclass-of:</div><div class="column-values">';
+    $superclasses .= '<div class="row"><div class="column-title">Superclass:</div><div class="column-values">';
     foreach ( $node->content['field_superclass2']['field']['items'] as $value ) {
       $superclasses .= theme('evocreference_formatter_default', $value).'&nbsp; ';
     }
@@ -1687,7 +1684,7 @@ function theme_class_view($node, $teaser = FALSE, $page = FALSE, $links = TRUE) 
   
   $disjointwith = '';
   if ( !empty($node->content['field_disjointwith2']['field']['items'][0]['#item']['evoc_term']) ) {
-    $disjointwith .= '<div class="row"><div class="column-title">disjoint-with:</div><div class="column-values">';
+    $disjointwith .= '<div class="row"><div class="column-title">Disjoint with:</div><div class="column-values">';
     foreach ( $node->content['field_disjointwith2']['field']['items'] as $value ) {
       $disjointwith .= theme('evocreference_formatter_default', $value).'&nbsp ';
     }
@@ -1797,7 +1794,7 @@ function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRU
   
   $inverse = '';
   if ( !empty($node->content['field_inverse2']['field']['items'][0]['#item']['evoc_term']) ) {
-    $inverse .= '<div class="row"><div class="column-title">Inverse-of:</div><div class="column-values">';
+    $inverse .= '<div class="row"><div class="column-title">Inverse:</div><div class="column-values">';
     foreach ( $node->content['field_inverse2']['field']['items'] as $value ) {
       $inverse .= theme('evocreference_formatter_default', $value).'&nbsp ';
     }
@@ -1806,7 +1803,7 @@ function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRU
   
   $subproperty_of = '';
   if ( !empty($node->content['field_superproperty2']['field']['items'][0]['#item']['evoc_term']) ) {
-    $subproperty_of .= '<div class="row"><div class="column-title">subproperty-of:</div><div class="column-values">';
+    $subproperty_of .= '<div class="row"><div class="column-title">Superproperty:</div><div class="column-values">';
     foreach ( $node->content['field_superproperty2']['field']['items'] as $value ) {
       $subproperty_of .= theme('evocreference_formatter_default', $value).'&nbsp ';
     }
@@ -1843,10 +1840,10 @@ function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRU
       <div class="properties-block">
 		      '.$URI.'     
 		      '.$owl_type.'
-          '.$inverse.'
-          '.$subproperty_of.'
           '.$domain.'
           '.$range.'
+          '.$subproperty_of.'
+          '.$inverse.'
       </div>
      <div class="description">'.$description.'</div>';
      
