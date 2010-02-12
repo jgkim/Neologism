@@ -76,30 +76,28 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	  		//console.info(node);
-	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
 	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
 		        // add selection to array of values
-        		if ( baseParams.arrayOfValues.indexOf(id) == -1 ) {
-	            	baseParams.arrayOfValues.push(id);
+        		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+	            	baseParams.arrayOfValues.push(node.text);
 	            }
 	            
-        		console.log(baseParams.arrayOfValues);
-        		
         		// check if this node has more than 1 super class, so we need to checked it 
         		// in other places in the tree.
         		if( node.attributes.superclasses !== undefined ) {
 	        		var c = node.attributes.superclasses;
 	        		var len = c.length;
 	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
+	        			var tree = node.getOwnerTree(); 
+		        		var rootnode = tree.getRootNode(); 
 		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
+		        			if( c[i] != node.parentNode.text ) {
+		        				var currentNode = tree.findNodeByText(c[i]);
 		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
-		        					if( n.getUI().checkbox.checked == false ) {
+		        					currentNode.expand();
+		        					var n = currentNode.findChild('text', node.text);
+		        					if( n.getUI().checkbox.checked == true ) {
 		        						n.getUI().toggleCheck(true);
 		        					}
 		        				}
@@ -111,8 +109,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 	            // disabled all the parent of the selection
         		if ( !node.parentNode.isRoot ) {
 	            	node.bubble( function() {
-		                var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-	            		if (id != cid && node.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED
+	            		if (node.text != this.text && node.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED
 	            				&& node.getUI().nodeClass != 'locked-for-edition') {
 		                	this.getUI().checkbox.disabled = true;
 		                	this.getUI().checkbox.checked = true;
@@ -127,7 +124,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 	        else {
 	    		// if we are unchecked a checkbox
 	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-	    			if ( baseParams.arrayOfValues[i] == id ) {
+	    			if ( baseParams.arrayOfValues[i] == node.text ) {
 	    				baseParams.arrayOfValues.splice(i, 1);
 	    			}
 	    		}
@@ -137,7 +134,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 				    // search for someone checked
 					var someoneChecked = false;
 					node.bubble( function() {
-				    	if ( id != this.id ) {
+				    	if ( node.text != this.text ) {
 				    		if ( this.getOwnerTree().isSomeChildChecked(this) ) {
 				    			return false;
 				    		}
@@ -152,19 +149,18 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 					
 				}
 				
-				// check multiple superclasses dependencies
 				if( node.attributes.superclasses !== undefined ) {
 	        		var c = node.attributes.superclasses;
 	        		var len = c.length;
 	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
+	        			var tree = node.getOwnerTree(); 
+		        		var rootnode = tree.getRootNode(); 
 		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
-		        				//console.info(currentNode);
-		        				//console.log('Path: %s, c[i]: %s', rootnode.findChild('id', c[i]), c[i]); //.getPath());
+		        			if( c[i] != node.parentNode.text ) {
+		        				var currentNode = tree.findNodeByText(c[i]);
 		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
+		        					currentNode.expand();
+		        					var n = currentNode.findChild('text', node.text);
 		        					if( n.getUI().checkbox.checked == true ) {
 		        						n.getUI().toggleCheck(false);
 		        					}
@@ -173,6 +169,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 		        		}
 	        		}
         		}
+				
 	        } // else
 	        
 	        // check for disjointwith classes with the selected class
@@ -184,8 +181,7 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 	        		this.expand();
 	        	}
 	        	
-	        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-        		if ( id != cid  ) {
+        		if ( node.text != this.text  ) {
         			if ( checked ) {
         				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
         					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;

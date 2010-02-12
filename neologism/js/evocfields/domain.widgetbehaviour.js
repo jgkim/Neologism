@@ -74,8 +74,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 	            	baseParams.arrayOfValues.push(id);
 	            }
 	            
-        		//console.log(baseParams.arrayOfValues);
-        		
         		// check if this node has more than 1 super class, so we need to checked it 
         		// in other places in the tree.
         		if( node.attributes.superclasses !== undefined ) {
@@ -199,7 +197,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 	        this.fireEvent('selectionchange', node);
   		} // checkchange
   		,selectionchange: function(objectSender) {
-  			console.log('domain widget selectionchange event');
   		}
     }
     

@@ -583,7 +583,7 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
   
   ,onSelectionChange:function(newValues) {
       // do whatever is necessary to assign the employee to position
-	  console.log('TermsTree - onSelectionChange not implemented yet...');
+	  //console.log('TermsTree - onSelectionChange not implemented yet...');
   }
   
 });
@@ -632,7 +632,7 @@ Neologism.TermsTree.prototype.findNodeByText = function(text){
         }, null);
         
         if( node !== null ) {
-        	node.setOwnerTree(this.getOwnerTree());
+        	//node.setOwnerTree(this.getOwnerTree());
         	return false;
         }
         
@@ -797,29 +797,6 @@ Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain
 }
 
 /**
- * 
- */
-Neologism.TermsTree.prototype.findNodeByText = function(text){   
-    var node = null;
-	this.getRootNode().eachChild(function(currentNode){
-		currentNode.cascade(function(){
-			if( this.text == text ) {
-        		node = this;
-        		return false;
-        	}
-        }, null);
-        
-        if( node !== null ) {
-        	//node.setOwnerTree(this.getOwnerTree());
-        	return false;
-        }
-        
-    },  null);
-	
-	return node;
-};
-
-/**
  * Finds the first child that has the attribute with the specified value using the children array.
  * @param {Node} node containing children
  * @param {String} attribute The attribute name
@@ -827,8 +804,6 @@ Neologism.TermsTree.prototype.findNodeByText = function(text){
  * @return {Node} The found child or null if none was found
  */
 Neologism.TermsTree.prototype.findChildInNode = function(node, value) { 
-    console.log('my findChild');
-    console.info(node);
 	var cs = node.attributes.children;
     for(var i = 0, len = cs.length; i < len; i++) {
         if(cs[i].text == value){

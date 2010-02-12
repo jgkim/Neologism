@@ -117,17 +117,14 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 			  	}
 			  	if( objectSender.widget == 'range' ) {
 			  		range = objectSender.selectedValues;
-			  		console.log(range);
 			  	}
 		  	}
 		  	
 		  	if( domain.length > 0 && range.length > 0 ) {
 			  	var allowedAsInverseProperties = this.computeInverses(lastSender.rootNode, domain, range);
-			  	// TODO add code to show the new values in the treeview for inverse selection widget
 			  	this.getRootNode().eachChild(function(currentNode) {
 			  		// we need to expand the node to traverse it
 			  		currentNode.cascade(function() {
-			        	//console.log(this.text);
 			        	// we need to expand the node to traverse it
 			        	this.expand();
 			        	

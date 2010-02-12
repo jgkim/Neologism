@@ -67,8 +67,6 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 	            	baseParams.arrayOfValues.push(node.text);
 	            }
 	            
-	        	console.log(baseParams.arrayOfValues);
-      		
 	      		// check if this node has more than 1 super class, so we need to checked it 
 	      		// in other places in the tree.
 	      		if( node.attributes.superclasses !== undefined ) {
@@ -120,8 +118,6 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 				if (!node.parentNode.isRoot) {
 				    // search for someone checked
 					node.bubble( function() {
-						//console.log('bubble...id: %s, this.id: %s', id, this.id);
-						//console.log(node);
 						if ( node.text != this.text ) {
 				    		// now we need to check for checked and BLOCKED status, so we need 
 				    		// to write a function to check both action
@@ -211,8 +207,6 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
    
   	,onSelectionChange:function(node) {
 	      // do whatever is necessary to assign the employee to position
-	  	console.log('in onUpdate from disjoint class');
-	  	//console.info(object);
   	}
     
   });

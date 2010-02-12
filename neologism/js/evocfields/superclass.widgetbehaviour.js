@@ -65,17 +65,12 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	  		//console.info(node);
-	  		//var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
-	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
 		        // add selection to array of values
         		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
 	            	baseParams.arrayOfValues.push(node.text);
 	            }
 	            
-        		console.log(baseParams.arrayOfValues);
-        		
         		// check if this node has more than 1 super class, so we need to checked it 
         		// in other places in the tree.
         		if( node.attributes.superclasses !== undefined ) {
@@ -207,9 +202,6 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
   	// override method onSelectionChange called when a fireEvent('selectionchange', ...); is invoked
   	,onSelectionChange:function(object) {
         // do whatever is necessary to assign the employee to position
-    	//console.log('in onSelectionChange from superclass selection');
-    	//console.info(object);
-    	
     	// notify Observers if there is someone
     	this.notifyObservers('selectionchange', object);
     },

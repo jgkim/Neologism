@@ -6,38 +6,31 @@ if( Drupal.jsEnabled ) {
 	var Neologism = {};
 	
 	$(document).ready( function() {
-		console.log('document ready finally');
 		// need for the Ext module
 		Ext.QuickTips.init();
 		
 		// we need to check for the form and later ask for the rest
 		if( Neologism.superclassesTreePanel !== undefined ) {
-			console.log('Neologism.superclassesTreePanel defined');
 			Neologism.superclassesTreePanel.render(Neologism.superclassesTreePanel.objectToRender);
 		}
 		
 		if( Neologism.disjointwithTreePanel !== undefined ) {
-			console.log('Neologism.disjointwithTreePanel defined');
 			Neologism.disjointwithTreePanel.render(Neologism.disjointwithTreePanel.objectToRender);
 		}
 		
 		if( Neologism.domainTermsTree !== undefined ) {
-			console.log('Neologism.domainTermsTree defined');
 			Neologism.domainTermsTree.render(Neologism.domainTermsTree.objectToRender);
 		}
 		
 		if( Neologism.rangeTermsTree !== undefined ) {
-			console.log('Neologism.rangeTermsTree defined');
 			Neologism.rangeTermsTree.render(Neologism.rangeTermsTree.objectToRender);
 		}
 		
 		if( Neologism.superpropertyTermsTree !== undefined ) {
-			console.log('Neologism.superpropertyTermsTree defined');
 			Neologism.superpropertyTermsTree.render(Neologism.superpropertyTermsTree.objectToRender);
 		}
 		
 		if( Neologism.inverseTermsTree !== undefined ) {
-			console.log('Adding observers to the Neologism.domainTermsTree');
 			// if Neologism.domainsTermsTree is defined we are in the add/edit property form
 			Neologism.domainTermsTree.addObserver(Neologism.inverseTermsTree);
 			Neologism.rangeTermsTree.addObserver(Neologism.inverseTermsTree);
@@ -58,7 +51,6 @@ if( Drupal.jsEnabled ) {
 		// this is used when all the content type form are shown the title field should take the focus
 		$('#edit-title').focus();
 		
-		console.log('Neologism document\'s ready finally');
 	}); // ready
 
 	Neologism.checkRangeField = function() {
