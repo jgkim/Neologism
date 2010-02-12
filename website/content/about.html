@@ -1,35 +1,45 @@
-<p><big>TODO @@@
-  Making the Semantic Web easy! Neologism is a simple web-based RDF Schema vocabulary
-  editor and publishing system. Use it to create RDF classes and properties, which are
-  needed to publish data on the Semantic Web. Its main goal is to dramatically reduce 
-  the time required to create, publish and modify vocabularies for the Semantic Web.</big></p>
+<p><big>Neologism is a web-based RDF Schema vocabulary editor and publishing system. With Neologism, you can define <em>vocabularies</em>, consisting of <em>classes and properties</em>. These are the building blocks that enable a growing number of web sites to share not just documents, images, videos and applications, but also <em>linked data</em> on the web. The main goal of Neologism is to dramatically reduce the time required to create, publish and modify vocabularies for the web of data.</big></p>
+
+<h2>About RDF Schema vocabularies and the Web of Data</h2>
+<p>@@@ Linked Data, RDF/XML, RDFa. Vocabularies provide the terminology for sharing data. Data from different sites becomes interoperable thanks to shared vocabularies. It's impossible to define one vocabulary that suits everyone; hence an open marketplace that contains everything from established players like FOAF, SKOS, DC down to Kissology and XXX and YYY. Vocabularies are usually about a narrow @@@
 
 <h2>What Neologism is</h2>
 <p>@@@ It follows the W3C's <a href="http://www.w3.org/TR/swbp-vocab-pub/">Best Practice for publishing RDF vocabularies</a> and <a href="http://www.w3.org/TR/cooluris/">Cool URIs for the Semantic Web</a> guidelines.</p>
 
-<h2>What Neologism is not</h2>
-<ul>
-  <li>Ontology editor</li>
-  <li>For large ontologies or vocabularies</li>
-</ul>
+<h2>What Neologism is <em>not</em></h2>
+<p><strong>Neologism is no ontology editor.</strong> If you want to build large and complex domain ontologies, if you need the full power of OWL, or if you need sophisticated reasoning services, consider applications such as <a href="http://www.topbraidcomposer.com/">TopBraid Composer</a>, <a href="http://protege.stanford.edu/">Protégé</a>, or the <a href="http://neon-toolkit.org/">NeOn Toolkit</a>. Neologism is designed for the simpler space of RDF vocabularies. OWL ontologies tend to be about <em>modelling a domain</em> with the formal language of logics</em>; RDF vocabularies thend to be about <em>exchanging and integrating data</em> between systems and on the Web.</p>
+<p><strong>Neologism is no hosted service.</strong> To use Neologism, you need to install it on your own web server. We do not run a hosted service where you could just sign up for an account and start creating vocabularies.</p>
+<p><strong>Neologism is no SKOS editor.</strong> The <em>Simple Knowledge ORganization Scheme</em> (SKOS) is an RDF-based format for expressing and exchanging taxonomies, thesauri, and controlled vocabularies. Neologism does not support SKOS. It only supports RDF Schema, plus selected constructs from OWL.</p>
 
 <h2>Quick feature list</h2>
+<ul>
+  <li>Support for subclasses, subproperties, domains, ranges, inverses, disjointness, functional and inverse functional properties</li>
+  <li>Support for XSD datatypes</li>
+  <li>RDF/XML and N3 output</li>
+  <li>Vocabularies are served with content negotiation</li>
+  <li>Customizable class diagram</li>
+  <li>Import from file or from the Web</li>
+  <li>Mapping to external vocabularies</li>
+</ul>
 
 <h2>Limitations</h2>
+<p>The current version of Neologism has some limitations that you should be aware of before deciding wether it is the right tool for you.</p>
+<p><strong>No permission system.</strong> If you create an account for another user on your system, then that user has access to all vocabularies. There is no way of restricting access to certain vocabularies, or to separate groups of users from each other. You should Neologism only for groups of users where everyone trusts each other.</p>
+<p><strong>No versioning.</strong> Changes to a vocabulary cannot be undone and no revision log is kept.</p> 
+<p><strong>Monolingual vocabularies.</strong> There is no support for adding labels/comments in more than one language.</p>
+<p>We will address these limitations in future versions.</p>
+
+<h2>Minimum requirements</h2>
+<p>Full details are available on the <a href="requirements">Minimum Requirements</a> page, but the gist is:</p>
 <ul>
-  <li>No versioning</li>
-  <li>No full multi-user with several independent groups</li>
+  <li>Web server that can run PHP 5.2 and supports Drupal Clean URLs (Apache with mod_rewrite recommended)</li>
+  <li>MySQL or PostgreSQL database (MySQL 4.1 or higher recommended)</li>
 </ul>
 
 <h2>Neologism is built on Drupal</h2>
+<p>@@@</p>
 <ul>
   <li>Drupal 6</li>
   <li>Current version not on drupal.org</li>
   <li>Does not play perfectly with an existing Drupal site. We want to improve that, need help from experienced Drupalers</li>
 </ul>
-
-<h2>How we started</h2>
-<p>@@@ Short history, including main contributros, original motivation</p>
-
-<h2>Funding</h2>
-<p>@@@ Sources of funding: SFI, iMP, CTIC?</p>
