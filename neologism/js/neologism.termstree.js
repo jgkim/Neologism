@@ -286,9 +286,6 @@ Ext.tree.TreePanel.prototype.isSomeChildCheckedOrStatus = function(node, status)
 ;
  
 //Ext.extend(Ext.tree.CheckboxNodeUI, Ext.tree.TreeNodeUI, {   
-    /**  
-     * This is virtually identical to Ext.tree.TreeNodeUI.render, modifications are indicated inline  
-     */   
 /*
 	render : function(bulkRender){   
         var n = this.node;   

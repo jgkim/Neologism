@@ -70,6 +70,8 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
         		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
 	            	baseParams.arrayOfValues.push(node.text);
 	            }
+        		
+        		log.info(baseParams.arrayOfValues);
 	            
         		// check if this node has more than 1 super class, so we need to checked it 
         		// in other places in the tree.

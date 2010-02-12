@@ -49,6 +49,9 @@ define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class
  */
 function neologism_init() {
   drupal_add_css(drupal_get_path('module', NEOLOGISM) .'/neologism.css');
+  
+  _neologism_initialize_log4javascript();
+  
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.termstree.js');
 
@@ -2057,7 +2060,34 @@ function theme_neologism_form_element(array $element, $value) {
 //-------------------------------------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------------------------------
-// private functions
+// private functions section
+
+/**
+ * This function add JavaScript logging framework
+ * @return unknown_type
+ */
+function _neologism_initialize_log4javascript() {
+	$js = '';
+  if( isset($_SERVER['SERVER_NAME']) == 'localhost' ) {
+  	drupal_add_js(drupal_get_path('module', NEOLOGISM).'/js/log4javascript.js');
+  	$js .= '
+				var log = log4javascript.getDefaultLogger();
+  	'; 	
+  }
+  else {
+  	$js .= '
+		  var log = {
+				trace:function(){},
+				debug:function(){},
+				info:function(){},
+				warn:function(){},
+				error:function(){},
+				fatal:function(){}
+				};
+  	';
+  }	
+  drupal_add_js($js, 'inline');
+}
 
 /**
  * update the url_alias table the alias 
