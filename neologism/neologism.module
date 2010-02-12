@@ -630,6 +630,22 @@ function neologism_vocabulary_load($nid) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
+
+  // @D7: Replace with drupal_add_html_head_link()
+  drupal_add_link(array(
+    'rel' => 'alternate',
+    'type' => 'application/rdf+xml',
+    'href' => url($node->path . '.' . RDF),
+    'title' => 'RDF Schema (in RDF/XML)',
+  ));
+  // @D7: Replace with drupal_add_html_head_link()
+  drupal_add_link(array(
+    'rel' => 'alternate',
+    'type' => 'text/rdf+n3',
+    'href' => url($node->path . '.' . N3),
+    'title' => 'RDF Schema (in N3)',
+  ));
+
   // TODO: finish to clean all the old code using the $node variable by the $vocabulary
 	$vocabulary_title = check_plain($node->field_title[0]['value']);
 	$vocabulary = new stdClass();
