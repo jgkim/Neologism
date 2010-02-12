@@ -3,8 +3,6 @@
  */
 
 var EvocWidget = {};
-console.log('EvocWidget definition');
-
 /**
 * appends a javascript array to a form
 *
@@ -156,5 +154,4 @@ $(document).ready( function() {
 	if( EvocWidget.termsTree !== undefined ) {
 		EvocWidget.termsTree.render(EvocWidget.termsTree.objectToRender);
 	}
-	console.log('document ready for evoc');
 });
