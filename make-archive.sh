@@ -31,9 +31,6 @@ svn co https://neologism.googlecode.com/svn/trunk/profile profiles/neologism --u
 # Delete the Drupal default installation profile, we only support the Neologism one
 rm -rf profiles/default/
 
-# Check out the customisations of the Garland theme from Google Code SVN
-svn co https://neologism.googlecode.com/svn/trunk/theme themes/garland --username richard@cyganiak.de
-
 # Create archive of the entire thing, ready for installation by users
 cd ..
 zip -r neologism.zip neologism
