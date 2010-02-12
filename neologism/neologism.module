@@ -82,7 +82,7 @@ function neologism_perm() {
 /**
  * Implementation of hook_theme().
  */
-function neologism_theme() {
+function neologism_theme(&$existing) {
   return array(
     'class_view' => array(
       'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
@@ -113,7 +113,9 @@ function neologism_theme() {
     'render_custom_namespace_field' => array(
     	'arguments' => array('element' => NULL)
     ),
-    
+    'node' => array(
+      'path' => drupal_get_path('module', 'neologism'),
+    ),
   );
 }
 
@@ -652,29 +654,33 @@ function neologism_export_html($node) {
   $properties = _neologism_get_all_properties($node);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
-  $output .= '<div id="authors" ><h3>'.t('Author').':</h3>';
+  $html = ''; $author_count = 0;
   foreach($node->field_authors as $author) {
+    if (!$author['uid']) continue;
+    $author_count++;
     $author = user_load($author);
-    $output .= '<div id="author-value">';
+    $html .= '<div id="author-value">';
     $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
     if ($author->profile_neologism_homepage) {
-      $output .= l($name, $author->profile_neologism_homepage);
+      $html .= l($name, $author->profile_neologism_homepage);
     } else {
-      $output .= $name;
+      $html .= $name;
     }
     if ($author->profile_neologism_affiliation) {
       if ($author->profile_neologism_affiliation_homepage) {
-        $output .= ' (' . l($author->profile_neologism_affiliation, $author->profile_neologism_affiliation_homepage) . ')';
+        $html .= ' (' . l($author->profile_neologism_affiliation, $author->profile_neologism_affiliation_homepage) . ')';
       } else {
-        $output .= ' (' . $author->profile_neologism_affiliation . ')';
+        $html .= ' (' . $author->profile_neologism_affiliation . ')';
       }
     }
     if ($author->profile_neologism_show_email) {
-      $output .= ' <i>(' . l('Email', 'mailto:' . $author->mail) . ')</i>';
+      $html .= ' <i>(' . l('Email', 'mailto:' . $author->mail) . ')</i>';
     }
-    $output .= '</div>';
+    $html .= '</div>';
   }
-  $output .= '</div>';
+  if ($author_count) {
+    $output .= '<div id="authors" ><h3>'.($author_count == 1 ? t('Author') : t('Authors')).':</h3>' . $html . '</div>';
+  }
 
   $output .= '<div id="last-update" ><h3>Last update:</h3><div id="last-update-value">'.format_date($node->changed, 'custom', 'd F Y').'</div></div>';
   
@@ -1150,7 +1156,6 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
     return $links;
 }
 
-
 /**
  * Implementation of hook_nodeapi().
  */
@@ -1202,6 +1207,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
   	// catching the view event
     case 'view':
     	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
+
         $node->authors = array();
         foreach($node->field_authors as $author) {
           $author = user_load($author);
@@ -1430,7 +1436,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
       }
       
       break;
-  
+
     default:
   }
 
