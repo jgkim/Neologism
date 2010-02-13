@@ -914,6 +914,7 @@ function &neologism_get_rdf_model($node) {
   foreach ($classes as $class) {
     $class_uri = $namespace . $class["id"];
     $rdf->triple_qname($class_uri, "rdf:type", 'rdfs:Class');
+    $rdf->triple_qname($class_uri, "rdf:type", 'owl:Class');
     $rdf->triple_uri($class_uri, "rdfs:isDefinedBy", $doc);
     $rdf->triple_literal($class_uri, "rdfs:label", $class["label"]);
     $rdf->triple_literal($class_uri, "rdfs:comment", $class["comment"]);
@@ -921,10 +922,19 @@ function &neologism_get_rdf_model($node) {
     $rdf->triples_qname($class_uri, "owl:disjointWith", $class[DISJOINTS_WITH]);
   }
  
+  $xsd_types = array();
+  foreach (neologism_get_xsd_datatype_list() as $types) {
+    $xsd_types = array_merge($xsd_types, $types);
+  }
   // export all properties
   foreach ($properties as $property) {
     $property_uri = $namespace . $property["id"];
     $rdf->triple_qname($property_uri, "rdf:type", 'rdf:Property');
+    // Try to determine wether it's an Object- or DatatypeProperty
+    // @todo To determine owl:ObjectProperty, we have to make sure that none of the ranges are subclasses of rdf:Datatype or rdfs:Class or owl:Class
+    if ($property[RANGES] && !array_diff($property[RANGES], $xsd_types)) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:DatatypeProperty');
+    }
     $rdf->triple_uri($property_uri, "rdfs:isDefinedBy", $doc);
     $rdf->triple_literal($property_uri, "rdfs:label", $property["label"]);
     $rdf->triple_literal($property_uri, "rdfs:comment", $property["comment"]);
