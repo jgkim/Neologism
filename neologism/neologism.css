@@ -316,6 +316,10 @@ img#legend {
   width: auto;
 }
 
+#field_superclass2_id tbody {
+	border:none;
+}
+
 #field_superclass2_id thead th {
   margin: 0;
   padding: 0;
@@ -382,6 +386,10 @@ img#legend {
   width: auto;
 }
 
+#field_disjointwith2_id tbody {
+	border:none;
+}
+
 #field_disjointwith2_id thead th {
   margin: 0;
   padding: 0;
@@ -444,6 +452,10 @@ img#legend {
 #field_inverse2_id table {
   margin: 0;
   width: auto;
+}
+
+#field_inverse2_id tbody {
+	border:none;
 }
 
 #field_inverse2_id thead th {
@@ -510,6 +522,10 @@ img#legend {
   width: auto;
 }
 
+#field_superproperty2_id tbody {
+	border:none;
+}
+
 #field_superproperty2_id thead th {
   margin: 0;
   padding: 0;
@@ -574,6 +590,10 @@ img#legend {
   width: auto;
 }
 
+#field_range2_id tbody {
+	border:none;
+}
+
 #field_range2_id thead th {
   margin: 0;
   padding: 0;
@@ -636,6 +656,10 @@ img#legend {
 #field_domain2_id table {
   margin: 0;
   width: auto;
+}
+
+#field_domain2_id tbody {
+	border:none;
 }
 
 #field_domain2_id thead th {
