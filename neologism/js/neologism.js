@@ -50,8 +50,6 @@ if( Drupal.jsEnabled ) {
 		
 		// this is used when all the content type form are shown the title field should take the focus
 		$('#edit-title').focus();
-		
-		log.info('Neologism\'s document ready!');
 	}); // ready
 
 	Neologism.checkRangeField = function() {
