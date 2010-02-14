@@ -1,140 +1,189 @@
 <?php
 
 /**
- * Loads an RDF/XML file from an HTTP URI and parses it. Handles content negotiation
- * and various errors.
+ * Loads an RDF/XML file from an HTTP URI, parses it, and builds
+ * an RDF schema representation (associative array) from it.
+ * Handles content negotiation and various errors.
+ *
+ * @param string $uri
+ * @return array
+ * @throws Exception On network or parse error
+ */
+function evoc_get_from_web($uri, $prefix) {
+  $schema_url = $uri;
+  $i = strpos($schema_url, '#');
+  if ($i !== false) {
+    $schema_url = substr($schema_url, 0, $i);
+  }
+  $content = _evoc_fetch_from_web($schema_url);
+  $parser = _evoc_parse_rdfxml($schema_url, $content);
+  list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
+  return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);
+}
+
+/**
+ * Loads a local RDF/XML file, parses it, and builds
+ * an RDF schema representation (associative array) from it.
+ * Handles various errors.
+ *
+ * @param string $uri
+ * @return array
+ * @throws Exception On file or parse error
+ */
+function evoc_get_from_file($filename, $uri, $prefix) {
+  $content = _evoc_fetch_from_file($filename);
+  list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
+  return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);
+}
+
+/**
+ * Loads the content of a local file.
+ *
+ * @param string $filename
+ * @return string
+ * @throws Exception
+ */
+function _evoc_fetch_from_file($filename) {
+  if (!is_file($filename)) {
+    throw new Exception("File not found: '$filename'");
+  }
+  return file_get_contents($filename);
+}
+
+/**
+ * Loads an RDF/XML file from an HTTP URI. Handles content negotiation
+ * and various errors. Inspects the server's Content-Type header
+ * to make reasonably sure that it actually is an RDF/XML file.
  *
  * @param $uri
  * @return Model
- * @throws Exception On network or parse error
+ * @throws Exception On network error
  */
-function evoc_read_RDF_from_URI($uri) {
-    $uri = trim($uri);
-    // check if it's an HTTP URI
-    if (!preg_match('!^http://!', $uri)) {
-        throw new Exception('Can only read from http:// URIs');
+function _evoc_fetch_from_web($uri) {
+  $uri = trim($uri);
+  // check if it's an HTTP URI
+  if (!preg_match('!^http://!', $uri)) {
+    throw new Exception('Can only read from http:// URIs');
+  }
+  // create a custom context that sends an Accept header that asks for RDF/XML
+  $context = stream_context_create(array('http' => array(
+      'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
+  )));
+  // read file contents
+  set_error_handler('_evoc_load__error_handler', E_WARNING);
+  try {
+    $content = file_get_contents($uri, FILE_BINARY, $context);
+  } catch (Exception $ex) {
+    $error = $ex->getMessage();
+    $offset = strrpos($error, ': ');
+    if ($offset) {
+      $error = substr($error, $offset + 2);
     }
-    // create a custom context that sends an Accept header that asks for RDF/XML
-    $context = stream_context_create(array('http' => array(
-            'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
-    )));
-    // read file contents
-    set_error_handler('_evoc_read_RDF_from_URI__error_handler', E_WARNING);
-    try {
-        $content = file_get_contents($uri, FILE_BINARY, $context);
-    } catch (Exception $ex) {
-        $error = $ex->getMessage();
-        $offset = strrpos($error, ': ');
-        if ($offset) {
-            $error = substr($error, $offset + 2);
-        }
+  }
+  restore_error_handler();
+  if (empty($content)) {
+    // reading has failed.
+    if (empty($http_response_header)) {
+      // failure is NOT an HTTP error reported by the destination server,
+      // so we will use PHP's warning message
+      if ($error) {
+        throw new Exception('Failed to read from URI: ' . $error);
+      }
+      throw new Exception('Failed to read from URI');
     }
-    restore_error_handler();
-    if (empty($content)) {
-        // reading has failed.
-        if (empty($http_response_header)) {
-            // failure is NOT an HTTP error reported by the destination server,
-            // so we will use PHP's warning message
-            if ($error) {
-                throw new Exception('Failed to read from URI: ' . $error);
-            }
-            throw new Exception('Failed to read from URI');
-        }
-        // First http_response_header should be: 'HTTP/1.1 404 Not Found' or similar.
-        // Try to get only the '404 Not Found' part.
-        if (preg_match('/^[^ ]* (.*)/', $http_response_header[0], $match)) {
-            $http_error = $match[1];
-        } else {
-            $http_error = $http_response_header[0];
-        }
-        throw new Exception('Failed to read from URI: ' . $http_error);
+    // First http_response_header should be: 'HTTP/1.1 404 Not Found' or similar.
+    // Try to get only the '404 Not Found' part.
+    if (preg_match('/^[^ ]* (.*)/', $http_response_header[0], $match)) {
+      $http_error = $match[1];
+    } else {
+      $http_error = $http_response_header[0];
     }
-    // Remove Byte Order Mark if present
-    if (strlen($content) >= 3 && ord($content[0]) == 0xEF && ord($content[1]) == 0xBB && ord($content[2]) == 0xBF) {
-        $content = substr($content, 3);
-    }
+    throw new Exception('Failed to read from URI: ' . $http_error);
+  }
 
-    // find media type by looking for a Content-Type header; default to application/rdf+xml
-    $media_type = null;
-    foreach (@$http_response_header as $header) {
-        $header = trim(strtolower($header));
-        if (preg_match('!^HTTP\/!i', $header)) {
-            // In case of redirects, headers of subsequent redirects are simply appended to the array.
-            // We are only interested in the last one, so reset.
-            $media_type = null;
-        }
-        if (preg_match('/^content-type *: *([a-z0-9\/+-]+)/', $header, $match)) {
-            $media_type = $match[1];
-        }
+  // find media type by looking for a Content-Type header; default to application/rdf+xml
+  $media_type = null;
+  foreach (@$http_response_header as $header) {
+    $header = trim(strtolower($header));
+    if (preg_match('!^HTTP\/!i', $header)) {
+      // In case of redirects, headers of subsequent redirects are simply appended to the array.
+      // We are only interested in the last one, so reset.
+      $media_type = null;
     }
-    $extension = null;
-    if (preg_match('/\.([a-zA-Z0-9])$/', $uri, $match)) {
-        $extension = strtolower($match[1]);
+    if (preg_match('/^content-type *: *([a-z0-9\/+-]+)/', $header, $match)) {
+      $media_type = $match[1];
     }
+  }
+  $extension = null;
+  if (preg_match('/\.([a-zA-Z0-9])$/', $uri, $match)) {
+    $extension = strtolower($match[1]);
+  }
 
-    // Sanity checks: Did we actually load some RDF/XML?
-    if ($media_type == 'application/rdf+xml' || $media_type == 'text/rdf' || $media_type == 'application/rdf') {
-        // Media type says RDF/XML, so let's try it
-    } else if ($extension == 'rdf' || $extension == 'rdfx' || $extension == 'owl') {
-        // Extension looks like RDF/XML, so let's try it
-    } else if (preg_match('!<rdf:RDF|http://www\.w3\.org/1999/02/22-rdf-syntax-ns#!', substr($content, 1000))) {
-        // Content smells like RDF/XML, so let's try it
-    } else if ($media_type == 'text/html' || $media_type == 'application/xhtml+xml') {
-        // Bad! This is HTML, not RDF/XML
-        throw new Exception('Server returned an HTML media type, but we can only process RDF/XML');
-    } else if (preg_match('/n3|turtle|ttl/', $media_type)) {
-        // Bad! This is N3 or Turtle, not RDF/XML
-        throw new Exception('Server returned a Turtle media type, but we can only process RDF/XML');
-    } else if (preg_match('/^\s*@prefix/', $content)) {
-        // Bad! This starts like a Turtle or N3 file
-        throw new Exception('This appears to be a Turtle document, but we can only process RDF/XML');
-    } else if (preg_match('/^x?html?$/', $media_type)) {
-        // Bad! This looks like HTML, not RDF/XML
-        throw new Exception('This appears to be an HTML document, but we can only process RDF/XML');
-    } else if ($media_type == 'text/plain' || $media_type == 'application/octet-stream') {
-        // Generic/default media types, might be OK
-    } else if ($media_type) {
-        throw new Exception("Can only process RDF/XML; reported media type was $media_type");
-    }
-    if (substr(ltrim($content), 0, 1) != '<') {
-        throw new Exception("Parse error: File does not start with '<'");
-    }
+  // Sanity checks: Did we actually load some RDF/XML?
+  if ($media_type == 'application/rdf+xml' || $media_type == 'text/rdf' || $media_type == 'application/rdf') {
+    // Media type says RDF/XML, so let's try it
+  } else if ($extension == 'rdf' || $extension == 'rdfx' || $extension == 'owl') {
+    // Extension looks like RDF/XML, so let's try it
+  } else if (preg_match('!<rdf:RDF|http://www\.w3\.org/1999/02/22-rdf-syntax-ns#!', substr($content, 1000))) {
+    // Content smells like RDF/XML, so let's try it
+  } else if ($media_type == 'text/html' || $media_type == 'application/xhtml+xml') {
+    // Bad! This is HTML, not RDF/XML
+    throw new Exception('Server returned an HTML media type, but we can only process RDF/XML');
+  } else if (preg_match('/n3|turtle|ttl/', $media_type)) {
+    // Bad! This is N3 or Turtle, not RDF/XML
+    throw new Exception('Server returned a Turtle media type, but we can only process RDF/XML');
+  } else if (preg_match('/^\s*@prefix/', $content)) {
+    // Bad! This starts like a Turtle or N3 file
+    throw new Exception('This appears to be a Turtle document, but we can only process RDF/XML');
+  } else if (preg_match('/^x?html?$/', $media_type)) {
+    // Bad! This looks like HTML, not RDF/XML
+    throw new Exception('This appears to be an HTML document, but we can only process RDF/XML');
+  } else if ($media_type == 'text/plain' || $media_type == 'application/octet-stream') {
+    // Generic/default media types, might be OK
+  } else if ($media_type) {
+    throw new Exception("Can only process RDF/XML; reported media type was $media_type");
+  }
 
-    // Create a RAP model and parse the content
-    // @todo TODO Port this RAP-specific code to ARC2
-    include_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include_once(RDFAPI_INCLUDE_DIR . "syntax/RdfParser.php");
-    $model = ModelFactory::getDefaultModel();
-    $parser = new RdfParser();
-    set_error_handler('_evoc_read_RDF_from_URI__error_handler', E_USER_ERROR);
-    try {
-        $parser->generateModel($content, $uri, $model);
-        restore_error_handler();
-        return $model;
-    } catch (Exception $ex) {
-        restore_error_handler();
-        throw $ex;
-    }
+  return $content;
 }
 
-function _evoc_read_RDF_from_URI__error_handler($errno, $errstr) {
+function &_evoc_parse_rdfxml($base_uri, $rdf_content) {
+  // Remove Byte Order Mark if present
+  if (strlen($rdf_content) >= 3 && ord($rdf_content[0]) == 0xEF && ord($rdf_content[1]) == 0xBB && ord($rdf_content[2]) == 0xBF) {
+    $rdf_content = substr($rdf_content, 3);
+  }
+  if (substr(ltrim($rdf_content), 0, 1) != '<') {
+    throw new Exception("Parse error: File does not start with '<'");
+  }
+
+  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  $parser = ARC2::getRDFXMLParser();
+  $parser->parse($base_uri, $rdf_content);
+  $namespaces = array();
+  foreach ($parser->nsp as $uri => $prefix) {
+    $namespaces[$prefix] = $uri;
+  }
+  return array($parser->getTriples(), $namespaces);
+}
+
+function _evoc_load__error_handler($errno, $errstr) {
     throw new Exception($errstr);
 }
 
-
 /**
- * Queries a RAP Model for classes and properties, and builds
+ * Queries a set of triples for classes and properties, and builds
  * an associative array describing the vocabulary and any 
  * classes and properties found.
  *
- * @param object $model A RAP model containing an RDFS vocabulary or OWL ontology
+ * @param array $model An ARC2-style array of triples an RDFS vocabulary or OWL ontology
+ * @param array $namespaces Associative array of namespaces parsed from the RDF file
  * @param string $ns_prefix Namespace prefix for the vocabulary
  * @param string $ns_uri Only terms in this namespace will be considered
  * @return array Array describing the vocabulary, its classes and properties.
  */
-function evoc_get_vocabulary_description(&$model, $ns_prefix, $ns_uri) {
+function _evoc_extract_schema(&$model, $namespaces, $ns_prefix, $ns_uri) {
 
-  _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, $model);
+  _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, $namespaces);
 
   $vocabulary = array(
       'prefix' => $ns_prefix,
@@ -227,6 +276,8 @@ function _evoc_query_for_class_uris(&$model) {
     array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#Class'),
     array('?', 'http://www.w3.org/2000/01/rdf-schema#subClassOf', null),
     array(null, 'http://www.w3.org/2000/01/rdf-schema#subClassOf', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#equivalentClass', null),
+    array(null, 'http://www.w3.org/2002/07/owl#equivalentClass', '?'),
     array('?', 'http://www.w3.org/2002/07/owl#disjointWith', null),
     array(null, 'http://www.w3.org/2002/07/owl#disjointWith', '?'),
     array(null, 'http://www.w3.org/2000/01/rdf-schema#domain', '?'),
@@ -242,10 +293,17 @@ function _evoc_query_for_property_uris(&$model) {
     array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#FunctionalProperty'),
     array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#InverseFunctionalProperty'),
     array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#SymmetricProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#AnnotationProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#ReflexiveProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#IrreflexiveProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#AsymmetricProperty'),
+    array('?', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type', 'http://www.w3.org/2002/07/owl#TransitiveProperty'),
     array('?', 'http://www.w3.org/2000/01/rdf-schema#domain', null),
     array('?', 'http://www.w3.org/2000/01/rdf-schema#range', null),
     array('?', 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf', null),
     array(null, 'http://www.w3.org/2000/01/rdf-schema#subPropertyOf', '?'),
+    array('?', 'http://www.w3.org/2002/07/owl#equivalentProperty', null),
+    array(null, 'http://www.w3.org/2002/07/owl#equivalentProperty', '?'),
     array('?', 'http://www.w3.org/2002/07/owl#inverseOf', null),
     array(null, 'http://www.w3.org/2002/07/owl#inverseOf', '?'),
   ));
@@ -310,7 +368,6 @@ function _evoc_query_for_property_description(&$model, $uri) {
   return $property;
 }
 
-// @todo TODO RAP-specific stuff stats here, port to ARC2! ---------------
 function _evoc_query_ask(&$model, $queries) {
   foreach ($queries as $query) {
     list($s, $p, $o) = $query;
@@ -322,17 +379,9 @@ function _evoc_query_ask(&$model, $queries) {
 function _evoc_query_find_literal(&$model, $queries) {
   foreach ($queries as $query) {
     list($s, $p, $o) = $query;
-    $stmt = _evoc_query_find_first($model, $s, $p, $o);
-    if (!$stmt) continue;
-    if ($s == '?' && is_a($stmt->getSubject(), 'Literal')) {
-      return $stmt->getSubject()->getLabel();
-    }
-    if ($p == '?' && is_a($stmt->getPredicate(), 'Literal')) {
-      return $stmt->getPredicate()->getLabel();
-    }
-    if ($o == '?' && is_a($stmt->getObject(), 'Literal')) {
-      return $stmt->getObject()->getLabel();
-    }
+    $triple = _evoc_query_find_first($model, $s, $p, $o);
+    if (!$triple) continue;
+    if ($triple['o_type'] == 'literal') return $triple['o'];
   }
   return null;
 }
@@ -342,15 +391,15 @@ function _evoc_query_find_uris(&$model, $queries) {
   foreach ($queries as $query) {
     list($s, $p, $o) = $query;
     $result = _evoc_query_find_all($model, $s, $p, $o);
-    foreach ($result as $stmt) {
-      if ($s == '?' && is_a($stmt->getSubject(), 'Resource') && !is_a($stmt->getSubject(), 'Blanknode')) {
-        $uris[] = $stmt->getSubject()->getURI();
+    foreach ($result as $triple) {
+      if ($s == '?' && $triple['s_type'] == 'uri') {
+        $uris[] = $triple['s'];
       }
-      if ($p == '?' && is_a($stmt->getPredicate(), 'Resource') && !is_a($stmt->getPredicate(), 'Blanknode')) {
-        $uris[] = $stmt->getPredicate()->getURI();
+      if ($p == '?') {
+        $uris[] = $triple['p'];
       }
-      if ($o == '?' && is_a($stmt->getObject(), 'Resource') && !is_a($stmt->getObject(), 'Blanknode')) {
-        $uris[] = $stmt->getObject()->getURI();
+      if ($o == '?' && $triple['o_type'] == 'uri') {
+        $uris[] = $triple['o'];
       }
     }
   }
@@ -366,34 +415,35 @@ function _evoc_query_find_qnames(&$model, $queries) {
   return $qnames;
 }
 
-function _evoc_to_rap_resource($s) {
-  if (is_null($s)) return null;
-  if ($s == '?') return null;
-  return new Resource($s);
-}
-
 function _evoc_query_find_first(&$model, $s, $p, $o) {
-  return $model->findFirstMatchingStatement(_evoc_to_rap_resource($s), _evoc_to_rap_resource($p), _evoc_to_rap_resource($o));
+  foreach ($model as $triple) {
+    if (!is_null($s) && $s != '?' && ($triple['s'] != $s || $triple['s_type'] != 'uri')) continue;
+    if (!is_null($p) && $p != '?' && ($triple['p'] != $p)) continue;
+    if (!is_null($o) && $o != '?' && ($triple['o'] != $o || $triple['o_type'] != 'uri')) continue;
+    return $triple;
+  }
+  return null;
 }
 
 function _evoc_query_find_all(&$model, $s, $p, $o) {
   $result = array();
-  $it = $model->findAsIterator(_evoc_to_rap_resource($s), _evoc_to_rap_resource($p), _evoc_to_rap_resource($o));
-  while ($it->hasNext()) {
-    $result[] = $it->next();
+  foreach ($model as $triple) {
+    if (!is_null($s) && $s != '?' && ($triple['s'] != $s || $triple['s_type'] != 'uri')) continue;
+    if (!is_null($p) && $p != '?' && ($triple['p'] != $p)) continue;
+    if (!is_null($o) && $o != '?' && ($triple['o'] != $o || $triple['o_type'] != 'uri')) continue;
+    $result[] = $triple;
   }
   return $result;
 }
-// @todo TODO RAP-specific stuff ends here ---------------
 
 /**
  * Prepares the importer's namespace tracking.
  *
  * @param string $ns_uri Namespace URI of the vocabulary being imported
  * @param string $ns_prefix Namespace prefix of the vocabulary being imported
- * @param object $model RDF model containing the vocabulary file (including parsed namespaces)
+ * @param array $parsed_namespaces Associative array containing the namespaces parsed from the RDF file
  */
-function _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, &$model) {
+function _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, $parsed_namespaces) {
   global $evoc_import_namespaces;
   $evoc_import_namespaces = array();
   $prefixes = array();
@@ -408,8 +458,7 @@ function _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, &$model) {
   $evoc_import_namespaces[$ns_uri] = array('prefix' => $ns_prefix, 'importing' => true);
   rdf_register_namespace($ns_prefix, $ns_uri);
   $prefixes[] = $ns_prefix;
-  $namespaces = $model->getParsedNamespaces();
-  foreach ($namespaces as $u => $p) {
+  foreach ($parsed_namespaces as $u => $p) {
     if (!isset($evoc_import_namespaces[$u]) && !in_array($p, $prefixes)) {
       $evoc_import_namespaces[$u] = array('prefix' => $p, 'new' => true);
       rdf_register_namespace($p, $u);

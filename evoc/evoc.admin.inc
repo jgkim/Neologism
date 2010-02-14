@@ -15,9 +15,8 @@
  */
 function evoc_manage_vocabularies() {
   
-  // get the available namespaces in the system
-  // TODO get only those that have been imported via evoc
-  $namespaces = array_diff(rdf_db_rdf_namespaces(), module_invoke('neologism', 'rdf_namespaces'));
+  // @todo Make sure that we get only namespaces imported via evoc
+  $namespaces = array_diff_key(rdf_db_rdf_namespaces(), module_invoke('neologism', 'rdf_namespaces'));
   
   $header = array(
       t('Prefix'),
@@ -91,21 +90,13 @@ function evoc_add_vocabulary_validate($form, &$form_state) {
   if (!$ns_uri || !$ns_prefix) return;
 
   // Load and parse the RDF file
-  require_once(drupal_get_path('module', 'evoc')."/evoc.load_vocab.inc");
-  $vocabulary_url = $ns_uri;
-  if (substr($vocabulary_url, -1) == '#') {
-    $vocabulary_url = substr($vocabulary_url, 0, -1);
-  }
+  module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
-    $model = evoc_read_RDF_from_URI($vocabulary_url);
+    $vocabulary = evoc_get_from_web($ns_uri, $ns_prefix);
   } catch (Exception $e) {
     form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
     return;
   }
-  $source_field = 'ns_uri';
-
-  // Extract information about classes, properties etc from the model
-  $vocabulary = evoc_get_vocabulary_description($model, $ns_prefix, $ns_uri);
 
   // Sanity checks over the extracted vocabulary
   if (!$vocabulary['classes'] && !$vocabulary['properties']) {

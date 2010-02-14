@@ -60,8 +60,7 @@ function evoc_menu() {
 function evoc_import_vocabulary($uri, $prefix, $showdetails = false) {
   module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
-    $model = evoc_read_RDF_from_URI($uri);
-    $vocabulary = evoc_get_vocabulary_description($model, $prefix, $uri);
+    $vocabulary = evoc_get_from_web($uri, $prefix);
     evoc_save_vocabulary($vocabulary, $showdetails);
   } catch (Exception $ex) {
     drupal_set_message($ex->getMessage(), 'error');
