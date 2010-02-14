@@ -63,14 +63,14 @@ class NeologismRDFWriter {
   }
 
   function write_rdfxml() {
-    header("Content-Type: application/rdf+xml; charset=utf-8");
+    drupal_set_header("Content-Type: application/rdf+xml; charset=utf-8");
     module_load_include('inc', 'neologism', 'neologism.arc');
     $ser = ARC2::getRDFXMLSerializer(array('ns' => $this->_namespaces, 'serializer_type_nodes' => true));
     echo $ser->getSerializedTriples($this->_triples);
   }
 
   function write_n3() {
-    header("Content-Type: text/rdf+n3; charset=utf-8");
+    drupal_set_header("Content-Type: text/rdf+n3; charset=utf-8");
     module_load_include('inc', 'neologism', 'neologism.arc');
     $ser = new NeologismTurtleSerializer($this->_namespaces);
     echo $ser->getSerializedTriples($this->_triples);
@@ -135,7 +135,7 @@ class NeologismTurtleSerializer extends ARC2_TurtleSerializer {
         $first_p = 0;
       }
     }
-    $r .= $r ? ' .' : '';
+    $r .= $r ? ' .' . $nl : '';
     if ($raw) {
       return $r;
     }

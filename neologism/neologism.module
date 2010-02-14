@@ -12,7 +12,6 @@ define("N3", "n3");
 define("XML", "xml");
 define("LAYOUT", "layout");
 
-define("CONTENT_NEGOTATION_DIR", drupal_get_path('module', NEOLOGISM)."/includes/content_negotiation/");
 define("NEOLOGISM_CT_VOCABULARY", "neo_vocabulary");
 define("NEOLOGISM_CT_CLASS", "neo_class");
 define("NEOLOGISM_CT_PROPERTY", "neo_property");
@@ -33,14 +32,12 @@ define("RANGES", "ranges");
 define("SUBPROPERTYOF", "subpropertyof");
 define("INVERSE", "inverse");
 
-// persmission definitions
 define("PERMISSION_EDIT_VOCABULARIES", "edit vocabularies");
 define("PERMISSION_IMPORT_VOCABULARIES", "import vocabularies");
-define("PERMISSION_NEOLOGISM_ACCESS", "access vocabularies");
 
 define("NEOLOGISM_VOCABULARY_FORM_ID", NEOLOGISM_CT_VOCABULARY."_node_form");
-define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form"); // neo_property_node_form
-define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class_node_form
+define("NEOLOGISM_PROPERTY_FORM_ID", NEOLOGISM_CT_PROPERTY."_node_form");
+define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form");
 
 //to control the form opertion we can check 
 
@@ -48,6 +45,9 @@ define("NEOLOGISM_CLASS_FORM_ID", NEOLOGISM_CT_CLASS."_node_form"); // neo_class
  * Implementation of hook_init().
  */
 function neologism_init() {
+  module_load_include('inc', 'neologism', 'neologism.conneg');
+  _neologism_negotiated_cache_start();
+
   drupal_add_css(drupal_get_path('module', NEOLOGISM) .'/neologism.css');
   
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
@@ -59,14 +59,6 @@ function neologism_init() {
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/range.widgetbehaviour.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/superproperty.widgetbehaviour.js');
   drupal_add_js(drupal_get_path('module', 'neologism') . '/js/evocfields/inverse.widgetbehaviour.js');
-  
-  //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-darkgray.css');
-  //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-slickness.css');
-  //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-olive.css');
-  
-  //drupal_add_css(drupal_get_path('module', NEOLOGISM) .'/js/jquery-treeview/jquery.treeview.css');
-  //drupal_add_js(drupal_get_path('module', 'neologism') . '/js/jquery-treeview/jquery.cookie.js');
-  //drupal_add_js(drupal_get_path('module', 'neologism') . '/js/jquery-treeview/jquery.treeview.js');
 }
 
 /**
@@ -76,7 +68,6 @@ function neologism_perm() {
     return array(
     	PERMISSION_EDIT_VOCABULARIES, 
     	PERMISSION_IMPORT_VOCABULARIES,
- //   	PERMISSION_NEOLOGISM_ACCESS
     );
 }
 
@@ -88,11 +79,9 @@ function neologism_theme(&$existing) {
     'class_view' => array(
       'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
     ),
-    
     'property_view' => array(
       'arguments' => array('node' => array(), 'teaser' => NULL, 'page' => NULL, 'links' => NULL)
     ),
-    
     'neologism_item_list' => array(
       'arguments' => array('items' => array(), 'title' => NULL, 'type' => 'ul', 'attribute' => NULL),
     ),
@@ -142,49 +131,40 @@ function _neologism_build_breadcrumb($path, $title = NULL) {
  * @return unknown_type
  */
 function neologism_export_conneg($node) {
-	
-	if( $node->type == NEOLOGISM_CT_VOCABULARY ) {
-	  $accept = $_SERVER["HTTP_ACCEPT"];
-	  $redirect_uri = neologism_get_preferred_uri($accept);
-	  header("Vary: Accept");
-	  header("Content-Location: " . $redirect_uri);
-	  $preferred_variant = neologism_get_preferred_content($accept);
-	  if ($preferred_variant == HTML) {
-	    return neologism_export_html($node);	
-	  } else if ($preferred_variant == RDF) {
-	    neologism_export_rdfxml($node);
-	  } else if ($preferred_variant == N3) {
-	    neologism_export_n3($node);
-	  } else if ($preferred_variant == XML) {
-	    neologism_export_xml($node);
-	  } else {
-	    drupal_set_message("Shouldn't happen! preferred variant was $preferred_variant in neologism_export_conneg()");
-	  }
-	}
-	else if( $node->type == NEOLOGISM_CT_CLASS ) {
-		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
-		drupal_set_title($node->vocabulary->title.':'.$node->title);
-		return theme('class_view', $node, FALSE, FALSE, FALSE);
-	}
-	else if( $node->type == NEOLOGISM_CT_PROPERTY ) {
-		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
-		drupal_set_title($node->vocabulary->title.':'.$node->title);
-		return theme('property_view', $node, FALSE, FALSE, FALSE);
-	}
-	else {
-		drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));	
-		drupal_set_title($node->title);
-		return theme('node', $node, FALSE, TRUE, FALSE);	
-	}
+  
+  if ($node->type == NEOLOGISM_CT_VOCABULARY) {
+    return _neologism_do_conneg($node, array(
+      HTML => 'neologism_export_html',
+      RDF => 'neologism_export_rdfxml',
+      N3 => 'neologism_export_n3',
+    ));
+  }
+  if ($node->type == NEOLOGISM_CT_CLASS) {
+    drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
+    drupal_set_title($node->vocabulary->title.':'.$node->title);
+    return theme('class_view', $node, FALSE, FALSE, FALSE);
+  }
+  if ($node->type == NEOLOGISM_CT_PROPERTY) {
+    drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
+    drupal_set_title($node->vocabulary->title.':'.$node->title);
+    return theme('property_view', $node, FALSE, FALSE, FALSE);
+  }
+  drupal_set_breadcrumb(_neologism_build_breadcrumb($node->path, $node->title));  
+  drupal_set_title($node->title);
+  return theme('node', $node, FALSE, TRUE, FALSE);  
 }
 
 /**
  * Implementation of hook_menu().
+ *
+ * @todo This overwrites the normal handler for nodes at 'node/%node'. We should try to make it work without that, or at least without having to duplicate the normal logic in neologism_export_conneg.
  */
 function neologism_menu() {
   $items = array();
   
-  $items['node/%neologism_vocabulary'] = array(
+  // Replace the core handler for 'node/%node'. This allows us to implement content negotiation
+  // for vocabulary nodes.
+  $items['node/%node'] = array(
       'title' => 'View',
       'page callback' => 'neologism_export_conneg',
       'page arguments' => array(1),
@@ -193,6 +173,14 @@ function neologism_menu() {
       'type' => MENU_LOCAL_TASK,
   );
 
+  $items['node/%neologism_vocabulary/'.HTML] = array(
+      'title' => 'View HTML',
+      'page callback' => 'neologism_export_html',
+      'page arguments' => array(1),
+      'access callback' => 'node_access',
+      'access arguments' => array('view', 1),
+      'type' => MENU_CALLBACK,
+  );
   $items['node/%neologism_vocabulary/'.RDF] = array(
       'title' => 'View RDF/XML',
       'page callback' => 'neologism_export_rdfxml',
@@ -250,7 +238,6 @@ function neologism_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'neologism.gateway.php'
   );
-  
   $items['neologism/json/fulltree'] = array(
     'title' => 'Neologism AJAX gateway - get full classes tree structure',
     'description' => 'Get full tree for all the current classes stored in Neologism.',
@@ -259,7 +246,6 @@ function neologism_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'neologism.gateway.php'
   );
-  
   $items['neologism/json/propertiesfulltree'] = array(
     'title' => 'Neologism AJAX gateway - get full properties tree structure',
     'description' => 'Get get full properties tree structure stored in Neologism.',
@@ -268,8 +254,14 @@ function neologism_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'neologism.gateway.php'
   );
-
   return $items;
+}
+
+/**
+ * Implementation of hook_exit().
+ */
+function neologism_exit() {
+  _neologism_negotiated_cache_end();
 }
 
 /**
@@ -286,25 +278,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   	// fix the size of the Id field to 20
   	$form['title']['#size'] = 20;
   	$form['#attributes'] = array('onreset' => 'Neologism.neoVocabularyFormOnLoad()', 'onsubmit' => 'Neologism.neoVocabularyFormOnSubmit()');
-  	
-  	// add the group for ranges
-	  /*
-  	$form['namespace_group']['namespace_type'] = array(
-	    '#type' => 'radios',
-	    //'#title' => t('The value of this property is'),
-	    '#title' => t('Namespace URI'),
-	    '#options' => array(
-	    	1 => t('Default ('.$default_namespace.')'),
-	    	2 => t('Custom')
-	    ),
-	    //'#description' => t('Description should goes here....'),
-	    '#default_value' => 1,
-	    '#prefix' => '<div id="range-group-resourcetype">',
-	    '#suffix' => '</div>',
-	    '#attributes' => array('onClick' => 'Neologism.checkResourceType()'),
-	    //'#theme' => "render_custom_namespace_field"
-	  );
-	  */
   	
   	// create a fieldset and make a copy of the field_additional_custom_rdf to locate it in a collapsable 
   	// panel and unset it for the current position
@@ -614,14 +587,15 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-function neologism_vocabulary_load($nid) {
-  if ($nid) {
-    $node = node_load($nid);
-    return $node;
-  }
-  else {
-    return FALSE;
-  }
+/**
+ * A menu wildcard loader for the %neologism_vocabulary wildcard. It loads
+ * vocabulary nodes, and causes a Not Found for any other kind of node.
+ */
+function &neologism_vocabulary_load($nid) {
+  if (!$nid) return FALSE;
+  $node = node_load($nid);
+  if (!$node || $node->type != NEOLOGISM_CT_VOCABULARY) return FALSE;
+  return $node;
 }
 
 /**
@@ -784,9 +758,6 @@ function neologism_export_html($node) {
     drupal_add_js( array('neologism' => array('property_json_url' => $json_url)), 'setting');
     drupal_add_js( drupal_get_path('module', NEOLOGISM) . '/js/object_property_treeview.js');
   }
-  
-  //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-darkgray.css');
-  //drupal_add_css( drupal_get_path('module', NEOLOGISM) . '/ext/css/xtheme-slickness.css');
   
   $base = base_path();
   $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
@@ -1067,7 +1038,7 @@ function neologism_export_xml($node) {
     }
   }
 
-  header("Content-Type: application/xml; charset=utf-8");
+  drupal_set_header("Content-Type: application/xml; charset=utf-8");
   echo $xml->asXml();
 }
 
@@ -1088,7 +1059,7 @@ function neologism_diagram_layout($node) {
       $layout = neologism_generate_layout($node);
     }
     
-    header("Content-Type: application/xml; charset=utf-8");
+    drupal_set_header("Content-Type: application/xml; charset=utf-8");
     echo $layout;
   }
 }
@@ -1471,80 +1442,15 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Get the best content type requested
- */
-function neologism_get_preferred_content($accept) {
-  if (isset($accept)) {
-    include_once(CONTENT_NEGOTATION_DIR."content_negotiation.inc.php");
-    // Stupid browsers that send */* should get HTML, so give
-    // highest preference ot that. We prefer XHTML over HTML if
-    // both are supported. Among RDF formats, RDF/XML has precedence
-    // over Turtle and N3. We also map application/xml to
-    // RDF/XML.
-    $supported_types = array(
-      'type' => array(
-        'application/xhtml+xml',
-        'text/html',
-        'application/rdf+xml',
-        'text/rdf+n3',
-        'text/turtle',
-        'application/xml',
-      ),
-      'app_preference' => array(
-        1.00,
-        0.99,
-        0.90,
-        0.88,
-        0.89,
-        0.50,
-      ),
-    );
-    
-    $best = content_negotiation::mime_best_negotiation($supported_types);
-    if ($best == "application/rdf+xml")
-      return RDF;
-    else if ($best == "text/rdf+n3" || $best == "text/turtle")
-      return N3;
-    else if ($best == "application/xml")
-      return RDF;
-    else
-      return HTML;
-   } else {
-     return RDF;
-   }
-}
-
-
-/**
- * Get the best uri requested
- */
-function neologism_get_preferred_uri($accept) {
-  $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
-  $uri = url($path, array('absolute' => TRUE));
-  $preferred = neologism_get_preferred_content($accept);
-  if (substr($uri, -1)=="/") {
-    return $uri . $preferred;
-  }
-  return $uri . "." . $preferred;
-}
-
-
-
-/**
 * Implementation of hook_rdf_namespaces().
 * load all the vocabularies as namespaces
 */
 function neologism_rdf_namespaces() {
 
-  // Start with the namespaces required in Neologism's RDF output
+  // Start with the namespaces required in Neologism's RDF output.
+  // The others (rdf, rdfs, dc, owl, foaf) should already be present
+  // because they were imported into evoc at installation time.
   $namespaces = array(
-// The rdf module behaves funny if the same prefix is assigned twice,
-// even if to the same URI. So we just hope that they are declared.
-//    'rdf' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
-//    'rdfs' => 'http://www.w3.org/2000/01/rdf-schema#',
-//    'dc' => 'http://purl.org/dc/elements/1.1/',
-//    'owl' => 'http://www.w3.org/2002/07/owl#',
-//    'foaf' => 'http://xmlns.com/foaf/0.1/',
     'vann' => 'http://purl.org/vocab/vann/',
   );
 
