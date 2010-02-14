@@ -35,6 +35,8 @@ if( Drupal.jsEnabled ) {
 			Neologism.domainTermsTree.addObserver(Neologism.inverseTermsTree);
 			Neologism.rangeTermsTree.addObserver(Neologism.inverseTermsTree);
 			
+			// this implicit event fire is to get the rootNode in inverseTermsTree to handle empty values for domain and range
+			Neologism.domainTermsTree.fireEvent('selectionchange', Neologism.domainTermsTree.rootNode);
 			Neologism.inverseTermsTree.render(Neologism.inverseTermsTree.objectToRender);
 		}
 		

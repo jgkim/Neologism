@@ -648,7 +648,6 @@ Neologism.TermsTree.prototype.findNodeByText = function(text){
  */
 Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain, range){   
 	// TODO: all parameter are obligatory, so we need to check for them.
-	
 	// Domain
 	// add all classes that are disjoint with domain
 	// and also add all classes that are disjoint with any superclass of domain

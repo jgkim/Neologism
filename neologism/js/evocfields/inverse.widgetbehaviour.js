@@ -54,8 +54,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    			}
 		          });
 	          
-	    		//treeview.enable();
-	    		treeview.fireEvent('selectionchange', null);
+	    		//treeview.fireEvent('selectionchange', null);
 	        }
 	      }
 	    }),
@@ -75,13 +74,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        if ( checked && node.parentNode !== null ) {
 	          // if we're checking the box, check it all the way up
 	    		if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-	    			if ( baseParams.arrayOfValues.indexOf(node.id) == -1 ) {
-	    				baseParams.arrayOfValues.push(node.id);
+	    			if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+	    				baseParams.arrayOfValues.push(node.text);
 	    			}
 	    		}
 	    	} else {
 	          for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
-	            if ( baseParams.arrayOfValues[i] == node.attributes.id ) {
+	            if ( baseParams.arrayOfValues[i] == node.attributes.text ) {
 	              baseParams.arrayOfValues.splice(i, 1);
 	            }
 	          }    
@@ -90,26 +89,16 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        node.getOwnerTree().expandPath(node.getPath());
 	        node.cascade( function(){
 	          this.expand();
-	          //alert(this.id + " == " + editingValue + " result = " + (this.id == editingValue) );
-	          if ( this.id != editingValue ) {
 	            if ( this.id != node.id ) {
 	              this.getUI().checkbox.disabled = node.getUI().checkbox.checked;
 	            }
-	          }
-	          else {
-	        	if ( this.id == editingValue ) {
-		            this.getUI().addClass('locked-for-edition');
-		            this.getUI().checkbox.disabled = true;
-		            this.getUI().checkbox.checked = false;
-	        	}
-	          }
 	        });
 	        
 	      } // checkchange
 	}
 	
 		,onSelectionChange:function(objectSender) {
-		      // do whatever is necessary to assign the employee to position
+			// do whatever is necessary to assign the employee to position
 		  	if( objectSender != null ) {
 		  		lastSender = objectSender;
 			  	if( objectSender.widget == 'domain' ) {
@@ -118,10 +107,11 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 			  	if( objectSender.widget == 'range' ) {
 			  		range = objectSender.selectedValues;
 			  	}
-		  	}
-		  	
-		  	if( domain.length > 0 && range.length > 0 ) {
-			  	var allowedAsInverseProperties = this.computeInverses(lastSender.rootNode, domain, range);
+			  	
+			  	var allowedAsInverseProperties = this.computeInverses(lastSender.rootNode, 
+			  			((domain.length == 0) ? ['rdfs:Resource'] : domain), 
+			  			((range.length == 0) ? ['rdfs:Resource'] : range)
+			  		);
 			  	this.getRootNode().eachChild(function(currentNode) {
 			  		// we need to expand the node to traverse it
 			  		currentNode.cascade(function() {
@@ -143,9 +133,6 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 			    });
 			  	
 			  	this.enable();
-		  	}
-		  	else {
-		  		this.disable();
 		  	}
 		}
 		
