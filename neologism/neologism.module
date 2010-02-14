@@ -866,7 +866,8 @@ function &neologism_get_rdf_model($node) {
 
   // Set up model with all necessary namespaces
   $namespaces = rdf_get_namespaces();
-  $rdf = new neologism_rdf_writer();
+  module_load_include('inc', 'neologism', 'neologism.rdfwriter');
+  $rdf = new NeologismRDFWriter();
   foreach ($required_namespaces as $prefix) {
     $ns = $namespaces[$prefix];
     if (is_array($ns)) {
@@ -2848,119 +2849,4 @@ function neologism_get_xsd_datatype_list() {
 			)
 	  );
 	return $neologism_xsd_datatypes;
-}
-
-/**
- * A writer for RDF statements. Encapsulates RAP storage and serialisation,
- * has its own namespace management, and provides a convenient API for
- * generating RDF statements.
- */
-class neologism_rdf_writer {
-  var $_model;
-  var $_namespaces = array();
-  var $_no_namespaces = array();
-
-  function __construct() {
-    define('HIDE_ADVERTISE', true);
-    require_once(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    $this->_model = ModelFactory::getDefaultModel();
-  }
-
-  /**
-   * Registers a namespace mapping that will be added to the written
-   * RDF file.
-   *
-   * @param $prefix
-   *   A namespace prefix, such as 'foaf'
-   * @param $uri
-   *   A namespace URI, such as 'http://xmlns.com/foaf/0.1/'
-   */
-  function register_namespace($prefix, $uri) {
-    $this->_namespaces[$prefix] = $uri;
-    $this->_model->addNamespace($prefix, $uri);
-  }
-
-  function triple_literal($s, $p, $o) {
-    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_literal($o));
-  }
-
-  function triple_uri($s, $p, $o) {
-    // RAP's N3 serialiser eagerly tries to compress every URI it
-    // encounters. This is not desired for URIs like mailto: and
-    // web page URLs. We assume that all namespaces which we actually
-    // want are already declared, and that only declared namespaces
-    // will occur in subject positions. Everything else should not
-    // be compressed.
-    $this->_dont_compress($o);
-    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_uri($o));
-  }
-
-  function triple_qname($s, $p, $o) {
-    $this->_stmt($this->_uri($s), $this->_qname($p), $this->_qname($o));
-  }
-
-  function triples_qname($s, $p, $os) {
-    if (empty($os)) return;
-    if (!is_array($os)) {
-      throw new Exception("Not an array: '$os'");
-    }
-    foreach ($os as $qname) {
-      $this->triple_qname($s, $p, $qname);
-    }
-  }
-
-  function &_uri($uri) {
-    if (empty($uri)) return null;
-    return new Resource($uri);
-  }
-
-  function &_qname($qname) {
-    if (empty($qname)) return null;
-    return $this->_uri($this->_expand_qname($qname));
-  }
-
-  function &_literal($s) {
-    if (empty($s)) return null;
-    return new Literal($s);
-  }
-
-  function _stmt($s, $p, $o) {
-    if (empty($s) || empty($p) || empty($o)) return;
-    $this->_model->add(new Statement($s, $p, $o));
-  }
-
-  function _expand_qname($qname) {
-    list($prefix, $local) = explode(':', $qname);
-    if (!isset($this->_namespaces[$prefix])) return null;
-    return $this->_namespaces[$prefix] . $local;
-  }
-
-  /**
-   * Checks if there already is a namespace declaration for this URI;
-   * if not, add it to the list of uncompressible namespaces.
-   */
-  function _dont_compress($uri) {
-    if (!preg_match('!^(.*[/#:]).*?$!', $uri, $match)) return;
-    if (in_array($match[1], $this->_no_namespaces)) return;
-    if (in_array($match[1], $this->_namespaces)) return;
-    $this->_no_namespaces[] = $match[1];
-  }
-
-  function write_rdfxml() {
-    include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
-    header("Content-Type: application/rdf+xml; charset=utf-8");
-    $ser = new RDFSerializer();
-    echo $ser->serialize($this->_model);
-  }
-
-  function write_n3() {
-    include_once(RDFAPI_INCLUDE_DIR . "syntax/N3Serializer.php");
-    header("Content-Type: text/rdf+n3; charset=utf-8");
-    $ser = new N3Serializer();
-    $ser->setPrettyPrint(true);
-    foreach ($this->_no_namespaces as $uri) {
-      $ser->addNoNSPrefix($uri);
-    }
-    echo $ser->serialize($this->_model);
-  }
 }

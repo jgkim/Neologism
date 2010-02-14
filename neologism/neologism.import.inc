@@ -97,32 +97,21 @@ function neologism_import_form_validate($form, &$form_state) {
   }
 
   // Load and parse the RDF file, either from the Web or from uploaded file
-  require_once(drupal_get_path('module', 'evoc')."/evoc.load_vocab.inc");
-  if ($form_state['values']['uploaded_file']) {
-    $uploaded_file = $form_state['values']['uploaded_file'];
-
-    include(RDFAPI_INCLUDE_DIR . "RdfAPI.php");
-    include(RDFAPI_INCLUDE_DIR . "syntax/RdfSerializer.php");
-    
-    $model = ModelFactory::getMemModel();
-    $model->load($uploaded_file->filepath);
-    $source_field = 'uploaded_file';
-  } else {
-    $vocabulary_url = $ns_uri;
-    if (substr($vocabulary_url, -1) == '#') {
-      $vocabulary_url = substr($vocabulary_url, 0, -1);
+  module_load_include('inc', 'evoc', 'evoc.load_vocab');
+  try {
+    if ($form_state['values']['uploaded_file']) {
+      $uploaded_file = $form_state['values']['uploaded_file'];
+      $vocabulary = evoc_get_from_file($uploaded_file->filepath, $ns_uri, $ns_prefix);
+      $source_field = 'uploaded_file';
+    } else {
+      $vocabulary = evoc_get_from_web($ns_uri, $ns_prefix);
+      $source_field = 'ns_uri';
     }
-    try {
-      $model = evoc_read_RDF_from_URI($vocabulary_url);
-    } catch (Exception $e) {
-      form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
-      return;
-    }
-    $source_field = 'ns_uri';
+  } catch (Exception $e) {
+    form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
+    return;
   }
 
-  // Extract information about classes, properties etc from the model
-  $vocabulary = evoc_get_vocabulary_description($model, $ns_prefix, $ns_uri);
   if ($source_field == 'uploaded_file') {
     $vocabulary['body'] = '<p>This vocabulary has been imported from a file.</p>';
   } else {
