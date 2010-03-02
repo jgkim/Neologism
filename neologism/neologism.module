@@ -2299,6 +2299,15 @@ function neo_property_node_form_validate($form, &$form_state) {
     	$form_state['values']['field_range2'][0] = NULL;
     }
     
+    // Comment by Guido Cecilio 2nd Febraury 2010
+    // we check at validation time if there is no domain or range and add by default rdfs:Resource (DEFAULT_RDFS_SUPERCLASS)
+    if( empty($form_state['values']['field_domain2']) ) {
+    	$form_state['values']['field_domain2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
+    }
+		if( empty($form_state['values']['field_range2']) ) {
+    	$form_state['values']['field_range2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
+    }
+    
     /*
     if( $form_state['values']['field_literal_as_range'][0]['value'] ) {
       $range = "rdfs:Literal";
