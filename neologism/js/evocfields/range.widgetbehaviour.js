@@ -228,8 +228,10 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
    * this function is used to clear the arrayOfValues and notify the observe 
    */
   Neologism.rangeTermsTree.clearValues = function() {
+	  //console.log('clearValues called');
 	  this.arrayOfValues.length = 0;
-	  this.fireEvent('selectionchange', null);
+	  this.refresh();
+	  //this.fireEvent('selectionchange', null);
   };
   
 };
