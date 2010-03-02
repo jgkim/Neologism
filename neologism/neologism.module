@@ -1760,9 +1760,12 @@ function theme_property_view($node, $teaser = FALSE, $page = FALSE, $links = TRU
     $label .= $node->field_label[0]['value'];
   }
   
+  // Comment by Guido Cecilio, 2nd Febraury 2010. 
+  // we should get the description rendered to $node->body but I do not for the moment why the 
+  // description rendered to $node->body is plain text and does not contain the xhtml tags
   $description = '';
-	if ( !empty($node->body_field) ) {
-    $description = $node->body_field;
+	if ( !empty($node->teaser) ) {
+    $description = $node->teaser;
   }
   
   $teaser_property = ($teaser == TRUE) ? ' class="teaser"' : '';
