@@ -849,7 +849,6 @@ function &neologism_get_rdf_model($node) {
     
   // export the ontology
   $doc = url($node->path, array('absolute' => true));
-  $rdf->triple_qname($doc, "rdf:type", 'foaf:Document');
   $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
   $rdf->triple_literal($doc, "dc:title", $node->field_title[0]['value']);
   $rdf->triple_literal($doc, "dc:description", $node->field_abstract[0]['value']);
