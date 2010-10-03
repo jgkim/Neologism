@@ -261,8 +261,16 @@ function neologism_menu() {
  * Implementation of hook_exit().
  */
 function neologism_exit() {
-  _neologism_negotiated_cache_end();
-}
+  // hook_exit is invoked even if the page was served from cache; it would
+  // be nicer to check that condition inside _neologism_negotiated_cache_end(),  // but in the case of cache hits, Drupal is not fully bootstrapped and
+  // including other code files for a module doesn't work. So we do that
+  // check here.
+  global $neologism_is_negotiated;
+  if ($neologism_is_negotiated) {
+    _neologism_negotiated_cache_end();
+  }
+} 
+
 
 /**
  * Implementation of hook_form_alter().
