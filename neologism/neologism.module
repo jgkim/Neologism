@@ -777,7 +777,6 @@ function neologism_export_html($node) {
   $height = '600px';
   
   $flex_params = "editMode=$edit_mode&vocabulary=$vocabulary&token=$token";
-  var_dump($flex_params);
   $output .= '
     <div id="diagram">
     <h2>Overview diagram</h2>
