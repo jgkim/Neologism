@@ -15,7 +15,6 @@ function neologism_gateway_get_classes_tree() {
     
     while ( $class = db_fetch_object($classes) ) {
       $qname = $class->prefix.':'.$class->id;
-      $store[$qname] = null;
       $store[$qname]['comment'] = $class->comment;
       $store[$qname]['label'] = $class->label;
       if ( $class->superclasses > 0 ) {
