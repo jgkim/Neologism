@@ -481,7 +481,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 	    	$form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
 	    	
 	    	// fill the field with thw default value
-	      $form['field_vocabulary']['#default_value'][0]['nid'] = $current_voc->field_vocabulary[0]['nid'];
+	      $form['field_vocabulary']['#default_value'][0]['nid'] = $current_voc->nid;
     	}
     }
   }
