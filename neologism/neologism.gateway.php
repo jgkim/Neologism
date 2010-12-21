@@ -143,14 +143,18 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
   $nodes = array();
   $stack = array();
   $referenceToCurrentNode = &$nodes;
+  $ancestors_and_self = array($node);
   static $array_of_id = array();
+//  static $total_classes_processed;
+//  global $processed_classes;
   
-  $stack[] = array($node, &$referenceToCurrentNode);
+  $stack[] = array($node, &$referenceToCurrentNode, $ancestors_and_self);
   
   while ( count($stack) ) {
   	$array = &array_rpop($stack);
   	$classname = $array[0];
 		$currentNode = &$array[1];
+		$ancestors_and_self = $array[2];
 		$parentNode = $currentNode;
 		$indexCount = 0;
 		
@@ -203,56 +207,6 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      
 	      //$children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array); 
 				
-				/*
-	      if( $voc ) {
-	        if( $class->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
-	          $leaf = count($children_nodes) == 0;
-	          $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-	          $nodes[] = array(
-	            'text' => $qname, 
-	            'id' => (!$extra_information) ? $qname : $modified_id, 
-	            'leaf' => $leaf, 
-	            'iconCls' => ($class->prefix == $voc) ? 'class-samevoc' : 'class-diffvoc', 
-	            'cls' => ($class->prefix == $voc) ? 'currentvoc' : '',            
-	            'children' => NULL, 
-	            'qtip' => $qtip,
-	          	'disjointwith' => $disjointwith,
-	          	'superclasses' => $superclasses,
-	          	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-	          );
-	          
-	          if( $extra_information ) {
-	          	$nodes[count($nodes)-1]['realid'] = $qname; 
-	          } 
-	          
-	          if( $add_checkbox ) {
-	            $nodes[count($nodes)-1]['checked'] = false;
-	          }
-	        }
-	      } else {
-	        $leaf = count($children_nodes) == 0;
-	        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-	        $nodes[] = array(
-	          'text' => $qname, 
-	          'id' => (!$extra_information) ? $qname : $modified_id, 
-	          'leaf' => $leaf, 
-	          'iconCls' => 'class-samevoc', 
-	          'children' => $children_nodes, 
-	          'qtip' => $qtip,
-	        	'disjointwith' => $disjointwith,
-	        	'superclasses' => $superclasses,
-	        	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-	        );
-	        
-	      	if( $extra_information ) {
-	        	$nodes[count($nodes)-1]['realid'] = $qname; 
-	        }
-	          
-	        if( $add_checkbox ) {
-	          $nodes[count($nodes)-1]['checked'] = false;
-	        }  
-	      }
-	      */
 	      if( $parentNode ) {
 		      $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
 		      $currentNode['leaf'] = false;
@@ -312,9 +266,21 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 		      $indexCount++;
 	      }
 	        
-	      
-	      //$children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array); 
-				$stack[] = array($qname, &$referenceToCurrentNode);
+	      //$children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array);
+	      if (!in_array($qname, $ancestors_and_self)) {
+	      //if (!isset($processed_classes[$qname])) {
+//	      	$total_classes_processed += 1;
+//	      	if ($total_classes_processed > 37000) {
+//	      		var_dump($processed_classes);
+//  					var_dump(count($processed_classes));
+//	      		die("Total reached\n");
+//	      	}
+//					$processed_classes[$qname] += 1;
+
+					$copy = $ancestors_and_self;
+					$copy[] = $qname;
+					$stack[] = array($qname, &$referenceToCurrentNode, $copy);
+	      }
 	    }
 	  } // while
 	  
@@ -581,32 +547,41 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
  * @return json with the tree structure 
  */
 function neologism_gateway_get_full_classes_tree() {
+	// For debugging!
+//	error_reporting(E_ALL);
+//	ini_set('display_errors', 1);
+	
   $nodes = array();
   $node = $_REQUEST['node'];
   
   // TODO we could pass as a parameter when to use the function to infer the disjointwith
   $infer_disjoint = TRUE;
   static $disjointwith_array = array();
+  
+  $count = 0;
     
   if ( $node == 'root' ) {
     $classes = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_classes} where superclasses = "0"'));
 
     while ($class = db_fetch_object($classes)) {
       $qname = $class->prefix.':'.$class->id;
-      
+
     	// fetch the disjointwith for root classes
       $disjointwith = array();
       if( $class->ndisjointwith > 0 ) {
 				$result = db_query('select disjointwith from evoc_rdf_disjointwith where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
 				while( $c = db_fetch_object($result) ) {
 					$disjointwith[] = $c->disjointwith;
-					}
+				}
 				
 				// add disjointwith to the main array to use it after build the nodes
 				$disjointwith_array[$qname] = $disjointwith;
       }
       
-      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $disjointwith_array);
+      $children = NULL;
+      if( $count++ < 500000) {
+      	$children = neologism_gateway_get_class_children($qname, NULL, TRUE, $disjointwith_array);
+      }
       $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
@@ -617,7 +592,7 @@ function neologism_gateway_get_full_classes_tree() {
         'children' => $children, 
         'checked' => false,
         'qtip' => $qtip,
-      	'disjointwith' => $disjointwith,
+      	'disjointwith' => null,//$disjointwith,
       	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
       );        
     }
@@ -626,10 +601,14 @@ function neologism_gateway_get_full_classes_tree() {
 	  // TODO At this point should exists an array with all the disjointwith classes and 
 	  // we execute some functio that works as a rasoner to infer all the posibles disjointwith 
 	  // between classes
-	  infer_disjointwith($nodes, $disjointwith_array);
+	  //infer_disjointwith($nodes, $disjointwith_array);
   }
 
   drupal_json($nodes);
+//  global $processed_classes;
+//  var_dump($processed_classes);
+//  var_dump(count($processed_classes));
+//  echo "Done\n";
 }
 
 /**
