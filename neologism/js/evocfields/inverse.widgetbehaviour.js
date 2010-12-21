@@ -34,27 +34,6 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        // Fires when the node has been successfuly loaded.
 	        // added event to refresh the checkbox from its parent 
 	        load: function(loader, node, response){
-	          
-	    		var treeview = node.getOwnerTree();
-	    		node.eachChild(function(currentNode){
-	    			if ( currentNode !== undefined ) {
-			            currentNode.cascade( function() {
-			            	this.expand();
-			            	
-			            	if (this.text == editingValue) {
-			              	  this.remove();
-			                }
-			                
-						  for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-						    if (this.text == baseParams.arrayOfValues[j]) {
-						      this.getUI().toggleCheck(true);
-						    }
-						  }
-			            }, null);
-	    			}
-		          });
-	          
-	    		//treeview.fireEvent('selectionchange', null);
 	        }
 	      }
 	    }),
@@ -69,34 +48,41 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    }),
 	  
 	    listeners: {
-	      // behaviour for on checkchange in superclassesTree TreePanel object 
-	      checkchange: function(node, checked) {
-	        if ( checked && node.parentNode !== null ) {
-	          // if we're checking the box, check it all the way up
-	    		if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-	    			if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
-	    				baseParams.arrayOfValues.push(node.text);
-	    			}
-	    		}
-	    	} else {
-	          for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
-	            if ( baseParams.arrayOfValues[i] == node.attributes.text ) {
-	              baseParams.arrayOfValues.splice(i, 1);
-	            }
-	          }    
-	        }
-	        
-	        node.getOwnerTree().expandPath(node.getPath());
-	        node.cascade( function(){
-	          this.expand();
-	            if ( this.id != node.id ) {
-	              this.getUI().checkbox.disabled = node.getUI().checkbox.checked;
-	            }
-	        });
-	        
-	      } // checkchange
-	}
+		      // behaviour for on checkchange in superclassesTree TreePanel object 
+		      checkchange: function(node, checked) {
+		        if ( checked && node.parentNode !== null ) {
+		          // if we're checking the box, check it all the way up
+		    		if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
+		    			if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+		    				baseParams.arrayOfValues.push(node.text);
+		    			}
+		    		}
+		    	} else {
+		          for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
+		            if ( baseParams.arrayOfValues[i] == node.attributes.text ) {
+		              baseParams.arrayOfValues.splice(i, 1);
+		            }
+		          }    
+		        }
+		        
+		      } // checkchange
 	
+				,expandnode: function( node ) {
+					node.eachChild(function(currentNode){
+						if ( currentNode !== undefined ) {
+							if (currentNode.attributes.text == editingValue) {
+				            	currentNode.remove();
+				            }
+				          	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+				          		if ( currentNode.attributes.text == baseParams.arrayOfValues[j] ) {
+				          			currentNode.getUI().toggleCheck(true);
+				          		}
+				          	}
+						}
+					});
+				}
+			} // listeners
+		/*
 		,onSelectionChange:function(objectSender) {
 			// do whatever is necessary to assign the employee to position
 		  	if( objectSender != null ) {
@@ -135,7 +121,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 			  	this.enable();
 		  	}
 		}
-		
+		*/
 	  });
 	
 	Neologism.inverseTermsTree.objectToRender = objectToRender;

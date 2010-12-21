@@ -3,13 +3,12 @@
  */
 Ext.onReady(function() {
 	
-    Ext.QuickTips.init();
+    //Ext.QuickTips.init();
     
     // Define Tree.
     var treeLoader = new Ext.tree.TreeLoader({
         dataUrl   : Drupal.settings.neologism.json_url,
-        baseParams: Drupal.settings.neologism,
-       
+        baseParams: Drupal.settings.neologism
     });
     
     // SET the root node.

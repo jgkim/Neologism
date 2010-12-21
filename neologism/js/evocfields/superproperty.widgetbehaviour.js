@@ -24,32 +24,13 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
       dataUrl: dataUrl,
       baseParams: baseParams,
       
-      listeners: {
-        // load : ( Object This, Object node, Object response )
-        // Fires when the node has been successfuly loaded.
-        // added event to refresh the checkbox from its parent 
-        load: function(loader, node, response){
-    		
-          node.eachChild(function(currentNode){
-            if ( currentNode !== undefined ) {
-        	  
-        	  currentNode.cascade(function(){
-        		  this.expand();
-	              if (this.text == editingValue) {
-	            	  this.remove();
-	              }
-	              
-	              for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-	                if (this.text == baseParams.arrayOfValues[j]) {
-	                  this.getUI().toggleCheck(true);
-	                }
-	              }
-        	  	}, null);
-            }
-          });
-        }
-    
-      }
+	  listeners: {
+		    // load : ( Object This, Object node, Object response )
+	    	// Fires when the node has been successfuly loaded.
+	    	// added event to refresh the checkbox from its parent 
+	    	load: function(loader, node, response){
+			}
+    	}
     }),
     
     root: new Ext.tree.AsyncTreeNode({
@@ -74,28 +55,27 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
         else {
           for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
             if (baseParams.arrayOfValues[i] == node.attributes.id) {
-              //alert(node.getPath());
               baseParams.arrayOfValues.splice(i, 1);
             }
           }
         }
-        
-        node.getOwnerTree().expandPath(node.getPath());
-        node.cascade(function(){
-          this.expand();
-          
-          if (this.id == editingValue) {
-            this.getUI().addClass('locked-for-edition');
-            this.getUI().checkbox.disabled = true;
-            this.getUI().checkbox.checked = false;
-          }
-          else {
-            if (this.id != node.id) {
-              this.getUI().checkbox.disabled = node.getUI().checkbox.checked;
-            }
-          }
-        });
       } // checkchange
+  
+		,expandnode: function( node ) {
+			node.eachChild(function(currentNode){
+				if ( currentNode !== undefined ) {
+		            if (currentNode.attributes.text == editingValue) {
+		            	currentNode.remove();
+		            }
+		              
+		          	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+		          		if ( currentNode.attributes.text == baseParams.arrayOfValues[j] ) {
+		          			currentNode.getUI().toggleCheck(true);
+		          		}
+		          	}
+				}
+		});
+		}
     }
   });
   

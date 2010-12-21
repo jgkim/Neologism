@@ -31,25 +31,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-          	
-    		node.eachChild(function(currentNode){
-    			if ( currentNode !== undefined ) {
-	    			currentNode.cascade( function() {
-	    				this.expand();
-	    				
-		            	if (this.text == editingValue) {
-		            		this.remove();
-			            }
-		            	
-		              	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-		              		if ( this.text == baseParams.arrayOfValues[j] ) {
-		              			this.getUI().toggleCheck(true);
-		              		}
-		              	}
-		            }, null);
-    			}
-	         });
-    		
         }
       }
     }),
@@ -73,43 +54,6 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
         		if ( baseParams.arrayOfValues.indexOf(id) == -1 ) {
 	            	baseParams.arrayOfValues.push(id);
 	            }
-	            
-        		// check if this node has more than 1 super class, so we need to checked it 
-        		// in other places in the tree.
-        		if( node.attributes.superclasses !== undefined ) {
-	        		var c = node.attributes.superclasses;
-	        		var len = c.length;
-	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
-		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
-		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
-		        					if( n.getUI().checkbox.checked == false ) {
-		        						n.getUI().toggleCheck(true);
-		        					}
-		        				}
-		        			}
-		        		}
-	        		}
-        		}
-        		
-	            // disabled all the parent of the selection
-        		if ( !node.parentNode.isRoot ) {
-	            	node.bubble( function() {
-		                var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-	            		if (id != cid && node.attributes.nodeStatus != Ext.tree.TreePanel.nodeStatus.BLOCKED
-	            				&& node.getUI().nodeClass != 'locked-for-edition') {
-		                	this.getUI().checkbox.disabled = true;
-		                	this.getUI().checkbox.checked = true;
-		                }
-		                // if this node is the root node then return false to stop the bubble process
-		                if ( this.parentNode.isRoot ) {
-		                	return false;
-		                }
-	            	});
-	            }
 	    	} 
 	        else {
 	    		// if we are unchecked a checkbox
@@ -118,84 +62,24 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
 	    				baseParams.arrayOfValues.splice(i, 1);
 	    			}
 	    		}
-	    		
-	    		// check if we can enabled a parent after a deselection
-				if (!node.parentNode.isRoot) {
-				    // search for someone checked
-					var someoneChecked = false;
-					node.bubble( function() {
-				    	if ( id != this.id ) {
-				    		if ( this.getOwnerTree().isSomeChildChecked(this) ) {
-				    			return false;
-				    		}
-				    		this.getUI().checkbox.disabled = false;
-				    		this.getUI().checkbox.checked = false;
-				    	}
-				    	
-				    	if ( this.parentNode.isRoot ) {
-				    		return false;
-				    	}
-				    });
-					
-				}
-				
-				// check multiple superclasses dependencies
-				if( node.attributes.superclasses !== undefined ) {
-	        		var c = node.attributes.superclasses;
-	        		var len = c.length;
-	        		if ( len > 1 ) {
-		        		var rootnode = node.getOwnerTree().getRootNode(); 
-		        		for ( var i = 0; i < len; i++ ) {
-		        			if( c[i] != node.parentNode.id ) {
-		        				var currentNode = node.getOwnerTree().findNodeById(c[i]);
-		        				if ( currentNode !== null ) {
-		        					var n = currentNode.findChild('text', id);
-		        					if( n.getUI().checkbox.checked == true ) {
-		        						n.getUI().toggleCheck(false);
-		        					}
-		        				}
-		        			}
-		        		}
-	        		}
-        		}
 	        } // else
 	        
-	        // check for disjointwith classes with the selected class
-    		node.getOwnerTree().checkDisjointWith(node);
-    		
-	        // disabled or enabled child in cascade depending of the value of checked
-	        node.cascade( function() {
-	        	if( !this.isExpanded() ) {
-	        		this.expand();
-	        	}
-	        	
-	        	var cid = ( this.attributes.realid !== undefined ) ? this.attributes.realid : this.id;
-        		if ( id != cid  ) {
-        			if ( checked ) {
-        				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.INCONSISTENT ) {
-        					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT;
-        				}
-        				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL ) {
-        					this.getUI().addClass('class-bloked');
-	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.BLOCKED;
-        				}
-        			}
-        			else {
-        				if( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED_AND_INCONSISTENT ) {
-        					this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.INCONSISTENT;
-        				}
-        				else if ( this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.BLOCKED ) {
-	        				this.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	        				this.getUI().removeClass('class-bloked');
-        				}
-        			}
-        			
-        			this.getUI().checkbox.disabled = !this.attributes.nodeStatus == Ext.tree.TreePanel.nodeStatus.NORMAL;
-        		}
-	        });
-	        
-	        this.fireEvent('selectionchange', node);
+	        //this.fireEvent('selectionchange', node);
   		} // checkchange
+  
+  
+	  	,expandnode: function( node ) {
+			node.eachChild(function(currentNode){
+				if ( currentNode !== undefined ) {
+		          	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+		          		if ( currentNode.attributes.text == baseParams.arrayOfValues[j] ) {
+		          			currentNode.getUI().toggleCheck(true);
+		          		}
+		          	}
+				}
+			});
+		}
+  
   		,selectionchange: function(objectSender) {
   		}
     }
