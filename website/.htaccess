@@ -1,5 +1,4 @@
 RewriteEngine On
-#RewriteBase /neologism-website/
-RewriteBase /
+RewriteBase /neowebsite/
 RewriteCond %{REQUEST_URI} !/(robots\.txt|favicon\.ico|style\.css|.*\.js|images/.*)$
-RewriteRule .* index.php
+RewriteRule .* index.php [L] 

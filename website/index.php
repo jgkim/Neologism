@@ -27,8 +27,9 @@ $section_links = array(
         'Overview' => 'docs',
         'Minimum requirements' => 'requirements',
         'Installation guide' => 'installation',
+				'Tutorials' => 'tutorials',
         'Customizing' => 'customizing',
-        'RDFS and OWL' => 'on-vocabularies',
+        //'RDFS and OWL' => 'on-vocabularies',
         'FAQ' => 'faq',
         'Publications' => 'publications',
     ),
@@ -73,16 +74,23 @@ $pages = array(
         'section' => 'docs',
         'text' => 'installation',
     ),
+    'tutorials' => array(
+        'title' => 'Tutorials',
+        'section' => 'docs',
+        'text' => 'tutorials',
+    ),
     'customizing' => array(
         'title' => 'Customizing a Neologism Installation',
         'section' => 'docs',
         'text' => 'customizing',
     ),
+    /*
     'on-vocabularies' => array(
         'title' => 'On Vocabularies, RDFS, and OWL',
         'section' => 'docs',
         'text' => 'on-vocabularies',
     ),
+    */
     'faq' => array(
         'title' => 'Frequently Asked Questions',
         'section' => 'docs',
