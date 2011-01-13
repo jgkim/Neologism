@@ -682,7 +682,9 @@ function evoc_remove_property($property) {
     
   	// update all posibles properties that are related with this property as inverseof
   	$qname = $property['prefix'].':'.$property['id'];
-    $result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set inverseof = NULL where inverseof = "%s"'), $qname);
+  	// guidocecilio, 22 December, 2010
+  	// note: this query must be analyzed, I really do not remember why this table has a column called inverseof
+    //$result = db_query(db_rewrite_sql('update {evoc_rdf_properties} set inverseof = NULL where inverseof = "%s"'), $qname);
     
     $result = db_query(db_rewrite_sql('delete from {evoc_rdf_properties} where prefix="%s" and id = "%s"'), $currentproperty->prefix, $currentproperty->id);
     if( $result ) {
