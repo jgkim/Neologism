@@ -1273,6 +1273,9 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         $vocabulary = node_load($node->field_vocabulary[0][nid]);
         $term['prefix'] = $vocabulary->title; 
         
+        // update vocabulary revision
+        _neologism_vocabulary_save($vocabulary);
+        
         evoc_update_class($term);  
       }
       elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
@@ -1328,6 +1331,9 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         // load vocabulary's node to get its title as namespace/prefix for this class 
         $vocabulary = node_load($node->field_vocabulary[0][nid]);
         $term['prefix'] = $vocabulary->title; 
+        
+        // update vocabulary revision
+        _neologism_vocabulary_save($vocabulary);
         
         evoc_update_property($term);  
       }
@@ -2774,4 +2780,61 @@ function neologism_get_xsd_datatype_list() {
 			)
 	  );
 	return $neologism_xsd_datatypes;
+}
+
+/**
+ * 
+ * @param unknown_type $node
+ * @return unknown_type
+ */
+function _neologism_vocabulary_save(&$vocabulary) {
+	//$node_save($vocabulary);	
+  global $user;
+
+  if (!empty($vocabulary->revision)) {
+    // When inserting a node, $node->log must be set because
+    // {node_revisions}.log does not (and cannot) have a default
+    // value.  If the user does not have permission to create
+    // revisions, however, the form will not contain an element for
+    // log so $node->log will be unset at this point.
+    if (!isset($vocabulary->log)) {
+      $vocabulary->log = '';
+    }
+  }
+  elseif (empty($vocabulary->log)) {
+    // When updating a node, however, avoid clobbering an existing
+    // log entry with an empty one.
+    unset($vocabulary->log);
+  }
+
+  // Save the old revision if needed.
+  if (!empty($vocabulary->revision) && $vocabulary->vid) {
+    $vocabulary->old_vid = $vocabulary->vid;
+  }
+
+  $time = time();
+  if (empty($vocabulary->created)) {
+    $vocabulary->created = $time;
+  }
+  // The changed timestamp is always updated for bookkeeping purposes (revisions, searching, ...)
+  $vocabulary->changed = $time;
+
+  $vocabulary->timestamp = $time;
+  $vocabulary->format = isset($vocabulary->format) ? $vocabulary->format : FILTER_FORMAT_DEFAULT;
+
+  // Generate the node table query and the node_revisions table query.
+  drupal_write_record('node', $vocabulary, 'nid');
+  if (!empty($vocabulary->revision)) {
+    _node_save_revision($vocabulary, $user->uid);
+    db_query('UPDATE {node} SET vid = %d WHERE nid = %d', $vocabulary->vid, $vocabulary->nid);
+  }
+  else {
+    _node_save_revision($vocabulary, $user->uid, 'vid');
+  }
+
+  // Update the node access table for this node.
+  //node_access_acquire_grants($node);
+
+  // Clear the page and block caches.
+  //cache_clear_all();
 }
