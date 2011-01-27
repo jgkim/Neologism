@@ -36,7 +36,6 @@ Ext.override(Ext.tree.TreeNodeUI, {
       }
   
       this.fireEvent("click", this.node, e);
-      //alert('onclick');
     } else {
       e.stopEvent();
     }
@@ -60,13 +59,56 @@ Ext.override(Ext.tree.TreeNodeUI, {
       //this.node.expand();
     }
     this.fireEvent("dblclick", this.node, e);
+  },
+
+  //private
+  onCheckChange : function(){
+	  //alert('onCheckChange');
+      var checked = this.checkbox.checked;
+      // fix for IE6
+      this.checkbox.defaultChecked = checked;
+      this.node.attributes.checked = checked;
+      this.fireEvent('checkchange', this.node, checked);
   }
+});
+
+Ext.override(Ext.tree.TreePanel, {
+	expandPath : function(path, attr, callback){
+	    attr = attr || 'id';
+	    var keys = path.split(this.pathSeparator);
+	    var curNode = this.root;
+	    if(curNode.attributes[attr] != keys[1]){ // invalid root
+	        if(callback){
+	            callback(false, null);
+	        }
+	        return;
+	    }
+	    var index = 1;
+	    var f = function(){
+	        if(++index == keys.length){
+	            if(callback){
+	                callback(true, curNode);
+	            }
+	            return;
+	        }
+	        var c = curNode.findChild(attr, keys[index]);
+	        if(!c){
+	            if(callback){
+	                callback(false, curNode);
+	            }
+	            return;
+	        }
+	        curNode = c;
+	        c.expand(false, false, f);
+	    };
+	    curNode.expand(false, false, f);
+	    return curNode;
+	}
 });
 
 /*
 Ext.override(Ext.tree.TreeNodeUI, {
     toggleCheck : function(value) {
-	alert('toggleCheck');
 		var cb = this.checkbox;
         if(cb){
             var checkvalue = (value === undefined ? !cb.checked : value);
@@ -76,7 +118,6 @@ Ext.override(Ext.tree.TreeNodeUI, {
     }
 }); 
 */
-
 
 /* Extending/depending on:  
 ~ = modified function (when updating from SVN be sure to check these for changes, especially to Ext.tree.TreeNodeUI.render() )  

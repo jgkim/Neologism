@@ -44,20 +44,38 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
     listeners: {
       // behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       checkchange: function(node, checked){
-        if (checked && node.parentNode !== null) {
-          // if we're checking the box, check it all the way up
-          if (node.parentNode.isRoot || !node.parentNode.getUI().isChecked()) {
-            if (baseParams.arrayOfValues.indexOf(node.id) == -1) {
-              baseParams.arrayOfValues.push(node.id);
+
+	  	var tree = node.getOwnerTree();
+	  	var rootNode = tree.getRootNode();
+	  	if ( rootNode.childNodes[0].attributes.references != undefined ) {
+	  		var references = rootNode.childNodes[0].attributes.references;
+	  		if (references[node.text] != undefined) {
+	  			var reference = references[node.text];
+	  			for ( var p = 0; p < reference.paths.length; p++ ) {
+	  				var rnode = tree.expandPath(reference.paths[p])
+	  				if ( rnode != undefined ) {
+	  					if (rnode.attributes.checked != checked) {
+	  						rnode.getUI().toggleCheck(checked);
+	  					}
+	  				}
+	  			}
+	  		}
+		}
+	  
+        if ( checked /*&& node.parentNode !== null*/ ) {
+	        // add selection to array of values
+    		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+            	baseParams.arrayOfValues.push(node.text);
+            	
+            	//check for dependences 
             }
-          }
         }
         else {
-          for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
-            if (baseParams.arrayOfValues[i] == node.attributes.id) {
-              baseParams.arrayOfValues.splice(i, 1);
-            }
-          }
+        	for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
+        		if ( baseParams.arrayOfValues[i] == node.text ) {
+        			baseParams.arrayOfValues.splice(i, 1);
+        		}
+        	}
         }
       } // checkchange
   
