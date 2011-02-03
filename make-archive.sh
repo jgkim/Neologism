@@ -24,8 +24,7 @@ if [ $# -eq 1 ]; then
 	rm ext-3.0.0.zip
 
 	echo "Preparing to export the main modules of Neologism...\n"
-	# Check out Neologism and evoc modules from Google Code SVN
-	# @@@ use export instead???
+	# Export Neologism and evoc modules from Google Code SVN
 	svn export https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/neologism sites/all/modules/neologism --username $1
 	svn export https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/evoc sites/all/modules/evoc --username $1
 
