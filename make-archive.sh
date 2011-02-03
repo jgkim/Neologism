@@ -23,14 +23,14 @@ if [ $# -eq 1 ]; then
 	mv ext-3.0.0 sites/all/modules/ext/
 	rm ext-3.0.0.zip
 
-	echo "Checking out main Neologism modules...\n"
+	echo "Preparing to export the main modules of Neologism...\n"
 	# Check out Neologism and evoc modules from Google Code SVN
 	# @@@ use export instead???
-	svn co https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/neologism sites/all/modules/neologism --username $1
-	svn co https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/evoc sites/all/modules/evoc --username $1
+	svn export https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/neologism sites/all/modules/neologism --username $1
+	svn export https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/evoc sites/all/modules/evoc --username $1
 
 	# Check out Neologism installation profile from Google Code SVN
-	svn co https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/profile profiles/neologism --username $1 
+	svn export https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/profile profiles/neologism --username $1 
 
 	# Delete the Drupal default installation profile, we only support the Neologism one
 	rm -rf profiles/default/
