@@ -15,6 +15,9 @@
  */
 function evoc_manage_vocabularies() {
   
+  // These are the namespaces imported during installation
+  $builtins = array('rdf', 'rdfs', 'owl', 'dc', 'foaf');
+
   // Get namespaces managed by evoc. First get all from the {rdf_namespaces}
   // table, then remove those managed by other modules (neologism). This
   // is a hack; it will fail if any other modules register namespaces into
@@ -35,10 +38,13 @@ function evoc_manage_vocabularies() {
 
   $rows = array();
   foreach ( $namespaces as $prefix => $uri ) {
+    $remove = in_array($prefix, $builtins)
+        ? t('(builtin)')
+        : l(t('remove'), 'evoc/remove/'.$prefix, array('attributes' => array('title' => 'Remove this external vocabulary')));
     $rows[] = array(
         array('data' => $prefix),
         array('data' => $uri),
-        array('data' => l(t('remove'), 'evoc/remove/'.$prefix, array('attributes' => array('title' => 'Remove this external vocabulary')))),
+        array('data' => $remove),
     );
   }
 
