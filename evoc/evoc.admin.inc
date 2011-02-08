@@ -15,8 +15,17 @@
  */
 function evoc_manage_vocabularies() {
   
+  // Get namespaces managed by evoc. First get all from the {rdf_namespaces}
+  // table, then remove those managed by other modules (neologism). This
+  // is a hack; it will fail if any other modules register namespaces into
+  // that table
   // @todo Make sure that we get only namespaces imported via evoc
-  $namespaces = array_diff_key(rdf_db_rdf_namespaces(), module_invoke('neologism', 'rdf_namespaces'));
+  $result = db_query('SELECT v.prefix, v.uri FROM {rdf_namespaces} v');
+  $namespaces = array();
+  while ($row = db_fetch_object($result)) {
+    $namespaces[$row->prefix] = $row->uri;
+  }
+  $namespaces = array_diff_key($namespaces, module_invoke('neologism', 'rdf_namespaces'));
   
   $header = array(
       t('Prefix'),

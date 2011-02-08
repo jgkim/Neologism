@@ -9,8 +9,6 @@ define("EVOC_SUPERPROPERTIES", "superproperties");
 define("EVOC_INVERSES", "inverses");    // new form -- multiple inverses
 define("EVOC_INVERSE", "inverse");      // old form -- one inverse
 
-define("RDFAPI_INCLUDE_DIR", drupal_get_path('module', 'evoc') ."/includes/rap/");
-
 /**
  * Implementation of hook_perm().
  */
