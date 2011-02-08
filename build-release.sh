@@ -35,12 +35,12 @@ rm -rf sites/all/modules/ext/ext-3.0.0/examples
 # Export Neologism and evoc modules from Google Code SVN
 echo "Getting neologism module from SVN ..."
 echo "Getting evoc module from SVN ..."
-svn export -q https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/neologism sites/all/modules/neologism
-svn export -q https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/evoc sites/all/modules/evoc
+svn export -q https://neologism.googlecode.com/svn/branches/drupal-6/neologism sites/all/modules/neologism
+svn export -q https://neologism.googlecode.com/svn/branches/drupal-6/evoc sites/all/modules/evoc
 
 # Check out Neologism installation profile from Google Code SVN
 echo "Getting installation profile from SVN ..."
-svn export -q https://neologism.googlecode.com/svn/branches/DRUPAL-6--14/profile profiles/neologism
+svn export -q https://neologism.googlecode.com/svn/branches/drupal-6/profile profiles/neologism
 
 # Delete the Drupal default installation profile, we only support the Neologism one
 echo "Deleting default installation profile ..."
