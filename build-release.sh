@@ -19,6 +19,7 @@ echo "Downloading ARC ..."
 mkdir sites/all/modules/rdf/vendor
 curl -L -o sites/all/modules/rdf/vendor/arc.tar.gz http://github.com/semsol/arc2/tarball/master
 tar xzf sites/all/modules/rdf/vendor/arc.tar.gz -C sites/all/modules/rdf/vendor/
+mv sites/all/modules/rdf/vendor/semsol-arc2-* sites/all/modules/rdf/vendor/arc
 rm sites/all/modules/rdf/vendor/arc.tar.gz
 
 # Download and extract Ext JS, which is required for the evoc module 
