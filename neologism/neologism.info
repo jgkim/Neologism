@@ -1,6 +1,6 @@
 ; $Id:
 name = Neologism
-description = Allows users to easily publish their own vocabulary online.
+description = Allows users to easily publish their own RDFS vocabulary online.
 dependencies[] = path
 dependencies[] = content
 dependencies[] = content_copy
@@ -18,5 +18,4 @@ dependencies[] = evocwidget_dynamic
 dependencies[] = rules
 package = RDF
 core = 6.x
-version = "6.x-1.x-dev"
 php = 5.2
