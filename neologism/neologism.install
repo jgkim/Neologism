@@ -50,23 +50,12 @@ function neologism_uninstall() {
 }
 
 /**
- * Update for version 0.01
+ * Update for Neologism 0.5.0
  * @return 
  */
-function neologism_update_6034() {
-  $ret = array();
-  return $ret;
-}
-
-function neologism_update_6200() {
-  module_load_include('install', 'neologism', 'neologism');
-  $ret = array();
-  
-  $ret[] = update_sql('delete from {node} where type = "neo_property"');
-  $ret[] = update_sql('delete from {node} where type = "neo_class"');
-  $ret[] = update_sql('delete from {node} where type = "neo_vocabulary"');
-  
-  return $ret;
+function neologism_update_6201() {
+  variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
+  return array();
 }
 
 /**

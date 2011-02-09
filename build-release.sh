@@ -24,13 +24,17 @@ rm sites/all/modules/rdf/vendor/arc.tar.gz
 
 # Download and extract Ext JS, which is required for the evoc module 
 echo "Downloading Ext JS"
-curl -O http://extjs.cachefly.net/ext-3.0.0.zip 
-unzip -q ext-3.0.0.zip
-mv ext-3.0.0 sites/all/modules/ext/
-rm ext-3.0.0.zip
+curl -O http://extjs.cachefly.net/ext-3.3.1.zip
+unzip -q -n ext-3.*.zip
+rm ext-3.*.zip
+mv ext-3.* sites/all/modules/ext/ext
 echo "Removing unused parts of Ext JS"
-rm -rf sites/all/modules/ext/ext-3.0.0/docs
-rm -rf sites/all/modules/ext/ext-3.0.0/examples
+rm -rf sites/all/modules/ext/ext/docs
+rm -rf sites/all/modules/ext/ext/examples
+rm -rf sites/all/modules/ext/ext/pkgs
+rm -rf sites/all/modules/ext/ext/src
+rm -rf sites/all/modules/ext/ext/test
+rm -rf sites/all/modules/ext/ext/welcome
 
 # Export Neologism and evoc modules from Google Code SVN
 echo "Getting neologism module from SVN ..."

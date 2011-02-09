@@ -155,7 +155,7 @@ function neologism_profile_tasks(&$task, $url) {
   
   if( $task == 'building-neologism-perspective' ) {
   	// set the default ExtJS library path to same place where is located the ext module
-  	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext-3.0.0');
+  	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
   	
   	// disabled the user login block
   	db_query('update {blocks} set status = 0 where bid = 1');
