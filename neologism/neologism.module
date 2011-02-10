@@ -261,6 +261,16 @@ function neologism_menu_link_alter(&$item, $menu) {
 }
 
 /**
+ * Implementation of hook_link_alter().
+ */
+function neologism_link_alter(&$links, $node) {
+  // Remove the “Read more” link on vocabularies
+  if ($node->type == 'neo_vocabulary') {
+    unset($links['node_read_more']);
+  }
+}
+
+/**
  * Implementation of hook_link().
  *
  * The “Edit class/property” and “Add subclass/property” on term nodes
@@ -330,7 +340,7 @@ function &neologism_vocabulary_load($nid) {
 function neologism_node_page_view_with_conneg($node) {
   if ($node->type == NEOLOGISM_CT_VOCABULARY) {
     return _neologism_do_conneg($node, array(
-      'html' => 'neologism_export_html',
+      'html' => 'node_page_view',
       'rdf' => 'neologism_export_rdfxml',
       'ttl' => 'neologism_export_turtle',
     ));
