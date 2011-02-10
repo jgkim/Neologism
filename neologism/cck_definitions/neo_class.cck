@@ -95,7 +95,7 @@ $content['fields']  = array (
     'weight' => '-8',
     'rows' => '1',
     'size' => 60,
-    'description' => 'A human readable name to the class.',
+    'description' => 'A human-readable name for the class.',
     'default_value' => 
     array (
     ),

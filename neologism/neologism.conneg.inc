@@ -71,7 +71,7 @@ function _neologism_do_conneg(&$node, $variant_handlers) {
  *   A variant name such as 'html', 'rdf'
  */
 function _neologism_get_preferred_variant() {
-  include_once(drupal_get_path('module', NEOLOGISM) . 
+  include_once(drupal_get_path('module', 'neologism') . 
       '/includes/content_negotiation/content_negotiation.inc.php');
 
   // Stupid browsers that send */* should get HTML, so give
@@ -80,17 +80,17 @@ function _neologism_get_preferred_variant() {
   // over Turtle and N3. We also map application/xml to
   // RDF/XML.
   $supported_types = array(
-    array(HTML, 1.00, 'application/xhtml+xml'),
-    array(HTML, 0.99, 'text/html'),
-    array(RDF,  0.90, 'application/rdf+xml'),
-    array(RDF,  0.50, 'application/xml'),
-    array(N3,   0.88, 'text/rdf+n3'),
-    array(N3,   0.89, 'text/turtle'),
-    array(N3,   0.87, 'text/x-turtle'),
-    array(N3,   0.86, 'application/turtle'),
-    array(N3,   0.85, 'application/x-turtle'),
+    array('html', 1.00, 'application/xhtml+xml'),
+    array('html', 0.99, 'text/html'),
+    array('rdf',  0.90, 'application/rdf+xml'),
+    array('rdf',  0.50, 'application/xml'),
+    array('ttl',  0.88, 'text/rdf+n3'),
+    array('ttl',  0.89, 'text/turtle'),
+    array('ttl',  0.87, 'text/x-turtle'),
+    array('ttl',  0.86, 'application/turtle'),
+    array('ttl',  0.85, 'application/x-turtle'),
   );
-  $default = RDF;
+  $default = 'rdf';
 
   $struct = array('type' => array(), 'app_preference' => array());
   foreach ($supported_types as $type) {

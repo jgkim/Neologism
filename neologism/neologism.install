@@ -2,7 +2,7 @@
 // $Id:  $
 
 function neologism_install() {
-	_neologism_install_node_type('neo_vocabulary');
+  _neologism_install_node_type('neo_vocabulary');
   _neologism_install_node_type('neo_class');
   _neologism_install_node_type('neo_property');
   content_clear_type_cache();
@@ -54,29 +54,40 @@ function neologism_uninstall() {
  * @return 
  */
 function neologism_update_6201() {
+  // Ext JS used to be delivered in modules/ext/ext-3.0.0 but now is
+  // in modules/ext/ext. We abuse the Neologism update function to
+  // change the ext_path config variable to the new location. We can't
+  // really do it anywhere else.
   variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
-  return array();
+
+  $result = array();
+  // Change URL aliases from /node/123/n3 to /node/123/ttl
+  $result[] = update_sql("UPDATE {url_alias} SET src = CONCAT(SUBSTR(src, 1, LENGTH(src)-3), '/ttl') WHERE src LIKE 'node/%/n3' AND dst LIKE '%.n3'");
+  // Add new URL aliases for vocabname.ttl to /node/123/ttl
+  $result[] = update_sql("INSERT INTO {url_alias} (src, dst, language) SELECT src, CONCAT(SUBSTR(dst, 1, LENGTH(dst)-3), '.ttl') AS dst, language FROM {url_alias} WHERE src LIKE 'node/%/ttl' AND dst LIKE '%.n3'");
+
+  return $result;
 }
 
 /**
- * Definitions of the CCK content types for Neologism which get created via hook_enable()
+ * Definitions of the CCK content types for Neologism which get created via hook_install()
  * when the module is enabled.
  */
 function _neologism_install_node_type($type) {
   if(!module_exists("content_copy")){
-    drupal_set_message('Programmatically creating CCK fields requires the Content Copy module. Exiting.');
+    drupal_set_message('Programmatically creating CCK fields requires the Content Copy module. Exiting.', 'error');
     return;
   }
-  
+
   // remove content type if it already exists
   $ct = content_types();
   if (isset($ct[$type])) {
     node_type_delete($type);      
   }
-  
+
   $cck_definition_file = drupal_get_path('module', 'neologism')."/cck_definitions/$type.cck";
   if(!file_exists($cck_definition_file)) {
-    drupal_set_message("Unable to read input file <i>$cck_definition_file</i> for import.", 'error');
+    drupal_set_message("Unable to read input file <em>$cck_definition_file</em> for import.", 'error');
     return;
   }
 

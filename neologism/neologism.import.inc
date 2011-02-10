@@ -1,6 +1,14 @@
 <?php
 
 /**
+ * This file contains code related to Neologism's vocabulary import:
+ * the import form, and code that transforms a parsed vocabulary into
+ * CCK nodes. The actual parsing is done by code in the evoc module.
+ *
+ * @todo The form is quite redundant with what's found in evoc
+ */
+
+/**
  * This is a hack to work around a problem in Safari: File uploads with
  * multipart/form-data often hang when persistent connections are used.
  * So we close the connection when the upload form is loaded.
@@ -238,7 +246,7 @@ function _neologism_new_node_vocabulary(array $vocabulary) {
   // check if there is some voc with the same id
   $title = db_result(db_query(db_rewrite_sql("select title from {node} where title = '%s' and type = '%s'"), $vocabulary['prefix'], NEOLOGISM_CT_VOCABULARY));
   if ($title && $title == $vocabulary['prefix']) {
-    drupal_set_message($vocabulary['prefix'].' '.t(MSG_ID_ALREADY_IN_USE), 'error');
+    drupal_set_message(t("Prefix %prefix is already in use.", array('%prefix' => $vocabulary['prefix'])), 'error');
     return null;
   }
 
@@ -256,13 +264,13 @@ function _neologism_new_node_vocabulary(array $vocabulary) {
 function _neologism_new_node_term($vocabulary_nid, $term, $content_type) {
   $local_name = substr($term['qname'], strpos($term['qname'], ':') + 1);
   if (!_neologism_is_valid_id($local_name)) {
-    drupal_set_message($local_name.' '.t(MSG_INVALID_ID), 'error');
+    drupal_set_message(t("Encountered invalid local name %id.", array('%id' => $local_name)), 'error');
     return false;
   }
   $title = db_result(db_query(db_rewrite_sql("select title from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid 
     where c.field_vocabulary_nid = %d and title = '%s' and type = '%s'"), $vocabulary_nid, $local_name, $content_type));
   if ($title && $title == $local_name) {
-    drupal_set_message($local_name.' '.t(MSG_ID_ALREADY_IN_USE), 'error');
+    drupal_set_message(t("Encountered duplicate local name %id.", array('%id' => $local_name)), 'error');
     return false;
   }
   

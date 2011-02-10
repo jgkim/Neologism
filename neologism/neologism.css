@@ -34,9 +34,6 @@ div.linkontop {
   float: right; 
   margin: 0;
 }
-.neologism_terms_links {
-  font-size: 0.8em;
-}
 
 img#legend {
   float: right;
@@ -104,58 +101,58 @@ img#legend {
 }
 
 
-#vocabulary-view {
+.vocabulary-view {
   margin: 0px 0px 0px 0px;
   padding: 0px;
 }
 
-#vocabulary-view h1 {
+.vocabulary-view h1 {
   font-size: 25px;
   margin-bottom: 10px;
 }
 
-#vocabulary-view h2 {
+.vocabulary-view h2 {
   font-size: 20px;
   /*margin-bottom: 10px;*/
 }
 
-#vocabulary-view h3 {
+.vocabulary-view h3 {
   font-size: 17px;
   font-stretch: normal;
   font-weight: bold;
   /*margin-bottom: 10px;*/
 }
 
-#vocabulary-view #abstract {
+.vocabulary-view #abstract {
   border-top: #000000 solid 1px; 
   border-bottom: #000000 solid 1px;
   margin-top: 30px;
   padding: 10px 0px 10px 0px;
 }
 
-#vocabulary-view #abstract .title {
+.vocabulary-view #abstract .title {
   font-size: 18px;
   margin-bottom: 3px;
 }
 
-#vocabulary-view #description {
+.vocabulary-view #description {
   font-size: 12px;
   margin: 30px 0px 0px 0px;
 }
 
-#vocabulary-view #last-update {
+.vocabulary-view #last-update {
   margin: 10px 0px 10px 0px;
 }
 
-#vocabulary-view #last-update #last-update-value{
+.vocabulary-view #last-update #last-update-value{
   margin: 0px 0px 0px 20px;
 }
 
-#vocabulary-view #authors {
+.vocabulary-view #authors {
   margin: 10px 0px 10px 0px;
 }
 
-#vocabulary-view #authors #author-value{
+.vocabulary-view #authors #author-value{
   margin: 0px 0px 0px 20px;
 }
 
@@ -171,120 +168,56 @@ img#legend {
   display: block;
 }
 
-/* class view */
-#classview {
-  margin: 10px 0px 25px 0px;
-  padding: 0px;
-  display: block;
-  /*border-bottom: #ccc solid 1px;*/
-}
-
 .teaser {
 	border-bottom: #ccc solid 1px;	
 }
 
-#classview h3 {
+.reference h2 {
+  border-bottom: 1px solid rgb(233, 239, 243);
+  margin: 0px -26px 0.5em;
+  padding: 1em 26px;
+}
+
+/* class/property view */
+.term-node.teaser {
+  margin-bottom: 0;
+  margin-top: 0.5em;
+}
+
+.term-node h3 {
   font-size: 14px;
   margin: 0px 0px 3px 0px;
 }
 
-#classview .abstract {
+.term-node .summary {
   font-size: 12px;
   margin: 0px 0px 0px 0px;
   text-align: justify;
 }
 
-#classview .abstract em {
-  font-style: italic;
-}
-
-#classview .properties-block {
-  display: block;
+.term-node dl {
   margin: 10px 0px 0px 0px;
   /*background-color: #add;*/
 }
 
-#classview .row {
-  /*background-color: #ff0000;*/
+.term-node dt {
   clear: both;
-  display: block;
-}
-
-#classview .properties-block .row .column-title {
-  width: 100px;
   float: left;
-  /*background-color: #00ff00;*/
+  margin: 0;
+  width: 100px;
 }
 
-#classview .properties-block .row .column-values {
-  margin-left: 100px;
-  /*background-color: #0000ff;*/
+.term-node dd {
+  margin: 0 0 0 100px;
 }
 
-#classview .description {
+.term-node .description {
   font-size: 12px;
   margin: 10px 0px 15px 0px;
   text-align: justify;
 }
 
-#classview .links {
-  margin-top: 5px;
-  font-size: 12px;  
-}
-
-/* property view */
-#propertyview {
-  margin: 10px 0px 25px 0px;
-  padding: 0px;
-  display: block;
-  /*border-bottom: #ccc solid 2px;*/
-}
-
-#propertyview h3 {
-  font-size: 14px;
-  margin: 0px 0px 3px 0px;
-}
-
-#propertyview .abstract {
-  font-size: 12px;
-  margin: 0px 0px 0px 0px;
-  text-align: justify;
-}
-
-#propertyview .abstract em {
-  font-style: italic;
-}
-
-#propertyview .properties-block {
-  display: block;
-  margin: 10px 0px 0px 0px;
-  /*background-color: #add;*/
-}
-
-#propertyview .row {
-  /*background-color: #ff0000;*/
-  clear: both;
-  display: block;
-}
-
-#propertyview .properties-block .row .column-title {
-  width: 100px;
-  float: left;
-  /*background-color: #00ff00;*/
-}
-
-#propertyview .properties-block .row .column-values {
-  margin-left: 100px;
-  /*background-color: #0000ff;*/
-}
-
-#propertyview .description {
-  font-size: 12px;
-  margin: 10px 0px 15px 0px;
-  text-align: justify;
-}
-
-#propertyview .links {
+.term-node .links {
   margin-top: 5px;
   font-size: 12px;  
 }
@@ -302,11 +235,11 @@ img#legend {
   padding: 0px 0px 0px 5px;
 }
 
-#vocabulary-view #diagram {
+.vocabulary-view #diagram {
   margin: 30px 0px 10px 0px;
 }
 
-/* field_superclass2_id */
+/*********** field_superclass2_id ***********/
 #field_superclass2_id {
   margin: 0px 0px 0px 0px;
 }
@@ -366,12 +299,12 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_superclass2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
 
@@ -436,15 +369,15 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_disjointwith2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
-/* field_inverse2_id */
+/*********** field_inverse2_id ***********/
 #field_inverse2_id {
   margin: 0px 0px 0px 0px;
 }
@@ -504,15 +437,15 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_inverse2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
-/* field_superproperty2_id */
+/*********** field_superproperty2_id ***********/
 #field_superproperty2_id {
   margin: 0px 0px 0px 0px;
 }
@@ -572,15 +505,15 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_superproperty2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
-/***** field_range2_id *****/
+/*************** field_range2_id ***************/
 #field_range2_id {
   margin: 0px 0px 0px 0px;
 }
@@ -640,15 +573,15 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_range2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
-/***** field_domain2_id *****/
+/*************** field_domain2_id ***************/
 #field_domain2_id {
   margin: 0px 0px 0px 0px;
 }
@@ -708,12 +641,12 @@ img#legend {
   margin: 0px 0 0px 0;
   padding: 0;
   position:relative;
-  top: -2px;
+  top: 3px;
   left: 3px;
 }
 
 #field_domain2_id input {
-  margin: 3px 0 0 0;
+  margin: -2px 0 0 2px;
 }
 
 /***** class tree *****/
@@ -807,18 +740,6 @@ img#legend {
 }
 
 /* temporal classes */
-.vocabulary-view {
-  margin: 10px 0px 25px 0px;
-  padding: 0px;
-  display: block;
-  border-bottom: #ccc solid 2px;
-}
-
-.vocabulary-view h2 {
-  font-size: 17px;
-  margin: 0px 0px 5px 0px;
-}
-
 .vocabulary-view .authors {
   font-size: 12px;
   margin: 0px 0px 5px 0px;
@@ -907,4 +828,15 @@ img#legend {
 	vertical-align:text-bottom;
 }
 
+/* ========= Vocabulary form ========================================== */
 
+/* Make the vocabulary ID input field and namespace editing input field
+   show up on the same line as preceding label */
+.node-form #edit-title, .node-form #edit-field-custom-namespace-0-value {
+    display: inline-block;
+    width: auto;
+}
+
+.node-form #edit-field-custom-namespace-0-value[disabled] {
+    color: #888;
+}

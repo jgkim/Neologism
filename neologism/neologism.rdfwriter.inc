@@ -108,8 +108,7 @@ class NeologismRDFWriter {
     echo $ser->getSerializedTriples($this->_triples);
   }
 
-  // @todo This should refer to Turtle, not N3
-  function write_n3() {
+  function write_turtle() {
     drupal_set_header("Content-Type: text/rdf+n3; charset=utf-8");
     module_load_include('inc', 'neologism', 'neologism.arc');
     $ser = new BetterTurtleSerializer($this->_namespaces);
