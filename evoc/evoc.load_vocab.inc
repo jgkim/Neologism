@@ -60,6 +60,7 @@ function _evoc_fetch_from_file($filename) {
  * @throws Exception On network error
  */
 function _evoc_fetch_from_web($uri) {
+  // @todo should use drupal_http_request() instead of file_get_contents+stream?
   $uri = trim($uri);
   // check if it's an HTTP URI
   if (!preg_match('!^http://!', $uri)) {
