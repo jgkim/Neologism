@@ -55,10 +55,25 @@ function evoc_menu() {
   return $items;
 }
 
-function evoc_import_vocabulary($uri, $prefix, $showdetails = false) {
+/**
+ * Import a vocabularie from the Web specified by its uri with prefix = $prefix. If 
+ * $filename is equal a filename in the system the vocabularie will be load from file.
+ * 
+ * @param $uri
+ * @param $prefix
+ * @param $filename
+ * @param $showdetails
+ * @return unknown_type
+ */
+function evoc_import_vocabulary($uri, $prefix, $filename = NULL, $showdetails = false) {
   module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
-    $vocabulary = evoc_get_from_web($uri, $prefix);
+  	if ( is_null($filename) ) {
+    	$vocabulary = evoc_get_from_web($uri, $prefix);
+  	}
+  	else {
+  		$vocabulary = evoc_get_from_file($filename, $uri, $prefix);	
+  	}
     evoc_save_vocabulary($vocabulary, $showdetails);
   } catch (Exception $ex) {
     drupal_set_message($ex->getMessage(), 'error');

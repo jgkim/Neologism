@@ -121,11 +121,12 @@ function evoc_install() {
   }
 
   module_load_include('module', 'evoc', 'evoc');
-  evoc_import_vocabulary('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf', FALSE);
-  evoc_import_vocabulary('http://www.w3.org/2000/01/rdf-schema#', 'rdfs', FALSE);
-  evoc_import_vocabulary('http://purl.org/dc/elements/1.1/', 'dc', FALSE);
-  evoc_import_vocabulary('http://xmlns.com/foaf/0.1/','foaf', FALSE);
-  evoc_import_vocabulary('http://www.w3.org/2002/07/owl#','owl', FALSE);
+  $builtin_vocabularies_path = drupal_get_path('module', 'evoc').'/builtin_vocabularies';
+  evoc_import_vocabulary('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf', $builtin_vocabularies_path.'/rdf.rdf');
+	evoc_import_vocabulary('http://www.w3.org/2000/01/rdf-schema#', 'rdfs', $builtin_vocabularies_path.'/rdf-schema.rdf');
+	evoc_import_vocabulary('http://purl.org/dc/elements/1.1/', 'dc', $builtin_vocabularies_path.'/dcelements.rdf');
+	evoc_import_vocabulary('http://xmlns.com/foaf/0.1/','foaf', $builtin_vocabularies_path.'/foaf.rdf');
+  evoc_import_vocabulary('http://www.w3.org/2002/07/owl#','owl', $builtin_vocabularies_path.'/owl.rdf');
   
   drupal_set_message( t('Evoc successfully installed.') );
 }
