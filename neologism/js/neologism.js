@@ -47,21 +47,21 @@ if( Drupal.jsEnabled ) {
 		
         // Prepare custom namespace selection widget
         // Move custom namespace edit field next to the "Custom" radio button
-        $('#edit-namespace-1-wrapper').append($('#edit-field-custom-namespace-0-value'));
-        $('#edit-field-custom-namespace-0-value-wrapper').remove();
+        $('#edit-namespace-1-wrapper').append($('#edit-custom-namespace'));
+        $('#edit-custom-namespace-wrapper').remove();
         // Enable and disable the custom namespace field as required
         if ($('#edit-namespace-0').attr('checked')) {
-            $('#edit-field-custom-namespace-0-value').attr('disabled', true);
+            $('#edit-custom-namespace').attr('disabled', true);
         }
         $('#edit-namespace-0').click(function() {
-            $('#edit-field-custom-namespace-0-value').attr('disabled', true);
+            $('#edit-custom-namespace').attr('disabled', true);
         });
         $('#edit-namespace-1').click(function() {
-            $('#edit-field-custom-namespace-0-value').attr('disabled', false);
+            $('#edit-custom-namespace').attr('disabled', false);
         });
         // Update the default namespace URI with the vocabulary ID
         setInterval(function() {
-            var vocabID = $('#edit-title').val();
+            var vocabID = $('#edit-prefix').val();
             if (vocabID) {
               $('#neologism-default-ns').empty().text(vocabID);
             } else {
@@ -70,7 +70,7 @@ if( Drupal.jsEnabled ) {
         }, 250);
 		
 		// this is used when all the content type form are shown the title field should take the focus
-		$('#edit-title').focus();
+		$('#edit-prefix').focus();
 	}); // ready
 
 	Neologism.checkResourceType = function() {

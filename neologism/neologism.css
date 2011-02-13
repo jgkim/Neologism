@@ -830,13 +830,6 @@ img#legend {
 
 /* ========= Vocabulary form ========================================== */
 
-/* Make the vocabulary ID input field and namespace editing input field
-   show up on the same line as preceding label */
-.node-form #edit-title, .node-form #edit-field-custom-namespace-0-value {
-    display: inline-block;
-    width: auto;
-}
-
-.node-form #edit-field-custom-namespace-0-value[disabled] {
+.node-form #edit-custom-namespace[disabled] {
     color: #888;
 }

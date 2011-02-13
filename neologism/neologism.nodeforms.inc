@@ -1,109 +1,5 @@
 <?php
 
-/**
- * This file contains code for building and validating Neologism's forms for
- * creating and editing vocabularies, classes and properties.
- */
-
-/**
- * Vocabulary form
- */
-function _neologism_form_alter_vocabulary(&$form, &$form_state) {
-
-  // Set page title and breadcrumb if we are in edit mode (node already has an ID)
-  $op = $form['nid']['#value'] ? 'edit' : 'create';
-  if ($op == 'edit') {
-    drupal_set_title($form['#node']->field_title[0]['value']);
-    drupal_set_breadcrumb(_neologism_build_breadcrumb());
-  }
-
-  $form['#validate'][] = '_neologism_form_validate_vocabulary';
-
-  // Customize prefix field
-  $form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
-  $form['title']['#size'] = 20;
-  $form['title']['#field_prefix'] = url('<front>', array('absolute' => TRUE));
-  $form['title']['#element_validate'][] = '_neologism_validate_id';
-  
-  // Add some radio buttons for choice of custom/default namespace
-  $neologism_root = url('', array('absolute' => TRUE));
-  $default_namespace = $neologism_root . '<span id="neologism-default-ns"><em>' . t('vocabulary-id') . '</em></span>#';
-  $form['namespace']['#type'] = 'radios';
-  $form['namespace']['#title'] = t('Namespace URI');
-  $form['namespace']['#required'] = TRUE;
-  $form['namespace']['#description'] = t('The URIs of the classes and properties in your vocabulary will start with this.');
-  $form['namespace']['#options'] = array(t('Default') . ' (' . $default_namespace . ')', t('Custom') . ':');
-  $form['namespace']['#weight'] = -3.5;
-  $form['namespace']['#default_value'] = $form['#node']->has_custom_namespace_uri ? '1' : '0';
-  // field_custom_namespace will be placed next to the Custom radio button
-  // using javascript. We just hide its title here.
-  $form['field_custom_namespace'][0]['#title'] = null;
-  $form['field_custom_namespace']['#weight'] = -3.4; // makes it less bad if JS for some reason doesn't work
-
-  // create a fieldset and make a copy of the field_additional_custom_rdf to locate it in a collapsable 
-  // panel and unset it for the current position
-  $form['aditional_custom_rdf_fieldset'] = array(
-    '#type' => 'fieldset', 
-    '#title' => t('Additional custom RDF'), 
-    '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
-    '#description' => t('Here you can provide additional RDF statements that will be included in the RDF description of the vocabulary. Statements must be provided in Turtle syntax.')
-  );
-  $form['aditional_custom_rdf_fieldset']['field_additional_custom_rdf'] = $form['field_additional_custom_rdf'];
-  unset($form['field_additional_custom_rdf']);
-
-  // Hide the preview button
-  $form['buttons']['preview']['#access'] = FALSE;
-  // Hide the menu fieldset
-  $form['menu']['#access'] = FALSE;
-  // Hide the path fielset
-  $form['path']['#access'] = FALSE;
-  // Hide the layout field of the vocublary page since it's only used
-  // internally by the viewer to store the diagram layout.
-  $form['field_layout']['#access'] = FALSE;
-}
-
-function _neologism_form_validate_vocabulary($form, &$form_state) {
-
-  // Validate namespace prefix
-  $prefix = $form_state['values']['title'];
-  // 1. Check if there is already a Neologism vocabulary with this prefix
-  $count = db_result(db_query('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"', $form_state['values']['nid'], $prefix, NEOLOGISM_CT_VOCABULARY));
-  if ($count > 0) {
-    form_set_error('title', t('The prefix %prefix is already in use. Please choose a different prefix.', array('%prefix' => $prefix)));
-    return FALSE;
-  }
-  // 2. Check if some module has registered this path
-  $count = db_result(db_query('SELECT COUNT(*) FROM {menu_router} WHERE path="%s"', $prefix));
-  if ($count > 0) {
-    form_set_error('title', t('The path %prefix is reserved by the system. Please choose a different prefix.', array('%prefix' => $prefix)));
-    return FALSE;
-  }
-  // 3. Check if some alias has registered this path
-  $src = db_result(db_query('SELECT src FROM {url_alias} WHERE dst="%s" LIMIT 1', $prefix));
-  if ($src && $src != 'node/' . $form['#node']->nid) {
-    form_set_error('title', t('The path %prefix is taken by other site content. Please choose a different prefix.', array('%prefix' => $prefix)));
-    return FALSE;
-  }
-  
-  // Validate custom namespace, if provided
-  if ($form_state['values']['namespace'] == 1) {
-    $custom_namespace = $form_state['values']['field_custom_namespace'][0]['value'];
-    if (!$custom_namespace) {
-      form_set_error('custom_namespace', t('You must provide a custom namespace URI, or select the default namespace.'));  
-      return FALSE;
-    }
-    if(!rdf_is_valid_uri($custom_namespace) ) {
-      form_set_error('custom_namespace', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));  
-      return FALSE;
-    }
-    if (substr($custom_namespace, -1) != '#' && substr($custom_namespace, -1) != '/') {
-      form_set_error('custom_namespace', t('The custom namespace URI must end in “#” or “/”.'));
-      return FALSE;
-    }
-  }
-}
-
 function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
 
   $parent = null;
@@ -114,12 +10,11 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
   }
 
   $current_voc = $form['#node']->vocabulary;
-  $form_title = $current_voc->field_title[0]['value'];
 
   if (isset($form['#node']->nid)) {    // Are we editing an existing term?
     $mode = 'edit';
-    $form_title = t('Editing ' . $class_or_property . ' %qname', array('%qname' => $form['#node']->qname));
-    drupal_set_breadcrumb(_neologism_build_breadcrumb($current_voc->path, $current_voc->field_title[0]['value']));
+    drupal_set_title(t('Editing ' . $class_or_property . ' %qname', array('%qname' => $form['#node']->qname)));
+    drupal_set_breadcrumb(_neologism_build_breadcrumb($current_voc->path, $current_voc->title));
   } else if (arg(3)) {    // Creating a new subclass of an existing class ...
     $mode = 'new-child';
     // Select the parent class if provided in the url of type node/1/add-class/2
@@ -130,38 +25,52 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
     drupal_set_breadcrumb(_neologism_build_breadcrumb());
   }
 
-  drupal_set_title($form_title);
-
   $form['field_vocabulary']['#default_value'][0]['nid'] = $current_voc->nid;
 
   // Customize prefix field
-  $form['title']['#description'] = 'Only letters, numbers, dashes, and underscores.';
+  $form['title']['#title'] = t(ucwords($class_or_property) . ' URI');
+  $form['title']['#description'] = t('Only letters, numbers, dashes, and underscores.');
   $form['title']['#size'] = 20;
   $form['title']['#field_prefix'] = $current_voc->namespace_uri;
   $form['title']['#element_validate'][] = '_neologism_validate_id';
-  
+  $form['title']['#attributes'] = array('style' => 'width: auto; display: inline');
+
   $form['body_field']['body']['#rows'] = 4;
+  $form['body_field']['body']['#title'] = 'Details';
+  $form['body_field']['body']['#description'] = 'Will only show in HTML views.';
+  // Hide the "Split summary at cursor" widget
+  $form['body_field']['teaser_include']['#access'] = FALSE;
   
   // Hide unused fields and widgets
   $form['field_vocabulary']['#access'] = FALSE;
   $form['buttons']['preview']['#access'] = FALSE;
   $form['menu']['#access'] = FALSE;
   $form['path']['#access'] = FALSE;
+  $form['author']['#access'] = FALSE;
+  $form['options']['#access'] = FALSE;
+  $form['revision_information']['#access'] = FALSE;
   
   // Add a Cancel button
   $form['buttons']['cancel'] = array(
     '#type' => 'submit',
     '#value' => t('Cancel'),
     '#weight' => 20,
-    '#attributes' => array('onclick' => 'window.location = \''.base_path().$current_voc->prefix.'\'; return false;'),
+    '#attributes' => array('onclick' => 'window.location = \''.url($current_voc->path, array('absolute' => TRUE)).'\'; return false;'),
   );
   $form['buttons']['submit']['#submit'][] = '_neologism_term_form_submit';
+  $form['buttons']['delete']['#submit'][] = '_neologism_term_form_delete';
 
   if ($class_or_property == 'class') {
     _neologism_form_alter_class($form, $form_state, $mode, $parent);
   } else {
     _neologism_form_alter_property($form, $form_state, $mode, $parent);
   }
+
+  // We need to pass through some values so we can
+  // use them during insert/update
+  $form['qname'] = array('#type' => 'value', '#value' => $form['#node']->qname);
+  $form['original_id'] = array('#type' => 'value', '#value' => $form['#node']->original_id);
+  $form['vocabulary'] = array('#type' => 'value', '#value' => $form['#node']->vocabulary);
 }
 
 /**
@@ -198,6 +107,9 @@ function _neologism_form_alter_class(&$form, &$form_state, $mode, &$parent) {
  * @return 
  */
 function _neologism_form_validate_class($form, &$form_state) {
+
+  // @todo: Check that a term with this ID doesn't exist yet in this vocab
+
     if(!empty($form_state['values']['field_superclass2']) ) {
       // TODO do a global select and then compare with the selected value. 
       // This way consume too much resources whether there exist many classes.
@@ -236,6 +148,7 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$parent) {
   $form['field_inverse2']['#suffix'] = '</div>';
   
   // add the group for ranges
+  $form['range_group']['#type'] = 'fieldset';
   $form['range_group']['#weight'] = $form['field_range2']['#weight'] - 0.5;
   $form['range_group']['resource_type'] = array(
     '#type' => 'radios',
@@ -261,6 +174,10 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$parent) {
     '#prefix' => '<div id="range-group-datatypes">',
     '#suffix' => '</div>'
   );
+
+  // Move Range selector into the fieldset
+  $form['range_group']['field_range2'] = $form['field_range2'];
+  unset($form['field_range2']);
  
   if ($mode == 'edit') {
     // why need to inform to the widget that there is comming an edition for a value, so the widget can
@@ -294,6 +211,9 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$parent) {
  * @return 
  */
 function _neologism_form_validate_property($form, &$form_state) {
+
+  // @todo: Check that a term with this ID doesn't exist yet in this vocab
+
   // check for a new property
   //if( !$form_state['values']['nid'] ) {
     $vocabulary_nid = $form_state['values']['field_vocabulary'][0]['nid'];
@@ -362,14 +282,8 @@ function _neologism_term_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'node/'.$form_state['values']['field_vocabulary'][0]['nid'];
 }
 
-/**
- * Custom form validation function for IDs (prefixes, class names, property names).
- * To be used with $form['my_element']['#element_validate'].
- */
-function _neologism_validate_id($element, &$form_state) {
-  if (!_neologism_is_valid_id($element['#value'])) {
-    form_set_error($element,
-        t("%id is not a valid identifier. It should start with a letter, and should contain only letters, numbers, dashes, and underscores.",
-            array('%id' => $element['#value'])));
-  }
+function _neologism_term_form_delete($form, &$form_state) {
+  $path = $form['#node']->vocabulary->path;
+  $form_state['redirect'] = array('node/' . $form['#node']->nid . '/delete', array('destination' => $path));
 }
+

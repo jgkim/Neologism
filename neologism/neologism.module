@@ -34,7 +34,6 @@ function neologism_init() {
   module_load_include('inc', 'neologism', 'neologism.theme');
 
   drupal_add_css(drupal_get_path('module', 'neologism') .'/neologism.css');
-  
   $scripts = array(
     '/js/neologism.js',
     '/js/neologism.termstree.js',
@@ -51,11 +50,35 @@ function neologism_init() {
 }
 
 /**
+ * Implementation of hook_node_info().
+ */
+function neologism_node_info() {
+  return array(
+    'neo_vocabulary' => array(
+      'name' => t('RDF vocabulary'),
+      'module' => 'neologism',
+      'description' => 'An <em>RDF vocabulary</em> defines <em>classes</em> and <em>properties</em>, also known as <em>terms</em>, and their relationships. Once defined, an RDF vocabulary can be used to exchange data between sites and applications.',
+    ),
+  );
+} 
+
+/**
  * Implementation of hook_perm().
  */
 function neologism_perm() {
+  // @todo: Having moved away from CCK, we need more fine-grained permissions here: create, edit own, edit any, delete own, delete any
   return array('edit vocabularies', 'import vocabularies');
 }
+
+/**
+ * Implementation of hook_access().
+ */
+function neologism_access($op, $node, $account) {
+  // Currently, 'edit vocabularies' means you can do absolutely anything to any vocabulary.
+  if ($op == 'create' || $op == 'update' || $op == 'delete') {
+    return user_access('edit vocabularies', $account);
+  }
+} 
 
 /**
  * Implementation of hook_theme().
@@ -214,17 +237,336 @@ function neologism_exit() {
 } 
 
 /**
+ * Implementation of hook_load().
+ */
+function neologism_load($node) {
+
+  // Load vocabulary fields from DB
+  $result = db_fetch_object(db_query('SELECT * FROM {neologism_vocabulary} WHERE nid=%d', $node->nid));
+
+  // Load authors from DB
+  $q = db_query("SELECT uid FROM {neologism_perm} WHERE nid=%d ORDER BY delta", $node->nid);
+  $result->authors = array();
+  while ($o = db_fetch_object($q)) {
+    $result->authors[] = $o->uid;
+  }
+
+  // Terms are stored by prefix:id in evoc, and in case we
+  // change the prefix during editing, we need the
+  // original values so we can update them in evoc.
+  $result->original_prefix = $result->prefix;
+
+  return $result;
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function neologism_form(&$node, $form_state) {
+
+  // Set page title and breadcrumb if we are in edit mode (node already has an ID)
+  $op = $node->nid ? 'edit' : 'create';
+  if ($op == 'edit') {
+    drupal_set_breadcrumb(_neologism_build_breadcrumb());
+  }
+
+  $root = url('<front>', array('absolute' => TRUE));
+
+  $form['prefix'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Vocabulary ID',
+    '#field_prefix' => $root,
+    '#description' => 'Only letters, numbers, dashes, and underscores. Will be used as the namespace prefix. Should be short.',
+    '#element_validate' => array('_neologism_validate_id'),
+    '#default_value' => $node->prefix,
+    '#required' => true,
+    '#maxlength' => 10,
+    '#size' => 10,
+    // override stupid 'display: block; width: 95%' in node.css
+    '#attributes' => array('style' => 'display: inline; width: auto'),
+    '#weight' => -10,
+  );
+
+  // Add some radio buttons for choice of custom/default namespace
+  // @todo: Add a custom form element that allows radio buttons with complex widgets behind them
+  $default_namespace = $root . '<span id="neologism-default-ns"><em>' . t('vocabulary-id') . '</em></span>#';
+  $form['namespace'] = array(
+    '#type' => 'radios',
+    '#title' => t('Namespace URI'),
+    '#required' => TRUE,
+    '#description' => t('URIs of classes and properties in the vocabulary will start with this.'),
+    '#options' => array(t('Default') . ': ' . $default_namespace, t('Custom') . ':'),
+    '#weight' => -8,
+    '#default_value' => $node->custom_namespace ? '1' : '0',
+  );
+  // custom_namespace will be placed next to the Custom radio button
+  // using javascript. We just hide its title here.
+  $form['custom_namespace'] = array(
+    '#type' => 'textfield',
+    '#default_value' => $node->custom_namespace,
+    '#maxlength' => 255,
+    // override stupid 'display: block; width: 95%' in node.css
+    '#attributes' => array('style' => 'display: inline; width: auto'),
+    '#weight' => -7,
+  );
+
+  $form['title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Title'),
+    '#description' => t('A human-readable title for the vocabulary.'),
+    '#default_value' => $node->title,
+    '#required' => TRUE,
+    '#maxlength' => 255,
+    '#size' => 60,
+    '#attributes' => array('style' => 'width: auto'),    // override stupid 'width: 95%' in node.css
+    '#weight' => -5,    // CCK will override this to -5 whatever we set it to
+  );
+
+  $fid = db_result(db_query("SELECT fid FROM {profile_fields} WHERE name='profile_neologism_fullname'"));
+  $result = db_query("SELECT u.uid, u.name, p.value AS fullname FROM {users} u LEFT JOIN {profile_values} p ON (fid = %d AND u.uid = p.uid) WHERE u.uid > 0", $fid);
+  $all_users = array();
+  while ($o = db_fetch_object($result)) {
+    $all_users[$o->uid] = $o->fullname ? "$o->fullname ($o->name)" : $o->name;
+  }
+  if (!$node->authors) {
+    global $user;
+    $node->authors[] = $user->uid;
+  }
+  $form['authors'] = array(
+    '#type' => 'select',
+    '#multiple' => 'true',
+    '#title' => t('Authors'),
+    '#default_value' => $node->authors,
+    '#options' => $all_users,
+    '#size' => 6,
+    '#attributes' => array('style' => 'min-width: 20em'),
+    '#weight' => -3,
+  );
+
+  $form['abstract'] = array(
+    '#title' => t('Abstract'),
+    '#type' => 'textarea',
+    '#default_value' => $node->abstract,
+    '#rows' => 3,
+    '#weight' => -1,
+  );
+
+  $form['body_field'] = node_body_field($node, 'Body', 0);
+  $form['body_field']['teaser_include']['#access'] = FALSE;
+
+  // Put the Custom RDF textarea into a collapsible fieldset
+  $form['rdf'] = array(
+    '#type' => 'fieldset', 
+    '#title' => t('Additional custom RDF'), 
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+    '#description' => t("Additional RDF in Turtle syntax for inclusion in the vocabulary's RDF description."),
+    '#weight' => 3,
+  );
+  $form['rdf']['custom_rdf'] = array(
+    '#type' => 'textarea',
+    '#default_value' => $node->custom_rdf,
+  );
+
+  // Pass some original values to the update/insert handler
+  // so we can compare against them later
+  $form['original_path'] = array(
+    '#type' => 'value',
+    '#default_value' => $node->path,
+  );
+  $form['original_prefix'] = array(
+    '#type' => 'value',
+    '#default_value' => $node->prefix,
+  );
+
+  return $form;
+}
+
+/**
+ * Implementation of hook_validate().
+ */
+function neologism_validate($node, &$form) {
+  // Validate namespace prefix
+  // 1. Check if there is already a Neologism vocabulary with this prefix
+  $count = db_result(db_query('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"', $node->nid, $node->prefix, NEOLOGISM_CT_VOCABULARY));
+  if ($count > 0) {
+    form_set_error('title', t('The prefix %prefix is already in use. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;
+  }
+  // 2. Check if some module has registered this path
+  $count = db_result(db_query('SELECT COUNT(*) FROM {menu_router} WHERE path="%s"', $node->prefix));
+  if ($count > 0) {
+    form_set_error('title', t('The path %prefix is reserved by the system. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;
+  }
+  // 3. Check if some alias has registered this path
+  $src = db_result(db_query('SELECT src FROM {url_alias} WHERE dst="%s" LIMIT 1', $node->prefix));
+  if ($src && $src != 'node/' . $form['#node']->nid) {
+    form_set_error('title', t('The path %prefix is taken by other site content. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;
+  }
+  
+  // Validate custom namespace, if provided
+  if ($node->namespace == 1) {
+    if (!$node->custom_namespace) {
+      form_set_error('custom_namespace', t('You must provide a custom namespace URI, or select the default namespace.'));  
+      return FALSE;
+    }
+    if(!rdf_is_valid_uri($node->custom_namespace) ) {
+      form_set_error('custom_namespace', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));  
+      return FALSE;
+    }
+    if (substr($node->custom_namespace, -1) != '#' && substr($node->custom_namespace, -1) != '/') {
+      form_set_error('custom_namespace', t('The custom namespace URI must end in “#” or “/”.'));
+      return FALSE;
+    }
+  }
+}
+
+/**
  * Implementation of hook_form_alter().
  */
 function neologism_form_alter(&$form, &$form_state, $form_id) {
-  module_load_include('inc', 'neologism', 'neologism.nodeforms');
   if ($form_id == 'neo_vocabulary_node_form') {
-    _neologism_form_alter_vocabulary($form, $form_state);
-  } else if ($form_id == 'neo_property_node_form') {
+    // Collapse the path fieldset unless the path is customized
+    if ($form['#node']->prefix == $form['#node']->path) {
+      $form['path']['#collapsed'] = true;
+    }
+    // Add an explanation to the path fieldset
+    $form['path']['neologism-note'] = array(
+      '#prefix' => '<div class="description">',
+      '#value' => t("This override the vocabulary's default namespace and location."),
+      '#suffix' => '</div>',
+    );
+  }
+  else if ($form_id == 'neo_property_node_form') {
+    module_load_include('inc', 'neologism', 'neologism.nodeforms');
     _neologism_form_alter_term($form, $form_state, 'property');
-  } else if ($form_id == 'neo_class_node_form') {
+  }
+  else if ($form_id == 'neo_class_node_form') {
+    module_load_include('inc', 'neologism', 'neologism.nodeforms');
     _neologism_form_alter_term($form, $form_state, 'class');
   }
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function neologism_insert($node) {
+
+  // Insert extra fields for vocabulary nodes into DB
+  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, diagram, custom_rdf) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->diagram, $node->custom_rdf);
+
+  // If no author, force current user as author
+  global $user;
+  if (empty($node->authors)) {
+    $node->authors = array($user->uid);
+  }
+
+  // Insert authors into DB
+  $count = 0;
+  foreach ($node->authors as $uid) {
+    db_query("INSERT INTO {neologism_perm} (nid, uid, delta) VALUES (%d, %d, %d)", $node->nid, $uid, $count);
+    $count++;
+  }
+
+  // If path has not been customized, set it to prefix
+  if (!$node->path) {
+    $node->path = $node->prefix;
+  }
+
+  // Set path aliases for alternate formats
+  _neologism_set_aliases($node);
+}
+
+/**
+ * Implementation of hook_update().
+ */
+function neologism_update($node) {
+
+  // If the prefix has changed, then we need to update
+  // all classes and properties to reflect the changed prefix.
+  if ($node->prefix != $node->original_prefix) {
+    // Update references to terms from this vocabulary; will update evoc too
+    // @todo: This doesn't update terms in other vocabularies that reference
+    //        *this* vocabulary.
+    $result = db_query("SELECT nid FROM {content_field_vocabulary} WHERE field_vocabulary_nid = %d", $node->nid);
+    while ($o = db_fetch_object($result)) {
+      $term = node_load($o->nid);
+      if ($term->vocabulary->prefix == $node->original_prefix) {
+        $term->vocabulary->prefix = $node->prefix;
+      }
+      _neologism_update_evoc_references($term, 'field_superclass2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, 'field_disjointwith2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, 'field_domain2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, 'field_range2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, 'field_superproperty2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, 'field_inverse2', $node->original_prefix, $node->prefix);
+      node_save($term);
+    }
+  }
+
+  // Save vocabulary fields to DB
+  db_query("UPDATE {neologism_vocabulary} SET prefix='%s', custom_namespace='%s', abstract='%s', diagram='%s', custom_rdf='%s' WHERE nid=%d", $node->prefix, $node->custom_namespace, $node->abstract, $node->diagram, $node->custom_rdf, $node->nid);
+
+  // If no author, force current user as author
+  global $user;
+  if (empty($node->authors)) {
+    $node->authors = array($user->uid);
+  }
+
+  // Update author list in DB by deleting and re-adding
+  db_query('DELETE FROM {neologism_perm} WHERE nid = %d', $node->nid);
+  $count = 0;
+  foreach ($node->authors as $uid) {
+    db_query("INSERT INTO {neologism_perm} (nid, uid, delta) VALUES (%d, %d, %d)", $node->nid, $uid, $count);
+    $count++;
+  }
+
+  // If path is empty, or if path has not been customized, then
+  // set path to the namespace prefix, to make the vocab accessible
+  // at http://site/prefix
+  if (!$node->path) {
+    $node->path = $node->prefix;
+  }
+  if ($node->path == $node->original_prefix) {
+    $node->path = $node->prefix;
+  }
+  if ($node->original_path != $node->path) {
+    drupal_set_message(t('Vocabulary moved from <a href="%old">%old</a> to <a href="%new">%new</a>', array(
+        '%old' => url($node->original_path, array('absolute' => true)),
+        '%new' => url($node->path, array('absolute' => true)),
+    )));
+    // Update path aliases for alternate formats
+    _neologism_update_aliases($node);
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function neologism_delete(&$node) {
+
+  // remove all classes and properties belonging to this vocabulary
+  $result = db_query(db_rewrite_sql("SELECT nid FROM {content_field_vocabulary} WHERE field_vocabulary_nid = %d"), $node->nid);
+  while ($o = db_fetch_object($result)) {
+
+    // HACK ALERT
+    // node_delete() first does a node_load() on the term node, but that
+    // will partially fail because it tries to load the term's vocabulary,
+    // which we have just deleted. So we pass the vocabulary as a global
+    // variable and check for that case in neologism_nodeapi() for
+    // $op = 'load'.
+    global $_neologism_vocabulary;
+    $_neologism_vocabulary = $node;
+    node_delete($o->nid);
+  }
+
+  db_query('DELETE FROM {neologism_vocabulary} WHERE nid = %d', $node->nid);
+  db_query('DELETE FROM {neologism_perm} WHERE nid = %d', $node->nid);
+
+  // Delete path aliases for alternate formats
+  _neologism_unset_aliases($node);
 }
 
 /**
@@ -238,10 +580,9 @@ function neologism_rdf_namespaces() {
     'vann' => 'http://purl.org/vocab/vann/',
   );
   // Add namespaces of all user-created vocabularies
-  // TODO Use the node's path instead of title when no custom namespace is defined
-  $vocs = db_query(db_rewrite_sql("SELECT n.title, c.field_custom_namespace_value AS custom FROM {content_type_neo_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE n.type = '%s'"), NEOLOGISM_CT_VOCABULARY);
-  while( $voc = db_fetch_object($vocs) ) {
-    $namespaces[$voc->title] = $voc->custom ? $voc->custom : url($voc->title, array('absolute' => TRUE)) . '#';
+  $result = db_query(db_rewrite_sql("SELECT prefix, dst AS path, custom_namespace FROM {neologism_vocabulary} JOIN {url_alias} ON CONCAT('node/', nid)=src"));
+  while ($o = db_fetch_object($result)) {
+    $namespaces[$o->prefix] = _neologism_namespace_uri($o->path, $o->custom_namespace);
   }
   return $namespaces;
 }
@@ -276,15 +617,15 @@ function neologism_link_alter(&$links, $node) {
  * are placed by this function.
  */
 function neologism_link($type, $node = NULL, $teaser = FALSE) {
-    $links = array();
-    $vocabulary_nid = $node->field_vocabulary[0]['nid'];
+  $links = array();
+  $vocabulary_nid = $node->field_vocabulary[0]['nid'];
 
-    // Content type in urls are with - instead of _
-    $vocabulary_url_str = str_replace('_', '-', NEOLOGISM_CT_VOCABULARY);
-    $class_url_str = str_replace('_', '-', NEOLOGISM_CT_CLASS);
-    $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
+  // Content type in urls are with - instead of _
+  $vocabulary_url_str = str_replace('_', '-', NEOLOGISM_CT_VOCABULARY);
+  $class_url_str = str_replace('_', '-', NEOLOGISM_CT_CLASS);
+  $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
 
-    //if( $type == 'node' )
+  //if( $type == 'node' )
 	if (user_access('edit vocabularies') && $node->type == NEOLOGISM_CT_CLASS) {
       $links['neologism_edit_class'] = array(
         'title' => t('Edit'),
@@ -313,8 +654,127 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
     return $links;
 }
 
-// @todo Move remaining hook implementations up here. hook_nodeapi is further down in the file
+/**
+ * Implementation of hook_nodeapi().
+ */
+function neologism_nodeapi(&$node, $op, $teaser, $page) {
 
+  // Set $node->namespace_uri. We can't do this in node_load
+  // because the path module has not yet been invoked at that
+  // point and $node->path would not be available.
+  if ($node->type == NEOLOGISM_CT_VOCABULARY && $op == 'load') {
+    $node->namespace_uri = _neologism_namespace_uri($node->path, $node->custom_namespace);
+  }
+
+  if ($node->type != NEOLOGISM_CT_CLASS && $node->type != NEOLOGISM_CT_PROPERTY) {
+    return;
+  }
+
+  switch ($op) {
+    case 'load':
+      // Load the vocabulary of the class/property.
+      $node->vocabulary = node_load($node->field_vocabulary[0]['nid']);
+      if (!$node->vocabulary) {
+        // HACK ALERT
+        // The vocabulary will be NULL if we are just in the
+        // process of deleting the vocabulary. In that case,
+        // we get it from a global variable prepared in
+        // neologism_delete().
+        global $_neologism_vocabulary;
+        $node->vocabulary = $_neologism_vocabulary;
+      }
+      $node->qname = $node->vocabulary->prefix . ':' . $node->title;
+
+      // Terms are stored by prefix:id in evoc, and in case we
+      // change the prefix or id during editing, we need the
+      // original values so we can update them in evoc.
+      $node->original_id = $node->title;
+
+      // Keep a copy of the body around because the original isn't accessible in themeing
+      // @todo: Is this really necessary?
+      $node->original_body = $node->body;
+      break;
+
+    case 'view':
+      if ($page) {
+        drupal_set_title($node->qname);
+        drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
+      }
+      break;
+
+    case 'update':
+      // Update the term in the evoc repository
+      $term = _neologism_make_evoc_term_array($node);
+      if ($node->type == NEOLOGISM_CT_CLASS) {
+        evoc_update_class($term);  
+      }
+      else if ($node->type == NEOLOGISM_CT_PROPERTY) {
+        evoc_update_property($term);
+      }
+
+      // update revision date of the vocabulary
+      _neologism_vocabulary_save($node->vocabulary);
+      break;
+    
+    case 'insert':
+      // load vocabulary node
+      $node->vocabulary = node_load($node->field_vocabulary[0][nid]);
+
+      // Insert the term into the evoc repository
+      $term = _neologism_make_evoc_term_array($node);
+      if ($node->type == NEOLOGISM_CT_CLASS) {
+        evoc_write_class($term);  
+      }
+      else if ($node->type == NEOLOGISM_CT_PROPERTY) {
+        evoc_write_property($term);
+      }
+
+      // update revision date of the vocabulary
+      _neologism_vocabulary_save($node->vocabulary);
+      break;
+   
+    case 'delete':
+      if ($node->type == NEOLOGISM_CT_CLASS) {
+        // Check for other classes or properties that reference
+        // this class as a superclass, disjoint class, domain or range.
+        _neologism_delete_evoc_references('field_superclass2', $node->qname, true);
+        _neologism_delete_evoc_references('field_disjointwith2', $node->qname, true);
+        _neologism_delete_evoc_references('field_domain2', $node->qname, true);
+        _neologism_delete_evoc_references('field_range2', $node->qname, true);
+        evoc_remove_class(array('prefix' => $node->vocabulary->prefix, 'id' => $node->title));
+      }
+      else if ($node->type == NEOLOGISM_CT_PROPERTY) {
+        // Check for other properties that reference
+        // this property as a superproperty or inverse.
+        _neologism_delete_evoc_references('field_superproperty2', $node->qname, true);
+        _neologism_delete_evoc_references('field_inverse2', $node->qname, true);
+        evoc_remove_property(array('prefix' => $node->vocabulary->prefix, 'id' => $node->title));
+      }
+
+      // update revision date of the vocabulary
+      _neologism_vocabulary_save($node->vocabulary);
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_removed_external_vocabulary($prefix)
+ *
+ * This hook is called by evoc module after a namespace is removed from its repository
+ *
+ * @param object $prefix removed
+ * @return 
+ */
+function neologism_removed_external_vocabulary($prefix) {
+  // We need to remove any references to terms from this vocabulary
+  // as superclasses, domains, ranges etc
+  _neologism_delete_evoc_references('field_superclass2', $prefix, false);
+  _neologism_delete_evoc_references('field_disjointwith2', $prefix, false);
+  _neologism_delete_evoc_references('field_domain2', $prefix, false);
+  _neologism_delete_evoc_references('field_range2', $prefix, false);
+  _neologism_delete_evoc_references('field_superproperty2', $prefix, false);
+  _neologism_delete_evoc_references('field_inverse2', $prefix, false);
+}
 
 /**
  * A menu wildcard loader for the %neologism_vocabulary wildcard. It loads
@@ -362,7 +822,7 @@ function _neologism_build_breadcrumb($path = null, $title = NULL) {
 }
 
 /**
- * Builds the form for adding terms (classes or properties).
+ * Menu callback for the "Add property" and "Add class" pages
  *
  * @param $type
  *   'neo_class' or 'neo_property'
@@ -392,6 +852,19 @@ function neologism_add_term($type, $vocabulary, $parent_node = null) {
 }
 
 /**
+ * Computes the namespace URI of a vocabulary from its $node->path and,
+ * optionally, its custom uri.
+ *
+ * @param
+ *   $path The vocabulary's $node->path (usually equal to its prefix)
+ * @param
+ *   $custom_uri The vocabulary's custom namespace URI, if any
+ */
+function _neologism_namespace_uri($path, $custom_uri = null) {
+  return $node->namespace_uri = empty($custom_uri) ? url($path, array('absolute' => TRUE)) . '#' : $custom_uri;
+}
+
+/**
  * Creates an RDF representation of a vocabulary.
  *
  * @param $node
@@ -400,7 +873,7 @@ function neologism_add_term($type, $vocabulary, $parent_node = null) {
  *   A NeologismRDFWriter that contains the triples
  */
 function &neologism_get_rdf_model($node) {
-  $required_namespaces = array($node->title, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'vann');
+  $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'vann');
   $classes = _neologism_get_all_classes($node, $required_namespaces);
   $properties = _neologism_get_all_properties($node, $required_namespaces);
   
@@ -419,16 +892,15 @@ function &neologism_get_rdf_model($node) {
   // export the ontology
   $doc = url($node->path, array('absolute' => true));
   $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
-  $rdf->triple_literal($doc, "dc:title", $node->field_title[0]['value']);
-  $rdf->triple_literal($doc, "dc:description", $node->field_abstract[0]['value']);
+  $rdf->triple_literal($doc, "dc:title", $node->title);
+  $rdf->triple_literal($doc, "dc:description", $node->abstract);
   $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
-  $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->title);
+  $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->prefix);
   $rdf->triple_uri($doc, "foaf:page", $doc . '.html');
   
   // authors and affiliations
-  foreach ($node->field_authors as $uid) {
-    if (is_null($uid['uid'])) continue;
-    $author = user_load($uid);
+  foreach ($node->authors as $uid) {
+    $author = user_load(array('uid' => $uid));
     $person = $doc . '#' . rawurlencode($author->name);
     $rdf->triple_uri($doc, "dc:creator", $person);
     $rdf->triple_qname($person, "rdf:type", 'foaf:Person');
@@ -492,15 +964,14 @@ function &neologism_get_rdf_model($node) {
     }
   }
   
-  if( !empty($node->field_additional_custom_rdf) ) {
+  if (!empty($node->custom_rdf)) {
   	// TODO If the vocabulary's Turtle or RDF/XML is viewed, and the custom RDF field is not empty, then the 
 		// content of that field will be parsed with a Turtle parser and loaded into the model that is used to 
 		// generate the Turtle or RDF/XML output. So the additional triples will show up when the model is 
 		// rendered.
 		// Add code to do such a thing here
   }
-  
-  
+
   return $rdf;
 }
 
@@ -528,7 +999,7 @@ function neologism_export_turtle($node) {
 function neologism_export_xml($node) {
 
   $xml = simplexml_load_string('<vocabulary/>');
-  $xml->addAttribute('id', $node->title);
+  $xml->addAttribute('id', $node->prefix);
 
   //export all classes
   $classes = _neologism_get_all_classes($node);
@@ -616,7 +1087,6 @@ function neologism_export_xml($node) {
  * Layout of the vocabulary using REST
  */
 function neologism_diagram_layout($node) {
-  $name = $node->title;
   if (isset($_POST['layout']) && drupal_valid_token($_POST['token'])) {
     //POST, so write layout
     $layout = $_POST['layout'];
@@ -638,8 +1108,8 @@ function neologism_diagram_layout($node) {
  * Get layout of a vocabulary
  */
 function neologism_get_layout($node) {
-  $result = db_fetch_array(db_query("select field_layout_value from {content_type_".NEOLOGISM_CT_VOCABULARY."} where nid = %d", $node->nid));
-  $layout = $result[field_layout_value];
+  $result = db_fetch_array(db_query("select diagram from {neologism_vocabulary} where nid = %d", $node->nid));
+  $layout = $result[diagram];
   return $layout;
 }
 
@@ -668,437 +1138,12 @@ function neologism_generate_layout($node) {
  * Write the layout of a vocabulary
  */
 function neologism_write_layout($node, $layout) {
-  db_query("update {content_type_".NEOLOGISM_CT_VOCABULARY."} set field_layout_value = '%s' where nid = %d", $layout, $node->nid);
+  db_query("update {neologism_vocabulary} set diagram = '%s' where nid = %d", $layout, $node->nid);
   content_clear_type_cache();
-}
-
-/**
- * Read/write diagram image image
- */
-function neologism_image($node) {
-  $name = $node->title;
-  $output = 'For the moment this feature is not available';
-  return $output;
-}
-
-/**
- * Implementation of hook_nodeapi().
- */
-function neologism_nodeapi(&$node, $op, $teaser, $page) {
-  switch ($op) {
-
-    case 'prepare':
-  		if( $node->type == NEOLOGISM_CT_CLASS ) {
-  			variable_set('previous_class_title', $node->title);
-      	
-  			// TODO working in this commented code, tvm guidocecilio
-  			/*
-  			if( !isset($node->vocabulary) ) {
-      		$vocabulary_nid = NULL;
-  				if( arg(2) == 'edit' ) {
-      			$vocabulary_nid = $node->field_vocabulary[0]['nid']; // there is different way to get this value
-      		}
-      		else if( arg(3) == 'parent' ) {
-      			$node_class = node_load(arg(4));
-      			$vocabulary_nid = $node_class->field_vocabulary[0]['nid'];
-      		}
-      		else if( isset($_GET['v']) ) {
-      			$vocabulary_nid = (int)$_GET['v'];
-      		}
-      		
-      		$vocabulary = node_load($vocabulary_nid);	
-      	}
-      	kpr($node);
-      	*/
-      	
-      }
-      else if( $node->type == NEOLOGISM_CT_PROPERTY ) {
-        variable_set('previous_property_title', $node->title);
-      }
- 
-  	  break;
-  	  
-    case 'load':
-
-      // Load various read-only values for more convenient access
-      if ($node->type == NEOLOGISM_CT_VOCABULARY) {
-
-        $node->prefix = $node->title;
-
-        $custom = $node->field_custom_namespace[0]['value'];
-        $node->namespace_uri = $custom ? $custom : url($node->path, array('absolute' => TRUE)) . '#';
-        $node->has_custom_namespace_uri = (boolean) $custom;
-
-        // this is a fast solution to show the vocabulary statistic to the user
-        $node->count_classes = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS));
-        $node->count_properties = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY));
-
-        $node->authors = array();
-        foreach($node->field_authors as $author) {
-          $author = user_load($author);
-          $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
-          if ($author->profile_neologism_homepage) {
-            $node->authors[] = l($name, $author->profile_neologism_homepage);
-          } else {
-            $node->authors[] = $name;
-          }
-        }
-      }
-
-      if ($node->type == NEOLOGISM_CT_CLASS || $node->type == NEOLOGISM_CT_PROPERTY) {
-        // Load the vocabulary of the class/property
-        $node->vocabulary = node_load($node->field_vocabulary[0]['nid']);
-        // Keep a copy of the body around because the original isn't accessible in themeing
-        $node->original_body = $node->body;
-        $node->qname = $node->vocabulary->prefix . ':' . $node->title;
-      } 
-
-      break;
-
-    case 'update':
-      if($node->type == NEOLOGISM_CT_VOCABULARY) {
-        _neologism_update_aliases($node);
-      }
-      elseif( $node->type == NEOLOGISM_CT_CLASS ) {
-        $term = array();
-        
-        // $node->update_by_reference is used when an update comes from other references than a normal update
-        $term['previous_id'] = !isset($node->update_by_reference) ? variable_get('previous_class_title', $node->title) : $node->title;
-        $term['id'] = $node->title;
-        $term['type'] = 'class';
-        $term['label'] = $node->field_label[0]['value']; 
-        $term['comment'] = $node->field_comment[0]['value'];
-        
-        // normalize the superclasses array to used by evoc's evoc_write_class() method
-        $term['superclasses'] = array();
-        if( !empty($node->field_superclass2) && is_array($node->field_superclass2) ) {
-          foreach ( $node->field_superclass2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term['superclasses'][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-      	$term[EVOC_DISJOINTS] = array();
-        if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
-          foreach ( $node->field_disjointwith2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DISJOINTS][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        // load vocabulary's node to get its title as namespace/prefix for this class 
-        $vocabulary = node_load($node->field_vocabulary[0][nid]);
-        $term['prefix'] = $vocabulary->title; 
-        
-        // update vocabulary revision
-        _neologism_vocabulary_save($vocabulary);
-        
-        evoc_update_class($term);  
-      }
-      elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
-      	$term = array();
-        // $node->update_by_reference is used when an update comes from other references than a normal update
-        $term['previous_id'] = !isset($node->update_by_reference) ? variable_get('previous_property_title', $node->title) : $node->title;
-        $term['id'] = $node->title;
-        $term['type'] = 'property';
-        $term['label'] = $node->field_label[0]['value']; 
-        $term['comment'] = $node->field_comment[0]['value'];
-        
-        // normaliza the evoc's fields
-        $term[EVOC_DOMAINS] = array();
-        if( !empty($node->field_domain2) && is_array($node->field_domain2) ) {
-          foreach ( $node->field_domain2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DOMAINS][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        $term[EVOC_RANGES] = array();
-        if( !empty($node->field_range2) && is_array($node->field_range2) ) {
-          foreach ( $node->field_range2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_RANGES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        $term[EVOC_SUPERPROPERTIES] = array();
-        if( !empty($node->field_superproperty2) && is_array($node->field_superproperty2) ) {
-          foreach ( $node->field_superproperty2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_SUPERPROPERTIES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        //kpr($form);
-      	$term[EVOC_INVERSES] = array();
-        if( !empty($node->field_inverse2) && is_array($node->field_inverse2) ) {
-          foreach ( $node->field_inverse2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_INVERSES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        // inverse normalizatio should goes here
-        $term[EVOC_INVERSE] = $node->field_inverse2[0]['evoc_term'];
- 
-        // load vocabulary's node to get its title as namespace/prefix for this class 
-        $vocabulary = node_load($node->field_vocabulary[0][nid]);
-        $term['prefix'] = $vocabulary->title; 
-        
-        // update vocabulary revision
-        _neologism_vocabulary_save($vocabulary);
-        
-        evoc_update_property($term);  
-      }
-      
-      break;
-    
-    case 'insert':
-      // Create a user friendly alias to the vocabulary node
-      if($node->type == NEOLOGISM_CT_VOCABULARY) {
-        _neologism_set_aliases($node);
-      }
-      
-      // Update evoc terms repository
-      // we don't need to worry about the existence of this term in the respository
-      // evoc module check this for us.
-      
-      // behavior to update evoc's classes list when a new class' content type is added.
-      elseif( $node->type == NEOLOGISM_CT_CLASS ) {
-        $term = array();
-        $term['id'] = $node->title;
-        $term['type'] = 'class';
-        $term['label'] = $node->field_label[0]['value']; 
-        $term['comment'] = $node->field_comment[0]['value'];
-        
-        // normalize the superclasses array to used by evoc's evoc_write_class() method
-        $term[EVOC_SUPERCLASSES] = array();
-        if( !empty($node->field_superclass2) && is_array($node->field_superclass2) ) {
-          foreach ( $node->field_superclass2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_SUPERCLASSES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-      	$term[EVOC_DISJOINTS] = array();
-        if( !empty($node->field_disjointwith2) && is_array($node->field_disjointwith2) ) {
-          foreach ( $node->field_disjointwith2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DISJOINTS][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        // load vocabulary's node to get its title as namespace/prefix for this class 
-        $vocabulary = node_load($node->field_vocabulary[0][nid]);
-        $term['prefix'] = $vocabulary->title; 
-        
-        evoc_write_class($term);  
-      }
-      
-      // behavior to update evoc's properties list when a new property's content type is added 
-      elseif( $node->type == NEOLOGISM_CT_PROPERTY ) {
-        $term = array();
-        $term['id'] = $node->title;
-        $term['type'] = 'property';
-        $term['label'] = $node->field_label[0]['value']; 
-        $term['comment'] = $node->field_comment[0]['value'];
-        
-        // normaliza the evoc's fields
-        $term[EVOC_DOMAINS] = array();
-        if( !empty($node->field_domain2) && is_array($node->field_domain2) ) {
-          foreach ( $node->field_domain2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_DOMAINS][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        $term[EVOC_RANGES] = array();
-        if( !empty($node->field_range2) && is_array($node->field_range2) ) {
-          foreach ( $node->field_range2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_RANGES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-        $term[EVOC_SUPERPROPERTIES] = array();
-        if( !empty($node->field_superproperty2) && is_array($node->field_superproperty2) ) {
-          foreach ( $node->field_superproperty2 as $value ) {
-            if( !empty($value['evoc_term']) ) {
-              $term[EVOC_SUPERPROPERTIES][] = $value['evoc_term'];
-            }
-          }
-        }
-        
-      	//kpr($form);
-      	$term[EVOC_INVERSE] = $node->field_inverse2[0]['evoc_term'];
- 
-        // load vocabulary's node to get its title as namespace/prefix for this class 
-        $vocabulary = node_load($node->field_vocabulary[0][nid]);
-        $term['prefix'] = $vocabulary->title; 
-        
-        evoc_write_property($term);  
-      }
-
-      break;
-    
-   
-    
-    case 'delete':
-      // Deletion of the aliases when deleting a vocabulary
-      if($node->type == NEOLOGISM_CT_VOCABULARY) {
-        _neologism_unset_aliases($node);
-        _neologism_on_deleted_vocabulary_node($node);
-      } 
-      else if($node->type == NEOLOGISM_CT_CLASS) {
-        _neologism_on_deleted_class_node($node);
-      }
-      else if($node->type == NEOLOGISM_CT_PROPERTY) {
-        _neologism_on_deleted_property_node($node);
-      }
-      
-      break;
-
-    default:
-  }
-
-}
-
-/**
- * hook_removed_external_vocabulary($prefix)
- * this hook is called by evoc module after a namespace is removed from its repository
- * @param object $prefix removed
- * @return 
- */
-function neologism_removed_external_vocabulary($prefix) {
-  $classes = db_query(db_rewrite_sql("select nid from {node} where type = '%s'"), NEOLOGISM_CT_CLASS);
-  while ( $class = db_fetch_object($classes) ) {
-    $nclass = (object) node_load($class->nid);
-    $need_update = FALSE;
-    
-    if( isset($nclass->field_superclass2[0]['evoc_term']) ) {
-      foreach ( $nclass->field_superclass2 as &$value ) {
-        $qname_splitted = explode(':', $value['evoc_term']); 
-        if( $qname_splitted[0] == $prefix ) {
-          $value['evoc_term'] = NULL;
-          $need_update = TRUE;
-        }
-      }
-    }
-    
-    if( isset($nclass->field_disjointwith2[0]['evoc_term']) ) {
-      foreach ( $nclass->field_disjointwith2 as &$value ) {
-        $qname_splitted = explode(':', $value['evoc_term']);
-        if( $qname_splitted[0] == $prefix ) {
-          $value['evoc_term'] = NULL;
-          $need_update = TRUE;
-        }
-      }
-    }
-    
-    if ( $need_update ) {
-      $nclass->update_by_reference = TRUE;
-      node_save($nclass);
-    }
-    
-  }
-  
-  // check for properties
-  $properties = db_query(db_rewrite_sql("select nid from {node} where type = '%s'"), NEOLOGISM_CT_PROPERTY); 
-  while( $property = db_fetch_object($properties) ) {
-    // if there exist any class that has $class as superclass change it to default superclass rdfs:Resource
-    $nproperty = (object) node_load($property->nid);
-    $need_update = FALSE;
-    
-    if( isset($nproperty->field_domain2[0]['evoc_term']) ) {
-      foreach($nproperty->field_domain2 as &$value) {
-        $qname_splitted = explode(':', $value['evoc_term']);
-        if( $qname_splitted[0] == $prefix ) {
-          $value['evoc_term'] = NULL;
-          $need_update = TRUE;
-        }
-      }
-    }
-    
-    if( isset($nproperty->field_range2[0]['evoc_term']) ) {
-      foreach($nproperty->field_range2 as &$value) {
-        $qname_splitted = explode(':', $value['evoc_term']);
-        if( $qname_splitted[0] == $prefix ) {
-          $value['evoc_term'] = NULL;
-          $need_update = TRUE;
-        }
-      }
-    }
-    
-    if( isset($nproperty->field_superproperty2[0]['evoc_term']) ) {
-      foreach($nproperty->field_superproperty2 as &$value) {
-        $qname_splitted = explode(':', $value['evoc_term']);
-        if( $qname_splitted[0] == $prefix ) {
-          $value['evoc_term'] = NULL;
-          $need_update = TRUE;
-        }
-      }
-    }
-    
-    if( $need_update ) {
-      $nclass->update_by_reference = TRUE;
-      node_save($nproperty);
-    }
-  } // check for properties
 }
 
 //---------------------------------------------------------------------------------------------------
 // private functions section
-
-/**
- * update the url_alias table the alias 
- * @param object $node
- * @return 
- */
-function _neologism_update_aliases($node) {
-  _neologism_unset_aliases($node);
-  _neologism_set_aliases($node);
-}
-
-/**
- * Create a alias in the url_alias table for the $node 
- * @param object $node
- * @return 
- */
-function _neologism_set_aliases($node) {
-  $path = check_plain($node->title);
-  path_set_alias("node/$node->nid", $path, NULL, $node->language );
-  path_set_alias("node/$node->nid/html", $path.'.html', NULL, $node->language);
-  path_set_alias("node/$node->nid/rdf", $path.'.rdf', NULL, $node->language);
-  path_set_alias("node/$node->nid/ttl", $path.'.ttl', NULL, $node->language);
-  path_set_alias("node/$node->nid/ttl", $path.'.n3', NULL, $node->language);
-  path_set_alias("node/$node->nid/xml", $path.'.xml', NULL, $node->language);
-  path_set_alias("node/$node->nid/layout", $path.'.layout', NULL, $node->language);
-}
-
-/**
- * Remove from the url_alias table the alias create for each vocabulary's node
- * @param object $node
- * @return 
- */
-function _neologism_unset_aliases($node) {
-  path_set_alias(NULL, $node->path, NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.html', NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.rdf', NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.ttl', NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.n3', NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.xml', NULL, $node->language);
-  path_set_alias(NULL, $node->path.'.layout', NULL, $node->language);
-}
 
 /**
  * Get all properties in a vocabulary
@@ -1235,217 +1280,188 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
   return $classes;
 }
 
+/**
+ * Builds an evoc-style representation of a class
+ * or property node for use with evoc_class_write(),
+ * evoc_property_update() and so on
+ *
+ * @param $node
+ *   A class or property node
+ * @return A term array as expected by evoc
+ */
+function _neologism_make_evoc_term_array(&$node) {
+  $term = array();
+  $term['prefix'] = $node->vocabulary->prefix; 
+  $term['previous_prefix'] = $node->vocabulary->original_prefix; 
+  $term['id'] = $node->title;
+  $term['previous_id'] = $node->original_id;
+  $term['label'] = $node->field_label[0]['value']; 
+  $term['comment'] = $node->field_comment[0]['value'];
+  if ($node->type == NEOLOGISM_CT_CLASS) {
+    $term['type'] = 'class';
+    $term[EVOC_SUPERCLASSES] = _neologism_list_evoc_references_from_field($node, 'field_superclass2');
+    $term[EVOC_DISJOINTS] = _neologism_list_evoc_references_from_field($node, 'field_disjointwith2');
+  } elseif ($node->type == NEOLOGISM_CT_PROPERTY) {
+    $term['type'] = 'property';
+    $term[EVOC_DOMAINS] = _neologism_list_evoc_references_from_field($node, 'field_domain2');
+    $term[EVOC_RANGES] = _neologism_list_evoc_references_from_field($node, 'field_range2');
+    $term[EVOC_SUPERPROPERTIES] = _neologism_list_evoc_references_from_field($node, 'field_superproperty2');
+    $term[EVOC_INVERSES] = _neologism_list_evoc_references_from_field($node, 'field_inverses2');
+  }
+  return $term;
+}
 
 /**
- * Callback launched after a vocabulary node has been deleted. Used in neologism_nodeapi() hook
- * @return none
- * 
- * Handling CCK nodereference orphaned nodes when the parent is deleted?
- * http://drupal.org/node/364539
- * 
- * Inconsistent site left after deleting a parent referenced in a nodereference field
- * http://drupal.org/node/362649 
+ * Returns a flat array of QNames from the values of a given CCK
+ * evoc_reference field on a node
+ *
+ * @param $node
+ *   A class or property node
+ * @param $field
+ *   The name of a multi-valued CCK evoc_reference field
+ * @return
+ *   Array of qnames
  */
-function _neologism_on_deleted_vocabulary_node($node) {
-  //$field_name = 'field_vocabulary';
-  //$field = content_fields($field_name); // $field_name is the name of the nodereference field.
-  //$db_info = content_database_info($field);
-  //$query = 'SELECT nid FROM {'. $db_info['table'] . '} WHERE '. $field_name .'_nid = %d';
-  //$result = db_query($query, $node->nid);
-  //while ($obj = db_fetch_object($result)) 
-  
-  // remove all classes belonging to this vocabulary
-  $classes = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS);
-  while ($class = db_fetch_object($classes)) {
-    // if there exist any class that has $class as superclass change it to default superclass rdfs:Resource
-    
-    // we need to delete the node without usign node_delete because there is no way to check the vocabulary
-    // it belong
-    //node_delete($class->nid);
-    
-    // same code that node_delete but without execute any callback
-    $cnode = node_load($class->nid);
-
-    if (node_access('delete', $cnode)) {
-      db_query('DELETE FROM {node} WHERE nid = %d', $cnode->nid);
-      db_query('DELETE FROM {node_revisions} WHERE nid = %d', $cnode->nid);
-  
-      // Clear the page and block caches.
-      cache_clear_all();
-  
-      // Remove this node from the search index if needed.
-      if (function_exists('search_wipe')) {
-        search_wipe($cnode->nid, 'node');
-      }
-      watchdog('content', '@type: deleted %title.', array('@type' => $cnode->type, '%title' => $cnode->title));
-      drupal_set_message(t('@type %title has been deleted.', array('@type' => node_get_types('name', $cnode), '%title' => $cnode->title)));
+function _neologism_list_evoc_references_from_field(&$node, $field) {
+  $result = array();
+  if (empty($node->$field) || !is_array($node->$field)) return $result;
+  foreach ($node->$field as $value) {
+    if (!empty($value['evoc_term']) ) {
+      $result[] = $value['evoc_term'];
     }
-    
-    // check for classes dependence
-    _neologism_on_deleted_class_node($cnode, $node->title);
   }
-  
-  // remove all properties belonging to this vocabulary 
-  $properties = db_query(db_rewrite_sql("SELECT n.nid, n.title FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
-  while ($property = db_fetch_object($properties)) {
-    // same code that node_delete but without execute any callback
-    $pnode = node_load($property->nid);
+  return $result;
+}
 
-    if (node_access('delete', $pnode)) {
-      db_query('DELETE FROM {node} WHERE nid = %d', $pnode->nid);
-      db_query('DELETE FROM {node_revisions} WHERE nid = %d', $pnode->nid);
-  
-      // Clear the page and block caches.
-      cache_clear_all();
-  
-      // Remove this node from the search index if needed.
-      if (function_exists('search_wipe')) {
-        search_wipe($pnode->nid, 'node');
-      }
-      watchdog('content', '@type: deleted %title.', array('@type' => $pnode->type, '%title' => $pnode->title));
-      drupal_set_message(t('@type %title has been deleted.', array('@type' => node_get_types('name', $pnode), '%title' => $pnode->title)));
+/**
+ * Updates references to a certain namespace in a
+ * CCK field of a class or property node.
+ * For example, invoking with $field = 'field_superclass2'
+ * and $old_prefix = 'foaf:' and $new_prefix = 'f' would
+ * change 'foaf:Person' to 'f:Person' if it is a superclass
+ * of the node passed as first argument.
+ *
+ * @param &$node
+ *   A class or property node
+ * @param $field
+ *   name of a CCK field of type evoc_reference
+ * @param $old_prefix
+ *   Prefix to be changed anywhere in the field
+ * @param $new_prefix
+ *   Prefix to be used as replacement
+ */
+function _neologism_update_evoc_references(&$node, $field, $old_prefix, $new_prefix) {
+  if (!$node->$field) return;
+  foreach ($node->$field as &$x) {
+    if (substr($x['evoc_term'], 0, strlen($old_prefix) + 1) == "$old_prefix:") {
+      $x['evoc_term'] = $new_prefix . ':' . substr($x['evoc_term'], strlen($old_prefix) + 1);
     }
-    
-    // check for properies dependence
-    _neologism_on_deleted_property_node($pnode, $node->title);
   }
 }
 
 /**
- * 
+ * Deletes all references to certain terms from CCK fields.
+ * The terms are given by qname or by namespace prefix.
+ * For example, invoking with $field = 'field_superclass2'
+ * and $qname = 'foaf:Person' would remove foaf:Person as
+ * the superclass of any class.
+ *
+ * @param $field
+ *   name of a CCK field of type evoc_reference
+ * @param $prefix_or_qname
+ *   Prefix or QName to be deleted anywhere from the field
+ * @param $by_qname
+ *   TRUE: $prefix_or_qname is a qname; FALSE: it's a prefix
+ */
+function _neologism_delete_evoc_references($field, $prefix_or_qname, $by_qname) {
+  if ($by_qname) {
+    $sql = 'SELECT nid FROM {content_' . $field . '} WHERE ' . $field . "_evoc_term='%s'";
+  }
+  else {
+    $sql = 'SELECT nid FROM {content_' . $field . '} WHERE ' . $field . "_evoc_term LIKE '%s:%'";
+  }
+  $result = db_query(db_rewrite_sql($sql), $prefix_or_qname);
+  while ($o = db_fetch_object($result)) {
+    $node = node_load($o->nid);
+    foreach ($node->$field as &$x) {
+      if (($by_qname && $x['evoc_term'] == $prefix_or_qname) || (!$by_qname && substr($x['evoc_term'], 0, strlen($prefix_or_qname) + 1) == "$prefix_or_qname:")) {
+        $x['evoc_term'] = null;
+      }
+    }
+    node_save($node);
+  }
+}
+
+/**
+ * Update the url_alias table when a vocabulary node's prefix has changed
+ *
  * @param object $node
- * @param object $vocabulary_title [optional]
  * @return 
  */
-function _neologism_on_deleted_class_node($node, $vocabulary_title = NULL) {
-  // at this point the current class has been removed. 
-  // now we have to check for other classes or properties that might be subClasses or disjoints 
-  // or properties that might has been using it as domain or range.
-  
-  if( !$vocabulary_title ) {
-    $vocabulary_title = db_fetch_object( db_query( db_rewrite_sql("SELECT n.title FROM {node} n WHERE n.nid = %d"), $node->field_vocabulary[0]['nid']) );
-    $vocabulary_title = $vocabulary_title->title;  
-  }
-  
-  // check for classes
-  $classes = db_query(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.type = '%s'"), NEOLOGISM_CT_CLASS); 
-  while( $class = db_fetch_object($classes) ) {
-    // if there exist any class that has $class as superclass change it to default superclass rdfs:Resource
-    $nclass = (object) node_load($class->nid);
-    $need_update = FALSE;
-    
-    foreach($nclass->field_superclass2 as &$value) {
-      if( $value['evoc_term'] == $vocabulary_title.':'.$node->title ) {
-        // if this is the only one superclass assign it the default superclass
-        if( count($nclass->field_superclass2) > 0 ) {
-          $value['evoc_term'] = $node->field_superclass2[0]['evoc_term'];
-        }
-        else {
-          $value['evoc_term'] = NULL;
-        }
-        $need_update = TRUE;
-      }
-    }
-    
-    foreach($nclass->field_disjointwith2 as &$value) {
-      if( $value['evoc_term'] == $vocabulary_title.':'.$node->title ) {
-        $value['evoc_term'] = NULL;
-        $need_update = TRUE;
-      }
-    }
-    
-    if( $need_update ) {
-      $nclass->update_by_reference = TRUE;
-      node_save($nclass);
-    }
-    
-  }
-  
-  // check for properties
-  $properties = db_query(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.type = '%s'"), NEOLOGISM_CT_PROPERTY); 
-  while( $property = db_fetch_object($properties) ) {
-    // if there exist any class that has $class as superclass change it to default superclass rdfs:Resource
-    $nproperty = (object) node_load($property->nid);
-    $need_update = FALSE;
-    
-    foreach($nproperty->field_domain2 as &$value) {
-      if( $value['evoc_term'] == $vocabulary_title.':'.$node->title ) {
-        $value['evoc_term'] = NULL;
-        $need_update = TRUE;
-      }
-    }
-    
-    foreach($nproperty->field_range2 as &$value) {
-      if( $value['evoc_term'] == $vocabulary_title.':'.$node->title ) {
-        $value['evoc_term'] = NULL;
-        $need_update = TRUE;
-      }
-    }
-    
-    if( $need_update ) {
-      $nclass->update_by_reference = TRUE;
-      node_save($nproperty);
-    }
-  } // check for properties
-  
-  // remove the class for evoc repository
-  $term = array();
-  $term['id'] = $node->title;
-  $term['prefix'] = $vocabulary_title;
-  evoc_remove_class($term);
+function _neologism_update_aliases($node) {
+  _neologism_unset_aliases($node);
+  _neologism_set_aliases($node);
 }
 
 /**
- * 
- * @param object $node
- * @param object $vocabulary_title [optional]
+ * Create aliases in the url_alias table for a vocabulary node
+ *
+ * @param object $node A vocabulary node
  * @return 
  */
-function _neologism_on_deleted_property_node($node, $vocabulary_title = NULL) {
-  watchdog('content', '@type: deleted %title.', array('@type' => $node->type, '%title' => $node->title));
-  drupal_set_message(t('@type %title has been deleted.', array('@type' => node_get_types('name', $node), '%title' => $node->title)));
-  
-  if( !$vocabulary_title ) {
-    $vocabulary_title = db_fetch_object( db_query( db_rewrite_sql("SELECT n.title FROM {node} n WHERE n.nid = %d"), $node->field_vocabulary[0]['nid']) );
-    $vocabulary_title = $vocabulary_title->title;  
-  }
-  
-  // at this point the current property node has been removed.Now we have to check for other properties
-  // that might be subPropertyOf that class.
-  // check for properties
-  $properties = db_query(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.type = '%s'"), NEOLOGISM_CT_PROPERTY); 
-  while( $property = db_fetch_object($properties) ) {
-    // if there exist any class that has $class as superclass change it to default superclass rdfs:Resource
-    $nproperty = (object) node_load($property->nid);
-    $need_update = FALSE;
-    
-    foreach($nproperty->field_superproperty2 as &$value) {
-      if( $value['evoc_term'] == $vocabulary_title.':'.$node->title ) {
-        $value['evoc_term'] = NULL;
-        $need_update = TRUE;
-      }
-    }
-    
-    if( $need_update ) {
-      $nclass->update_by_reference = TRUE;
-      node_save($nproperty);
-    }
-  } 
-  
-   // remove the class for evoc repository
-  $term = array();
-  $term['id'] = $node->title;
-  $term['prefix'] = $vocabulary_title;
-  evoc_remove_property($term);
+function _neologism_set_aliases($node) {
+  $path = check_plain($node->path);
+  path_set_alias("node/$node->nid", $path, NULL, $node->language);
+  path_set_alias("node/$node->nid/html", $path.'.html', NULL, $node->language);
+  path_set_alias("node/$node->nid/rdf", $path.'.rdf', NULL, $node->language);
+  path_set_alias("node/$node->nid/ttl", $path.'.ttl', NULL, $node->language);
+  path_set_alias("node/$node->nid/ttl", $path.'.n3', NULL, $node->language);
+  path_set_alias("node/$node->nid/xml", $path.'.xml', NULL, $node->language);
+  path_set_alias("node/$node->nid/layout", $path.'.layout', NULL, $node->language);
 }
 
+/**
+ * Remove from the url_alias table the aliases created for a vocabulary node
+ *
+ * @param object $node
+ * @return 
+ */
+function _neologism_unset_aliases($node) {
+  path_set_alias("node/$node->nid", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/html", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/rdf", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/ttl", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/ttl", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/xml", NULL, NULL, $node->language);
+  path_set_alias("node/$node->nid/layout", NULL, NULL, $node->language);
+}
+
+/**
+ * Custom form validation function for IDs (prefixes, class names, property names).
+ * To be used with $form['my_element']['#element_validate'] = ...
+ */
+function _neologism_validate_id($element, &$form_state) {
+  if (!empty($element['#value']) && !_neologism_is_valid_id($element['#value'])) {
+    form_error($element,
+        t("%id is not a valid identifier. It should start with a letter, and should contain only letters, numbers, dashes, and underscores.",
+            array('%id' => $element['#value'])));
+    return false;
+  }
+}
+
+/**
+ * Verifies a string for use as an XML NCName, that is, it
+ * can be used in a QName.
+ */
 function _neologism_is_valid_id($string) {
-  return ( ereg("^[a-zA-Z_]+[a-zA-Z0-9._-]*", $string, $reg) == strlen($string)); 
-  //return (preg_match("/^[a-zA-Z_]+[a-zA-Z0-9._-]*/", $string) == strlen($string));
+  return (preg_match("/^[a-zA-Z_]+[a-zA-Z0-9._-]*$/", $string));
 }
 
 /**
  * This function is a wrapper function to fix the bug in rdfapi when localpart contain the prefix #
+ *
+ * @todo: Is this still used?
+ *
  * @param object $uri
  * @return 
  */

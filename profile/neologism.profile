@@ -63,7 +63,7 @@ function neologism_profile_details() {
  */
 function neologism_profile_task_list() {
 	return array(
-		'building-neologism-perspective' => st('Building Neologism\'s Perspective')
+		'building-neologism-perspective' => st('Prepare Neologism')
 	);
 }
 
@@ -218,7 +218,6 @@ function neologism_profile_tasks(&$task, $url) {
   	$res = db_fetch_object(db_query('select rid from {role} where name = "authenticated user"'));
     $permissions = join(', ', array_merge(
       array('access content'),
-      array('create url aliases'),
       array('create neo_vocabulary content', 'delete any neo_vocabulary content', 'delete own neo_vocabulary content', 'edit any neo_vocabulary content', 'edit own neo_vocabulary content'),
       array('create neo_class content', 'delete any neo_class content', 'delete own neo_class content', 'edit any neo_class content', 'edit own neo_class content'),
       array('create neo_property content', 'delete any neo_property content', 'delete own neo_property content', 'edit any neo_property content', 'edit own neo_property content'),

@@ -9,10 +9,8 @@
     <?php } ?>
   </p>
   <dl class="term-details">
-    <?php if ($has_custom_namespace) { ?>
-      <dt>URI:</dt>
-      <dd><?php print l($term_uri, $term_uri); ?></dd>
-    <?php } ?>
+    <dt>URI:</dt>
+    <dd><?php print l($term_uri, $term_uri); ?></dd>
     <?php if ($types) { ?>
       <dt><?php print count($types) == 1 ? t('Type') : t('Types'); ?>:</dt>
       <dd><?php print join(', ', $types); ?></dd>

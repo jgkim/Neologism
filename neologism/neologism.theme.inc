@@ -9,31 +9,43 @@
  * template. Used on vocabulary overview pages.
  */
 function neologism_preprocess_node(&$variables) {
-  if ($variables['type'] != NEOLOGISM_CT_CLASS && $variables['type'] != NEOLOGISM_CT_PROPERTY) return;
-  $variables['is_class'] = $variables['type'] == NEOLOGISM_CT_CLASS;
-  $variables['template_file'] = 'node-neo_term';
-  $variables['term_uri'] = $variables['vocabulary']->namespace_uri . $variables['title'];
-  $variables['qname'] = $variables['vocabulary']->prefix . ':' . $variables['title'];
-  $variables['term_label'] = $variables['field_label'][0]['value'];
-  $variables['term_comment'] = $variables['field_comment'][0]['value'];
-  $variables['has_custom_namespace'] = !empty($variables['vocabulary']->field_custom_namespace[0]['value']);
-  $variables['original_body'] = check_markup($variables['original_body'], $node->format, FALSE);
-  $variables['superclasses'] = _neologism_themed_qnames($variables['field_superclass2']);
-  $variables['disjoints'] = _neologism_themed_qnames($variables['field_disjointwith2']);
-  $variables['domains'] = _neologism_themed_qnames($variables['field_domain2']);
-  $variables['ranges'] = _neologism_themed_qnames($variables['field_range2']);
-  $variables['inverses'] = _neologism_themed_qnames($variables['field_inverse2']);
-  $variables['superproperties'] = _neologism_themed_qnames($variables['field_superproperty2']);
-  $variables['types'] = array();
-  if (!empty($variables['field_fp'][0]['value'])) {
-    $variables['types'][] = trim(theme('neologism_qname', 'owl:FunctionalProperty'));
+  if ($variables['type'] == 'neo_vocabulary') {
+    $variables['count_classes'] = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $variables['nid'], NEOLOGISM_CT_CLASS));
+    $variables['count_properties'] = db_result(db_query(db_rewrite_sql("SELECT COUNT(*) FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $variables['nid'], NEOLOGISM_CT_PROPERTY));
+    $variables['author_list'] = array();
+    foreach($variables['authors'] as $uid) {
+      $author = user_load($uid);
+      $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
+      if ($author->profile_neologism_homepage) {
+        $variables['author_list'][] = l($name, $author->profile_neologism_homepage);
+      }
+      else {
+        $variables['author_list'][] = l($name, 'user/' . $uid);
+      }
+    }
   }
-  if (!empty($variables['field_ifp'][0]['value'])) {
-    $variables['types'][] = trim(theme('neologism_qname', 'owl:InverseFunctionalProperty'));
-  }
-  if ($variables['page']) {
-    drupal_set_title($variables['qname']);
-    drupal_set_breadcrumb(_neologism_build_breadcrumb($variables['vocabulary']->path, $variables['vocabulary']->title));
+  else if ($variables['type'] == NEOLOGISM_CT_CLASS || $variables['type'] == NEOLOGISM_CT_PROPERTY) {
+    $variables['is_class'] = $variables['type'] == NEOLOGISM_CT_CLASS;
+    $variables['template_file'] = 'node-neo_term';
+    $variables['term_uri'] = $variables['vocabulary']->namespace_uri . $variables['title'];
+    $variables['qname'] = $variables['vocabulary']->prefix . ':' . $variables['title'];
+    $variables['term_label'] = $variables['field_label'][0]['value'];
+    $variables['term_comment'] = $variables['field_comment'][0]['value'];
+    $variables['has_custom_namespace'] = !empty($variables['vocabulary']->field_custom_namespace[0]['value']);
+    $variables['original_body'] = check_markup($variables['original_body'], $variables['format'], FALSE);
+    $variables['superclasses'] = _neologism_themed_qnames($variables['field_superclass2']);
+    $variables['disjoints'] = _neologism_themed_qnames($variables['field_disjointwith2']);
+    $variables['domains'] = _neologism_themed_qnames($variables['field_domain2']);
+    $variables['ranges'] = _neologism_themed_qnames($variables['field_range2']);
+    $variables['inverses'] = _neologism_themed_qnames($variables['field_inverse2']);
+    $variables['superproperties'] = _neologism_themed_qnames($variables['field_superproperty2']);
+    $variables['types'] = array();
+    if (!empty($variables['field_fp'][0]['value'])) {
+      $variables['types'][] = trim(theme('neologism_qname', 'owl:FunctionalProperty'));
+    }
+    if (!empty($variables['field_ifp'][0]['value'])) {
+      $variables['types'][] = trim(theme('neologism_qname', 'owl:InverseFunctionalProperty'));
+    }
   }
 }
 
@@ -91,14 +103,6 @@ function neologism_export_html($node) {
     'title' => 'RDF Schema (in Turtle)',
   ));
 
-  // TODO: finish to clean all the old code using the $node variable by the $vocabulary
-	$vocabulary_title = check_plain($node->field_title[0]['value']);
-	$vocabulary = new stdClass();
-	$vocabulary->id = $node->title;
-  $vocabulary->title = $node->field_title[0]['value'];
-  $vocabulary->description = $node->body;
-  $vocabulary->authors = $node->field_authors;
-  
   $output = '<div class="vocabulary-view">';
   
   $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/rdf_w3c_icon.48.gif', t('RDF/XML version of this vocabulary.'), t('RDF/XML version of this vocabulary.'));
@@ -107,25 +111,21 @@ function neologism_export_html($node) {
   $link2 = l($image, $node->path.'.ttl', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
-  // clear the title so we can print our formatted title
-  drupal_set_title($vocabulary_title);
-  
   $classes = _neologism_get_all_classes($node);
   usort($classes, '_neologism_cmp_2array_alphabetically');
   $properties = _neologism_get_all_properties($node);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
   $html = ''; $author_count = 0;
-  foreach($node->field_authors as $author) {
-    if (!$author['uid']) continue;
+  foreach($node->authors as $uid) {
     $author_count++;
-    $author = user_load($author);
+    $author = user_load(array('uid' => $uid));
     $html .= '<div id="author-value">';
     $name = empty($author->profile_neologism_fullname) ? $author->name : $author->profile_neologism_fullname;
     if ($author->profile_neologism_homepage) {
       $html .= l($name, $author->profile_neologism_homepage);
     } else {
-      $html .= $name;
+      $html .= l($name, 'user/' . $uid);
     }
     if ($author->profile_neologism_affiliation) {
       if ($author->profile_neologism_affiliation_homepage) {
@@ -148,8 +148,8 @@ function neologism_export_html($node) {
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$node->namespace_uri.'</div></div>';
 
   // Abstract
-  if ($node->field_abstract[0]['value']) {
-    $output .= '<div id="abstract" class="neologism field"><div class="block title"><h3>Abstract</h3></div> ' . $node->field_abstract[0]['value'] . ' </div>';
+  if ($node->abstract) {
+    $output .= '<div id="abstract" class="neologism field"><div class="block title"><h3>Abstract</h3></div> ' . $node->abstract . ' </div>';
   }
 
   // Content type in urls are with - instead of _
@@ -158,7 +158,6 @@ function neologism_export_html($node) {
   $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
   
   //Vocabulary at glance
-  //$output .= '<h2 id="sec_glance" class="neologism">'.$vocabulary_title.' at a glance</h2>';
   if ($classes || $properties) {
     $output .= '<h2 id="sec_glance" class="neologism">All terms at a glance</h2>';
     $output .= '<div id="atglance">';
@@ -199,7 +198,7 @@ function neologism_export_html($node) {
   }
   
   //ext_load_library();
-  drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->title)), 'setting');
+  drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->prefix)), 'setting');
   
   if ($classes) {
     $output .= '<div id="class-tree" ></div>';
@@ -255,8 +254,7 @@ function neologism_export_html($node) {
                 allowScriptAccess="sameDomain"
                 type="application/x-shockwave-flash"
                 pluginspage="http://www.adobe.com/go/getflashplayer"
-                flashVars="'.$flex_params.'">
-            </embed>
+                flashVars="'.$flex_params.'" />
     </object>
   </div>';
   

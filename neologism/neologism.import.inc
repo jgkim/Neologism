@@ -184,7 +184,7 @@ function neologism_import_form_submit($form, &$form_state) {
     // The import function should have set a drupal error if it returned false.
     return false;
   }
-  drupal_set_message(t('The vocabulary has been successfully imported with %classes classes and %properties properties.',
+  drupal_set_message(t('Imported vocabulary with %classes classes and %properties properties.',
       array('%classes' => count($vocabulary['classes']), '%properties' => count($vocabulary['properties']))));
 
   drupal_goto($vocabulary['prefix']);
@@ -244,17 +244,17 @@ function _neologism_save_imported_node($node) {
 function _neologism_new_node_vocabulary(array $vocabulary) {
   
   // check if there is some voc with the same id
-  $title = db_result(db_query(db_rewrite_sql("select title from {node} where title = '%s' and type = '%s'"), $vocabulary['prefix'], NEOLOGISM_CT_VOCABULARY));
-  if ($title && $title == $vocabulary['prefix']) {
+  $prefix = db_result(db_query(db_rewrite_sql("select prefix from {neologism_vocabulary} where prefix = '%s'"), $vocabulary['prefix']));
+  if ($prefix && $prefix == $vocabulary['prefix']) {
     drupal_set_message(t("Prefix %prefix is already in use.", array('%prefix' => $vocabulary['prefix'])), 'error');
     return null;
   }
 
-  $node = _neologism_prepare_imported_node(NEOLOGISM_CT_VOCABULARY, $vocabulary['prefix']);
-  $node->field_title[0]['value'] = isset($vocabulary['title']) ? $vocabulary['title'] : 'Imported vocabulary';
-  $node->field_authors[0]['uid'] = $node->uid;
-  $node->field_abstract[0]['value'] = check_plain($vocabulary['description']);
-  $node->field_custom_namespace[0]['value'] = $vocabulary['uri'];
+  $node = _neologism_prepare_imported_node(NEOLOGISM_CT_VOCABULARY, isset($vocabulary['title']) ? $vocabulary['title'] : 'Imported vocabulary');
+  $node->prefix = $vocabulary['prefix'];
+  $node->authors = array($node->uid);
+  $node->abstract = check_plain($vocabulary['description']);
+  $node->custom_namespace = $vocabulary['uri'];
   $node->teaser = $vocabulary['body'];
   $node->body = $vocabulary['body'];
   $node->promote = 1;

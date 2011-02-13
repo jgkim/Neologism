@@ -53,6 +53,7 @@ $content['fields']  = array (
       'sparql' => 0,
       'page' => false,
       'story' => false,
+      'vocabulary_documentation' => false,
     ),
     'op' => 'Save field settings',
     'module' => 'nodereference',
@@ -91,7 +92,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'text_textfield',
     'change' => 'Change basic information',
-    'weight' => '-8',
+    'weight' => '-3',
     'rows' => '1',
     'size' => 60,
     'description' => 'A human-readable name for the property.',
@@ -155,7 +156,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'text_textarea',
     'change' => 'Change basic information',
-    'weight' => '-7',
+    'weight' => '-2',
     'rows' => '2',
     'size' => '255',
     'description' => 'A plain text description of the property.',
@@ -224,7 +225,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'optionwidgets_onoff',
     'change' => 'Change basic information',
-    'weight' => '-6',
+    'weight' => '1',
     'description' => 'Check this box, if your property is an FP, i.e. when you use this property in a statement, then the subject of the statement uniquely determines its object.',
     'default_value' => 
     array (
@@ -291,7 +292,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'optionwidgets_onoff',
     'change' => 'Change basic information',
-    'weight' => '-5',
+    'weight' => '2',
     'description' => 'Check this box, if your property is an IFP, i.e. the object of a statment that uses your property uniquely determines its subject.',
     'default_value' => 
     array (
@@ -358,7 +359,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-4',
+    'weight' => '3',
     'description' => 'If having this property makes something belong to a certain class, then the class should be selected here.',
     'default_value' => 
     array (
@@ -424,7 +425,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-3',
+    'weight' => '4',
     'description' => 'If all possible values of this property are members of a certain class, then the class should be selected here.',
     'default_value' => 
     array (
@@ -490,7 +491,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-2',
+    'weight' => '5',
     'description' => '',
     'default_value' => 
     array (
@@ -556,7 +557,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-1',
+    'weight' => '6',
     'description' => '',
     'default_value' => 
     array (
@@ -615,11 +616,4 @@ $content['fields']  = array (
       ),
     ),
   ),
-);
-$content['extra']  = array (
-  'title' => '-9',
-  'body_field' => '0',
-  'revision_information' => '2',
-  'menu' => '3',
-  'path' => '4',
 );

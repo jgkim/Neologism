@@ -2,7 +2,8 @@
 // $Id:  $
 
 function neologism_install() {
-  _neologism_install_node_type('neo_vocabulary');
+  drupal_install_schema('neologism');
+
   _neologism_install_node_type('neo_class');
   _neologism_install_node_type('neo_property');
   content_clear_type_cache();
@@ -35,7 +36,6 @@ function neologism_uninstall() {
 
   _neologism_uninstall_node_type('neo_property');
   _neologism_uninstall_node_type('neo_class');
-  _neologism_uninstall_node_type('neo_vocabulary');
   content_clear_type_cache();
   
   module_load_include('module', 'profile');
@@ -47,6 +47,33 @@ function neologism_uninstall() {
   _neologism_uninstall_profile_field('affiliation_homepage');
 
   drupal_set_message( t('Neologism successfully uninstalled.') );
+}
+
+function neologism_schema() {
+  return array(
+    'neologism_vocabulary' => array(
+      'description' => 'Additional node fields for RDF vocabulary nodes.',
+      'fields' => array(
+        'nid' => array('type' => 'int', 'not null' => TRUE),
+        'prefix' => array('type' => 'varchar', 'length' => 10, 'not null' => TRUE),
+        'custom_namespace' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE),
+        'abstract' => array('type' => 'text', 'not null' => TRUE),
+        'diagram' => array('type' => 'text', 'not null' => TRUE),
+        'custom_rdf' => array('type' => 'text', 'not null' => TRUE),
+      ),
+      'indexes' => array('neologism_vocabulary_prefix' => array('prefix')),
+      'primary key' => array('nid'),
+    ),
+    'neologism_perm' => array(
+      'description' => 'Association between RDF vocabularies and users.',
+      'fields' => array(
+        'nid' => array('type' => 'int', 'not null' => TRUE),
+        'uid' => array('type' => 'int', 'not null' => TRUE),
+        'delta' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE),
+      ),
+      'primary key' => array('nid', 'uid'),
+    ),
+  );
 }
 
 /**
@@ -61,10 +88,50 @@ function neologism_update_6201() {
   variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
 
   $result = array();
-  // Change URL aliases from /node/123/n3 to /node/123/ttl
+
+  // Add support for .ttl file extension as synonym for .n3
+  // 1. Change URL aliases from /node/123/n3 to /node/123/ttl
   $result[] = update_sql("UPDATE {url_alias} SET src = CONCAT(SUBSTR(src, 1, LENGTH(src)-3), '/ttl') WHERE src LIKE 'node/%/n3' AND dst LIKE '%.n3'");
-  // Add new URL aliases for vocabname.ttl to /node/123/ttl
+  // 2. Add new URL aliases for vocabname.ttl to /node/123/ttl
   $result[] = update_sql("INSERT INTO {url_alias} (src, dst, language) SELECT src, CONCAT(SUBSTR(dst, 1, LENGTH(dst)-3), '.ttl') AS dst, language FROM {url_alias} WHERE src LIKE 'node/%/ttl' AND dst LIKE '%.n3'");
+
+  // Vocabulary content type now has its own table and is no
+  // longer managed by CCK.
+  // 1. Create new table
+  $schema = neologism_schema();
+  db_create_table($result, 'neologism_vocabulary', $schema['neologism_vocabulary']);
+  // 2. Populate new table from CCK table
+  $result[] = update_sql("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, diagram, custom_rdf) SELECT n.nid, n.title AS prefix, v.field_custom_namespace_value AS custom_namespace, v.field_abstract_value AS abstract, v.field_layout_value AS diagram, v.field_additional_custom_rdf_value AS custom_rdf FROM {node} n JOIN {content_type_neo_vocabulary} v ON n.nid=v.nid");
+  // 3. Replace {node}.title and {node_revisions} title values with the values of the field_title CCK field
+  $result[] = update_sql("UPDATE {node} SET title=(SELECT field_title_value FROM {content_type_neo_vocabulary} WHERE {node}.nid={content_type_neo_vocabulary}.nid) WHERE type='neo_vocabulary'");
+  $result[] = update_sql("UPDATE {node_revisions} SET title=(SELECT title FROM {node} WHERE {node}.vid={node_revisions}.vid) WHERE vid IN (SELECT vid FROM {node} WHERE type='neo_vocabulary')");
+  // 4. Create author permission table
+  db_create_table($result, 'neologism_perm', $schema['neologism_perm']);
+  $result[] = update_sql("INSERT INTO {neologism_perm} (nid, uid, delta) SELECT nid, field_authors_uid AS uid, delta FROM {content_field_authors}");
+  // 5. Remove the CCK content type
+  _neologism_uninstall_node_type('neo_vocabulary');
+  variable_del('content_extra_weights_neo_vocabulary');
+
+  // Reset a variable that makes ordering of elements in
+  // term editing form unpredictable if set
+  variable_del('content_extra_weights_neo_class');
+  variable_del('content_extra_weights_neo_property');
+
+  // Update field weights for class and property content types
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-4 WHERE field_name='field_label' AND type_name='neo_class'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-3 WHERE field_name='field_comment' AND type_name='neo_class'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-2 WHERE field_name='field_superclass2' AND type_name='neo_class'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-1 WHERE field_name='field_disjointwith2' AND type_name='neo_class'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-3 WHERE field_name='field_label' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=-2 WHERE field_name='field_comment' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=1 WHERE field_name='field_fp' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=2 WHERE field_name='field_ifp' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=3 WHERE field_name='field_domain2' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=4 WHERE field_name='field_range2' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=5 WHERE field_name='field_superproperty2' AND type_name='neo_property'");
+  $result[] = update_sql("UPDATE {content_node_field_instance} SET weight=6 WHERE field_name='field_inverse2' AND type_name='neo_property'");
+
+  content_clear_type_cache();
 
   return $result;
 }

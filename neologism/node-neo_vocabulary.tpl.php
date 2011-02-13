@@ -3,7 +3,7 @@
 <?php print $picture ?>
 
 <?php if ($page == 0): ?>
-  <h2><?php print l($node->field_title[0]['value'], $node->title); ?></h2>
+  <h2><?php print l($node->title, $node->path); ?></h2>
 <?php endif; ?>
 
 <?php if ($submitted && !$teaser): ?>
@@ -11,20 +11,20 @@
 <?php endif; ?>
 
 <div class="content clear-block">
-  <?php if( isset($node->authors) && !empty($node->authors[0]) ): ?>
+  <?php if (count($author_list)): ?>
     <div class="authors">
-      <h3>Author<?php if (count($node->authors) > 1) print 's'; ?>:</h3>
+      <h3>Author<?php if (count($author_list) > 1) print 's'; ?>:</h3>
       <?php
-        $authors = 0;
-        foreach ( $node->authors as $author ) {
-          print '<span class="value">'.($authors++ > 0 ? ', ' : '').$author.'</span>';
+        $count = 0;
+        foreach ( $author_list as $author ) {
+          print '<span class="value">'.($count++ > 0 ? ', ' : '').$author.'</span>';
         }
       ?>
     </div>
   <?php endif; ?>
-  <?php if( !empty($node->field_abstract[0]['value']) ): ?>
+  <?php if( !empty($node->abstract) ): ?>
     <div class="abstract">
-      <?php print $node->field_abstract[0]['value']; ?>
+      <?php print $node->abstract; ?>
     </div>
   <?php endif; ?>
     
@@ -35,10 +35,14 @@
     
   <div class="terms-overview">
     <h3>Terms:</h3>
-    <?php if ($node->count_classes || $node->count_properties) { ?>
+    <?php if ($count_classes || $count_properties) { ?>
       <span class="value">
-        <?php print( ($node->count_classes).' '.(($node->count_classes == 1) ? 'Class' : 'Classes')); ?>,
-        <?php print( ($node->count_properties).' '.(($node->count_properties == 1) ? 'Property' : 'Properties')); ?>.
+        <?php if ($count_classes): ?>
+          <?php print( ($count_classes).' '.(($count_classes == 1) ? 'Class' : 'Classes')); if ($count_properties) print ','; ?>
+        <?php endif; ?>
+        <?php if ($count_properties): ?>
+          <?php print( ($count_properties).' '.(($count_properties == 1) ? 'Property' : 'Properties')); ?>
+        <?php endif; ?>
       </span>
     <?php } else { ?>
       No classes or properties defined yet.

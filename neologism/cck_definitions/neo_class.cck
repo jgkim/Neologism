@@ -92,7 +92,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'text_textfield',
     'change' => 'Change basic information',
-    'weight' => '-8',
+    'weight' => '-4',
     'rows' => '1',
     'size' => 60,
     'description' => 'A human-readable name for the class.',
@@ -156,7 +156,7 @@ $content['fields']  = array (
     'type' => 'text',
     'widget_type' => 'text_textarea',
     'change' => 'Change basic information',
-    'weight' => '-7',
+    'weight' => '-3',
     'rows' => '2',
     'size' => '255',
     'description' => 'A plain text description of the class.',
@@ -225,7 +225,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-5',
+    'weight' => '-2',
     'description' => 'If every member of this class is also a member of another class, then that other class should be selected here.',
     'default_value' => 
     array (
@@ -283,7 +283,7 @@ $content['fields']  = array (
     'type' => 'evocreference',
     'widget_type' => 'evocwidget_dynamic',
     'change' => 'Change basic information',
-    'weight' => '-4',
+    'weight' => '-1',
     'description' => 'If members of this class cannot logically also be members of another class, then that other class should be selected here.',
     'default_value' => 
     array (
@@ -334,11 +334,4 @@ $content['fields']  = array (
       ),
     ),
   ),
-);
-$content['extra']  = array (
-  'title' => '-9',
-  'body_field' => '-2',
-  'revision_information' => '20',
-  'menu' => '-6',
-  'path' => '30',
 );
