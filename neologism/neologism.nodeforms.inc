@@ -15,12 +15,12 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
     $mode = 'edit';
     drupal_set_title(t('Editing ' . $class_or_property . ' %qname', array('%qname' => $form['#node']->qname)));
     drupal_set_breadcrumb(_neologism_build_breadcrumb($current_voc->path, $current_voc->title));
-  } else if (arg(3)) {    // Creating a new subclass, subproperty or inverse of an existing term ...
+  } else if (arg(4)) {    // Creating a new subclass, subproperty or inverse of an existing term ...
     // Select the term and mode if provided in the url of type node/1/mode/2
-    $modes = array('add-class', 'add-property', 'add-inverse');
-    $mode = arg(2); 
+    $modes = array('sub', 'inverse');
+    $mode = arg(3); 
     if (in_array($mode, $modes)) {
-      $related_term = node_load(arg(3));
+      $related_term = node_load(arg(4));
     }
     else {
       $mode = 'new';
@@ -88,7 +88,7 @@ function _neologism_form_alter_class(&$form, &$form_state, $mode, &$related_term
     // Tell the widget that we are editing a term
     $form['field_superclass2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
     $form['field_disjointwith2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-  } else if ($mode == 'add-class') {
+  } else if ($mode == 'sub') {
     // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
     $form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
@@ -201,12 +201,12 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
       $form['range_group']['resource_type']['#default_value'] = 2;
     }
   }
-  else if ($mode == 'add-property') {
+  else if ($mode == 'sub') {
     // Check the related term in superproperty widget
     $form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
   }
-  else if ($mode == 'add-inverse') {
+  else if ($mode == 'inverse') {
     // Check the related term in inverse widget
     $form['field_inverse2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_inverse2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
