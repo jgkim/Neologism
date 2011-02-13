@@ -2,7 +2,7 @@
 
 function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
 
-  $parent = null;
+  $related_term = null;
 
   if (!isset($form['#node']->vocabulary)) {
     drupal_set_message('Something went wrong! No vocabulary selected!', 'error');
@@ -15,10 +15,16 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
     $mode = 'edit';
     drupal_set_title(t('Editing ' . $class_or_property . ' %qname', array('%qname' => $form['#node']->qname)));
     drupal_set_breadcrumb(_neologism_build_breadcrumb($current_voc->path, $current_voc->title));
-  } else if (arg(3)) {    // Creating a new subclass of an existing class ...
-    $mode = 'new-child';
-    // Select the parent class if provided in the url of type node/1/add-class/2
-    $parent = node_load(arg(3));
+  } else if (arg(3)) {    // Creating a new subclass, subproperty or inverse of an existing term ...
+    // Select the term and mode if provided in the url of type node/1/mode/2
+    $modes = array('add-class', 'add-property', 'add-inverse');
+    $mode = arg(2); 
+    if (in_array($mode, $modes)) {
+      $related_term = node_load(arg(3));
+    }
+    else {
+      $mode = 'new';
+    }
     drupal_set_breadcrumb(_neologism_build_breadcrumb());
   } else {    // We are creating a new term
     $mode = 'new';
@@ -61,9 +67,9 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
   $form['buttons']['delete']['#submit'][] = '_neologism_term_form_delete';
 
   if ($class_or_property == 'class') {
-    _neologism_form_alter_class($form, $form_state, $mode, $parent);
+    _neologism_form_alter_class($form, $form_state, $mode, $related_term);
   } else {
-    _neologism_form_alter_property($form, $form_state, $mode, $parent);
+    _neologism_form_alter_property($form, $form_state, $mode, $related_term);
   }
 
   // We need to pass through some values so we can
@@ -76,15 +82,15 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
 /**
  * Set up widgets specific to classes
  */
-function _neologism_form_alter_class(&$form, &$form_state, $mode, &$parent) {
+function _neologism_form_alter_class(&$form, &$form_state, $mode, &$related_term) {
 
   if ($mode == 'edit') {
     // Tell the widget that we are editing a term
     $form['field_superclass2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
     $form['field_disjointwith2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-  } else if ($mode == 'new-child') {
+  } else if ($mode == 'add-class') {
     // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
-    $form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($parent->qname);
+    $form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
   }
   
@@ -122,8 +128,8 @@ function _neologism_form_validate_class($form, &$form_state) {
     }
 }
 
-function _neologism_form_alter_property(&$form, &$form_state, $mode, &$parent) {
-  
+function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_term) {
+
   // add behaviours for evoc fields if they are using the MXCheckBox selection widget
   $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
@@ -194,10 +200,16 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$parent) {
       // set the radio button to The value of this property is a literal (string, number, date, ...).
       $form['range_group']['resource_type']['#default_value'] = 2;
     }
-  } else if ($mode == 'new-child') {
-    // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
-    $form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($parent->qname);
+  }
+  else if ($mode == 'add-property') {
+    // Check the related term in superproperty widget
+    $form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+  }
+  else if ($mode == 'add-inverse') {
+    // Check the related term in inverse widget
+    $form['field_inverse2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
+    $form['field_inverse2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
   }
 
   $form['#validate'][] = '_neologism_form_validate_property';

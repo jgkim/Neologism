@@ -131,14 +131,21 @@ function neologism_menu() {
   );
   $items['node/%neologism_vocabulary/add-class/%node'] = array(
       'page callback' => 'neologism_add_term',
-      'page arguments' => array(NEOLOGISM_CT_CLASS, 1, 3),
+      'page arguments' => array(NEOLOGISM_CT_CLASS, 1, 3, 'subclass'),
       'access callback' => 'node_access',
       'access arguments' => array('update', 1),
       'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   $items['node/%neologism_vocabulary/add-property/%node'] = array(
       'page callback' => 'neologism_add_term',
-      'page arguments' => array(NEOLOGISM_CT_PROPERTY, 1, 3),
+      'page arguments' => array(NEOLOGISM_CT_PROPERTY, 1, 3, 'subproperty'),
+      'access callback' => 'node_access',
+      'access arguments' => array('update', 1),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+  $items['node/%neologism_vocabulary/add-inverse/%node'] = array(
+      'page callback' => 'neologism_add_term',
+      'page arguments' => array(NEOLOGISM_CT_PROPERTY, 1, 3, 'inverse'),
       'access callback' => 'node_access',
       'access arguments' => array('update', 1),
       'type' => MENU_DEFAULT_LOCAL_TASK,
@@ -649,6 +656,13 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
         'href' => "node/" . $node->vocabulary->nid . "/add-property/$node->nid",
       	'attributes' => array('title' => 'Create a new property as subproperty of '.$node->field_label[0]['value'].'.')	
       );
+      if (!$node->field_inverse2 || !$node->field_inverse2[0]['evoc_term']) {
+        $links['neologism_add_inverse'] = array(
+          'title' => t('Add inverse property'),
+          'href' => "node/" . $node->vocabulary->nid . "/add-inverse/$node->nid",
+          'attributes' => array('title' => 'Create a new property as inverse of '.$node->field_label[0]['value'].'.')	
+        );
+      }
     }
 
     return $links;
@@ -828,21 +842,18 @@ function _neologism_build_breadcrumb($path = null, $title = NULL) {
  *   'neo_class' or 'neo_property'
  * @param $vocabulary
  *   The vocabulary owning the new term
- * @param $parent_node
- *   An optional superclass or superproperty; a node of neo_class or
- *   neo_property type
+ * @param $existing_term
+ *   An optional class or property; a node of neo_class or
+ *   neo_property type; arg(2) determines the relationship to it
  * @return
  *   A built form
  */
-function neologism_add_term($type, $vocabulary, $parent_node = null) {
+function neologism_add_term($type, $vocabulary, $existing_term = null) {
   global $user;
   include_once('modules/node/node.pages.inc');
 
   // @todo display an error message
   if (!node_access('create', $type)) return;
-
-  // Sanity check: If a parent is specified, is it of the type we're asked to create?
-  if ($parent_node && $parent_node->type != $type) return;
 
   // Copied from node_add
   $node = array('uid' => $user->uid, 'name' => (isset($user->name) ? $user->name : ''), 'type' => $type, 'language' => '');
@@ -1497,6 +1508,10 @@ function neologism_evoc_widgetbehaviour_preprocess($field_name, $default_of_valu
 		case 'field_superproperty2':
 			$result = $extra_values;
 			break;
+
+    case 'field_inverse2':
+      $result = $extra_values;
+      break;
 	}
 	
 	return $result;
