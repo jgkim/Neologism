@@ -25,6 +25,11 @@ define("INVERSE", "inverse");
  */
 function neologism_init() {
 
+  // Display an annoying warning if Clean URLs are disabled
+  if (!variable_get('clean_url', 0)) {
+    drupal_set_message(t('Neologism will not work correctly unless <a href="@clean">Clean URLs</a> are enabled.', array('@clean' => url('admin/settings/clean-urls'))), 'error', FALSE);
+  }
+
   // Init the custom content negotiation aware cache
   module_load_include('inc', 'neologism', 'neologism.conneg');
   _neologism_negotiated_cache_start();
