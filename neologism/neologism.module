@@ -860,7 +860,7 @@ function _neologism_namespace_uri($path, $custom_uri = null) {
  *   A NeologismRDFWriter that contains the triples
  */
 function &neologism_get_rdf_model($node) {
-  $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'vann');
+  $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann');
   $classes = _neologism_get_all_classes($node, $required_namespaces);
   $properties = _neologism_get_all_properties($node, $required_namespaces);
   
@@ -881,6 +881,7 @@ function &neologism_get_rdf_model($node) {
   $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
   $rdf->triple_literal($doc, "dc:title", $node->title);
   $rdf->triple_literal($doc, "dc:description", $node->abstract);
+  $rdf->triple_literal($doc, "dc:modified", date('Y-m-d'), 'xsd:date');
   $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
   $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->prefix);
   $rdf->triple_uri($doc, "foaf:page", $doc . '.html');
