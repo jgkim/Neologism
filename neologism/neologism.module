@@ -350,7 +350,7 @@ function neologism_form(&$node, $form_state) {
     '#type' => 'fieldset', 
     '#title' => t('Additional custom RDF'), 
     '#collapsible' => TRUE, 
-    '#collapsed' => TRUE,
+    '#collapsed' => empty($node->custom_rdf),
     '#description' => t("Additional RDF in Turtle syntax for inclusion in the vocabulary's RDF description."),
     '#weight' => 3,
   );
@@ -412,6 +412,24 @@ function neologism_validate($node, &$form) {
       return FALSE;
     }
   }
+  
+  
+  // validate the additional custom RDF
+  if (!empty($node->custom_rdf)) {
+  	include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  	$parser = ARC2::getTurtleParser();
+  	$parser->parse(NULL, $node->custom_rdf);
+		$errors = $parser->getErrors();
+		if ($errors) {
+			$error_message = '';
+			foreach ($errors as $error) {
+				$error_message .= $error.'<br/>';
+			}
+  		form_set_error('additional_custom_rdf', 'Additional custom RDF field error:<br/>'.$error_message);
+      return FALSE;
+  	}
+  }
+  
 }
 
 /**
@@ -962,9 +980,9 @@ function &neologism_get_rdf_model($node) {
 		// content of that field will be parsed with a Turtle parser and loaded into the model that is used to 
 		// generate the Turtle or RDF/XML output. So the additional triples will show up when the model is 
 		// rendered.
-		// Add code to do such a thing here
+		$rdf->merge_turtle($node->custom_rdf, url($node->path, array('absolute' => TRUE)));
   }
-
+  
   return $rdf;
 }
 
