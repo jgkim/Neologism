@@ -76,6 +76,20 @@ class NeologismRDFWriter {
       $this->triple_qname($s, $p, $qname);
     }
   }
+  
+  function merge_rdf(&$rdf_content, $base = NULL) {
+  	$parser = ARC2::getRDFXMLParser();
+  	$parser->parse($base, $rdf_content);
+  	if ($parser->getErrors()) {
+  		throw new Exception("Error parsing RDF content.");
+  	}
+  	
+	  foreach ($parser->nsp as $uri => $prefix) {
+	  	$this->register_namespace($prefix, $uri);
+	  }
+	  
+  	$this->_triples = array_merge($this->_triples, $parser->getTriples());
+  }
 
   function _triple($s, $p, $o, $o_type, $datatype = null) {
     if (is_null($s) || is_null($p) || is_null($o)) return;
