@@ -77,18 +77,22 @@ class NeologismRDFWriter {
     }
   }
   
-  function merge_rdf(&$rdf_content, $base = NULL) {
-  	$parser = ARC2::getRDFXMLParser();
+  function merge_turtle(&$rdf_content, $base = NULL) {
+  	$parser = ARC2::getTurtleParser();
   	$parser->parse($base, $rdf_content);
   	if ($parser->getErrors()) {
-  		throw new Exception("Error parsing RDF content.");
+  		throw new Exception("Error parsing Turtle content.");
   	}
   	
 	  foreach ($parser->nsp as $uri => $prefix) {
 	  	$this->register_namespace($prefix, $uri);
 	  }
 	  
-  	$this->_triples = array_merge($this->_triples, $parser->getTriples());
+   	foreach ($parser->prefixes as $prefix => $uri) {
+	  	$this->register_namespace(substr($prefix, 0, -1), $uri);
+	  }
+
+	  $this->_triples = array_merge($this->_triples, $parser->getTriples());
   }
 
   function _triple($s, $p, $o, $o_type, $datatype = null) {
