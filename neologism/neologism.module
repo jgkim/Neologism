@@ -884,8 +884,8 @@ function _neologism_namespace_uri($path, $custom_uri = null) {
  */
 function &neologism_get_rdf_model($node) {
   $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann');
-  $classes = _neologism_get_all_classes($node, $required_namespaces);
-  $properties = _neologism_get_all_properties($node, $required_namespaces);
+  list($classes) = _neologism_get_all_classes($node, FALSE, $required_namespaces);
+  list($properties) = _neologism_get_all_properties($node, FALSE, $required_namespaces);
   
   // Set up model with all necessary namespaces
   $namespaces = rdf_get_namespaces();
@@ -1013,7 +1013,7 @@ function neologism_export_xml($node) {
   $xml->addAttribute('id', $node->prefix);
 
   //export all classes
-  $classes = _neologism_get_all_classes($node);
+  list($classes) = _neologism_get_all_classes($node);
   $classes_node = $xml->addChild('classes');
   foreach ( $classes as $class ) {
     $classnode = $classes_node->addChild('Class');
@@ -1050,7 +1050,7 @@ function neologism_export_xml($node) {
   }
 
   //export all properties
-  $properties = _neologism_get_all_properties($node);
+  list($properties) = _neologism_get_all_properties($node);
   $properties_node = $xml->addChild("properties");
   foreach ($properties as $property) {
     $propertynode = $properties_node->addChild('Property');
@@ -1129,7 +1129,7 @@ function neologism_get_layout($node) {
  */
 function neologism_generate_layout($node) {
   $xml = simplexml_load_string('<layout/>');
-  $classes = _neologism_get_all_classes($node);
+  list($classes) = _neologism_get_all_classes($node);
   $y = 0;
   foreach ($classes as $oneclass) {
     //export all classes
@@ -1159,13 +1159,19 @@ function neologism_write_layout($node, $layout) {
 /**
  * Get all properties in a vocabulary
  */
-function _neologism_get_all_properties($node, array &$detect_namespaces = NULL) {
+function _neologism_get_all_properties($node, $retrive_inverses = FALSE, array &$detect_namespaces = NULL) {
   $properties_resource = db_query(db_rewrite_sql("select n.nid from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid where c.field_vocabulary_nid = %d and n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
-  $i = 0;
-  
   $properties = array(); 
+  $inverse_properties_array = array();
+  
+  $i = 0;
   while ( $item = db_fetch_object($properties_resource) ) {
     $fullnode = node_load($item->nid);
+    
+    //_neologism_find_implicit_inverses()
+    if ($retrive_inverses) {
+      _neologism_retrieve_implicit_values($fullnode->field_inverse2, $fullnode->qname, $inverse_properties_array);
+    }
     
     $properties[$i]['nid'] = $item->nid;
     $properties[$i]['id'] = $fullnode->title;
@@ -1231,18 +1237,18 @@ function _neologism_get_all_properties($node, array &$detect_namespaces = NULL) 
     $i++;
   }
   
-  return $properties;
+  return array($properties, $inverse_properties_array);
 }
 
 /**
  * Get all classes in a vocabulary
  */
-function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
-  
+function _neologism_get_all_classes($node, $retrive_disjointness = FALSE, array &$detect_namespaces = NULL) {
   $classes_resource = db_query(db_rewrite_sql("SELECT n.nid FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS);
-  $i = 0;
+  $classes = array();
+  $disjointwith_properties_array = array();
   
-  $classes = array(); 
+  $i = 0;
   while ( $item = db_fetch_object($classes_resource) ) {
     $fullnode = node_load($item->nid);
     
@@ -1251,6 +1257,11 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
     $classes[$i]['label'] = $fullnode->field_label[0]['value'];
     if( !empty($fullnode->field_comment[0]['value']) ) {
       $classes[$i]['comment'] = $fullnode->field_comment[0]['value'];
+    }
+    
+    // retrieve implicit disjointness
+    if ($retrive_disjointness) {
+      _neologism_retrieve_implicit_values($fullnode->field_disjointwith2, $fullnode->qname, $disjointwith_properties_array);
     }
     
     if ( isset($fullnode->field_superclass2[0]['evoc_term']) && $fullnode->field_superclass2[0]['evoc_term'] ) {
@@ -1288,7 +1299,45 @@ function _neologism_get_all_classes($node, array &$detect_namespaces = NULL) {
     $i++;
   }
   
-  return $classes;
+  return array($classes, $disjointwith_properties_array);
+}
+
+/**
+ * Build an array holding a relatioship between the QName and the values found in the field.
+ * 
+ * @param $field
+ * 	A multi-value CCK evoc_reference field where the implicit values are.
+ * @param $qname
+ * 	The QName term being analyzed and used to create the relation with the implicit value.
+ * @holder_array
+ * 	A reference where all the retrieved implicited values are stored
+ * @return none 
+ */
+function _neologism_retrieve_implicit_values(&$field, $qname, array &$holder_array) {
+  if (!empty($field[0]['evoc_term'])) {
+    foreach ( $field as $term => $value ) {
+      $holder_array[$value['evoc_term']][] = $qname;
+    } 
+  }
+}
+
+/**
+ * Normalize the values in $values_array into a cck field using QName as index
+ * @param $values_array
+ * 	Array of values to normalize.
+ * @param $qname
+ * 	Index name of the wanted value
+ * @param $field
+ * 	Multi-valued CCK field where the value will be pushed 
+ * @return none
+ */
+function _neologism_normalize_implicit_values(array &$values_array, $qname, &$field) {
+  if (is_array($values_array[$qname])) {
+    $index = empty($field[0]['evoc_term']) ? 0 : 1;
+    foreach ($values_array[$qname] as $value) {
+      $field[$index++] = array('evoc_term' => $value);
+    }
+  }
 }
 
 /**
