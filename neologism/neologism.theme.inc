@@ -111,9 +111,10 @@ function neologism_export_html($node) {
   $link2 = l($image, $node->path.'.ttl', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
-  $classes = _neologism_get_all_classes($node);
+  list($classes, $disjoin_classes_array) = _neologism_get_all_classes($node, TRUE);
   usort($classes, '_neologism_cmp_2array_alphabetically');
-  $properties = _neologism_get_all_properties($node);
+  
+  list($properties, $inverse_properties_array) = _neologism_get_all_properties($node, TRUE);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
   $html = ''; $author_count = 0;
@@ -267,14 +268,18 @@ function neologism_export_html($node) {
   if ($classes) {
     $output .= '<h2 id="sec_classes">Classes</h2>';
     foreach ($classes as $term) {
-      $output .= node_view(node_load($term['nid']), TRUE, FALSE, TRUE);
+      $loaded_node = node_load($term['nid']);
+      _neologism_normalize_implicit_values($disjoin_classes_array, $loaded_node->qname, $loaded_node->field_disjointwith2);
+      $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }
   }
    
   if ($properties) {
     $output .= '<h2 id="sec_properties">Properties</h2>';
     foreach ($properties as $term) {
-      $output .= node_view(node_load($term['nid']), TRUE, FALSE, TRUE);
+      $loaded_node = node_load($term['nid']);
+      _neologism_normalize_implicit_values($inverse_properties_array, $loaded_node->qname, $loaded_node->field_inverse2);
+      $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }
   }
   $output .= '</div>';
