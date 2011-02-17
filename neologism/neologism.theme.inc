@@ -39,6 +39,10 @@ function neologism_preprocess_node(&$variables) {
     $variables['ranges'] = _neologism_themed_qnames($variables['field_range2']);
     $variables['inverses'] = _neologism_themed_qnames($variables['field_inverse2']);
     $variables['superproperties'] = _neologism_themed_qnames($variables['field_superproperty2']);
+    
+    // dummy fields
+    $variables['subclasses'] = _neologism_themed_qnames($variables['subclasses']);
+    
     $variables['types'] = array();
     if (!empty($variables['field_fp'][0]['value'])) {
       $variables['types'][] = trim(theme('neologism_qname', 'owl:FunctionalProperty'));
@@ -111,7 +115,7 @@ function neologism_export_html($node) {
   $link2 = l($image, $node->path.'.ttl', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
-  list($classes, $disjoin_classes_array) = _neologism_get_all_classes($node, TRUE);
+  list($classes, $superclasses_array, $disjoin_classes_array) = _neologism_get_all_classes($node, TRUE, TRUE);
   usort($classes, '_neologism_cmp_2array_alphabetically');
   
   list($properties, $inverse_properties_array) = _neologism_get_all_properties($node, TRUE);
@@ -269,7 +273,13 @@ function neologism_export_html($node) {
     $output .= '<h2 id="sec_classes">Classes</h2>';
     foreach ($classes as $term) {
       $loaded_node = node_load($term['nid']);
+      
       _neologism_normalize_implicit_values($disjoin_classes_array, $loaded_node->qname, $loaded_node->field_disjointwith2);
+      
+      // create a dummy variable for the neo_term.tpl
+      _neologism_normalize_implicit_values($superclasses_array, $loaded_node->qname, $loaded_node->subclasses);
+      //$loaded_node->subclasses = $superclasses_array;
+      
       $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }
   }

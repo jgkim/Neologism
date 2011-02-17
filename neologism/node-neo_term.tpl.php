@@ -35,6 +35,10 @@
       <dt><?php print count($superclasses) == 1 ? t('Superclass') : t('Superclasses'); ?>:</dt>
       <dd><?php print join(', ', $superclasses); ?></dd>
     <?php } ?>
+     <?php if ($subclasses) { ?>
+      <dt><?php print count($subclasses) == 1 ? t('Subclass') : t('Subclasses'); ?>:</dt>
+      <dd><?php print join(', ', $subclasses); ?></dd>
+    <?php } ?>
     <?php if ($disjoints) { ?>
       <dt><?php print t('Disjoint with'); ?>:</dt>
       <dd><?php print join(', ', $disjoints); ?></dd>

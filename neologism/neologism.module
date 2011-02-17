@@ -884,7 +884,7 @@ function _neologism_namespace_uri($path, $custom_uri = null) {
  */
 function &neologism_get_rdf_model($node) {
   $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann');
-  list($classes) = _neologism_get_all_classes($node, FALSE, $required_namespaces);
+  list($classes) = _neologism_get_all_classes($node, FALSE, FALSE, $required_namespaces);
   list($properties) = _neologism_get_all_properties($node, FALSE, $required_namespaces);
   
   // Set up model with all necessary namespaces
@@ -1243,10 +1243,11 @@ function _neologism_get_all_properties($node, $retrive_inverses = FALSE, array &
 /**
  * Get all classes in a vocabulary
  */
-function _neologism_get_all_classes($node, $retrive_disjointness = FALSE, array &$detect_namespaces = NULL) {
+function _neologism_get_all_classes($node, $retrive_disjointness = FALSE, $retrive_superclasses = FALSE, array &$detect_namespaces = NULL) {
   $classes_resource = db_query(db_rewrite_sql("SELECT n.nid FROM {content_field_vocabulary} c INNER JOIN {node} n ON c.nid = n.nid WHERE c.field_vocabulary_nid = %d AND n.type = '%s'"), $node->nid, NEOLOGISM_CT_CLASS);
   $classes = array();
-  $disjointwith_properties_array = array();
+  $disjointwith_classes_array = array();
+  $superclasses_array = array();
   
   $i = 0;
   while ( $item = db_fetch_object($classes_resource) ) {
@@ -1261,7 +1262,12 @@ function _neologism_get_all_classes($node, $retrive_disjointness = FALSE, array 
     
     // retrieve implicit disjointness
     if ($retrive_disjointness) {
-      _neologism_retrieve_implicit_values($fullnode->field_disjointwith2, $fullnode->qname, $disjointwith_properties_array);
+      _neologism_retrieve_implicit_values($fullnode->field_disjointwith2, $fullnode->qname, $disjointwith_classes_array);
+    }
+    
+    // retrieve superclasses
+    if ($retrive_superclasses) {
+      _neologism_retrieve_implicit_values($fullnode->field_superclass2, $fullnode->qname, $superclasses_array);
     }
     
     if ( isset($fullnode->field_superclass2[0]['evoc_term']) && $fullnode->field_superclass2[0]['evoc_term'] ) {
@@ -1299,7 +1305,7 @@ function _neologism_get_all_classes($node, $retrive_disjointness = FALSE, array 
     $i++;
   }
   
-  return array($classes, $disjointwith_properties_array);
+  return array($classes, $superclasses_array, $disjointwith_classes_array);
 }
 
 /**
