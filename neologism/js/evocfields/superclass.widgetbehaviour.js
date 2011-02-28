@@ -2,6 +2,9 @@
  * @author guicec
  */
 
+
+
+
 /**
  * Create the class selection widget behaviour for filed_superclass2 
  * 
@@ -32,7 +35,12 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
         // Fires when the node has been successfuly loaded.
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
-    	
+    		var treePanel = node.getOwnerTree();
+    		Neologism.TermsTree.traverse(node, function(currentNode, path) {
+    			if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
+    				treePanel.expandPath(path.join('/'));
+    			}
+    		}, true);
         }
       }
     }),

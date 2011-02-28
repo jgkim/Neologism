@@ -24,6 +24,12 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
       baseParams: baseParams,//baseParams,
       listeners: {
     	load: function(loader, node, response){
+    		var treePanel = node.getOwnerTree();
+			Neologism.TermsTree.traverse(node, function(currentNode, path) {
+				if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
+					treePanel.expandPath(path.join('/'));
+				}
+			}, true);
         }
       }
     }),
