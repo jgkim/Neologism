@@ -831,7 +831,7 @@ Neologism.TermsTree.prototype.computeInverses = function(rootNodeClasses, domain
     },  null);
 	
 	return allowedAsInverseProperties;
-}
+},
 
 /**
  * Finds the first child that has the attribute with the specified value using the children array.
@@ -848,7 +848,43 @@ Neologism.TermsTree.prototype.findChildInNode = function(node, value) {
         }
     }
     return null;
-}
+},
+
+/**
+ * Traverse a term tree
+ * @param rootNode
+ * @param func a function to apply with two parameter. First param the node and second param the path
+ * @param reset
+ * @return
+ */
+Neologism.TermsTree.traverse = function(rootNode, func, reset) {
+	var children = [];
+	
+	if ( typeof Neologism.TermsTree.traverse.path == 'undefined' || reset == true ) {
+        // It has not... perform the initilization
+		Neologism.TermsTree.traverse.path = ['/root'];
+    }
+	
+	// rootNode of type Object
+	if(rootNode.attributes == undefined) {
+		children = rootNode.children;
+	} // rootNode of type Ext.tree.AsyncTreeNode
+	else if(rootNode.attributes.children == undefined) {
+		children = rootNode.childNodes;
+	} // rootNode of type Ext.tree.TreeNode
+	else { 
+		children = rootNode.attributes.children;
+	}
+	
+	if(children != null) {
+		for (var i = 0; i < children.length; i++) {
+			Neologism.TermsTree.traverse.path.push(children[i].text);
+			func.apply(this,[children[i],Neologism.TermsTree.traverse.path]); 
+			Neologism.TermsTree.traverse(children[i],func, false);
+			Neologism.TermsTree.traverse.path.pop();
+	    }
+	}
+},
 
 /**
  * Static method that return the xsd datatype.
@@ -898,5 +934,14 @@ Neologism.TermsTree.getXSDDatatype = function() {
 				];
 };
 
+//Ext.reg('termstree', Neologism.util);
+Ext.ns('Neologism.util');
 
-
+Neologism.util.in_array = function(element, array_of_elements) { 
+	for (var j = 0; j < array_of_elements.length; j++) {
+  		if ( element == array_of_elements[j] ) {
+  			return true;
+  		}
+  	}
+    return false;
+};
