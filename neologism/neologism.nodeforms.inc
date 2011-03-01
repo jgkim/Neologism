@@ -247,14 +247,15 @@ function _neologism_form_validate_property($form, &$form_state) {
       $form_state['values']['field_range2'][0] = NULL;
     }
     
-    // Comment by Guido Cecilio 2nd Febraury 2010
-    // we check at validation time if there is no domain or range and add by default rdfs:Resource (DEFAULT_RDFS_SUPERCLASS)
-    if( empty($form_state['values']['field_domain2']) ) {
-        $form_state['values']['field_domain2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
-    }
-    if( empty($form_state['values']['field_range2']) ) {
-        $form_state['values']['field_range2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
-    }
+    // Comment by Guido Cecilio 1st March 2011
+    // by default domain and range do not have any value.
+    // TODO: this commented block will be removed after revision.
+//    if( empty($form_state['values']['field_domain2']) ) {
+//        $form_state['values']['field_domain2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
+//    }
+//    if( empty($form_state['values']['field_range2']) ) {
+//        $form_state['values']['field_range2'][0]['evoc_term'] = DEFAULT_RDFS_SUPERCLASS;
+//    }
 
     /*
     if( $form_state['values']['field_literal_as_range'][0]['value'] ) {
