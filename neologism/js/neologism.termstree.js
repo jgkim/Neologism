@@ -938,8 +938,6 @@ Neologism.TermsTree.getXSDDatatype = function() {
 Ext.ns('Neologism.util');
 
 Neologism.util.in_array = function(element, array_of_elements) { 
-	//console.log('in_array call ----- ' + element);
-	//console.log(array_of_elements);
 	for(var i = 0, len = array_of_elements.length; i < len; i++) {
   		if ( element == array_of_elements[i] ) {
   			return true;
