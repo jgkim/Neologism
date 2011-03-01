@@ -34,9 +34,9 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
         // added event to refresh the checkbox from its parent 
         load: function(loader, node, response){
           	
-    		// check the first element of the baseParams.arrayOfValues if this is a literal then we need to clear it from the
+    		// check the first element of the baseParams.arrayOfValues, if this is a literal then we need to clear it from the
 	    	// list of value
-    		if( Neologism.TermsTree.getXSDDatatype().indexOf(baseParams.arrayOfValues[0]) != -1 ) {
+    		if(Neologism.util.in_array(baseParams.arrayOfValues[0], Neologism.TermsTree.getXSDDatatype())) {
 				baseParams.arrayOfValues.length = 0;
 			}
     		
@@ -70,18 +70,13 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
 	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
 		        // add selection to array of values
-        		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
-	            	baseParams.arrayOfValues.push(node.text);
-	            }
-	            
+	        	if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues)) {
+					baseParams.arrayOfValues.push(node.attributes.text);
+				}
 	    	} 
 	        else {
 	    		// if we are unchecked a checkbox
-	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-	    			if ( baseParams.arrayOfValues[i] == node.text ) {
-	    				baseParams.arrayOfValues.splice(i, 1);
-	    			}
-	    		}
+	        	Neologism.util.remove_element(node.attributes.text, baseParams.arrayOfValues);
 	        }
 	        // fire the event to execute the onSelectionChange handler and notify to observers
 	        //this.fireEvent('selectionchange', node);

@@ -51,19 +51,13 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 	  		
 	        if ( checked  ) {
 		        // add selection to array of values
-	        	if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
-	            	baseParams.arrayOfValues.push(node.text);
-	            }
-	            
+	        	if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues)) {
+					baseParams.arrayOfValues.push(node.text);
+				}
 		    } 
 	        else {
 	    		// if we are unchecked a checkbox
-	    		for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-	    			if ( baseParams.arrayOfValues[i] == node.text ) {
-	    				baseParams.arrayOfValues.splice(i, 1);
-	    			}
-	    		}
-	    		
+	        	Neologism.util.remove_element(node.attributes.text, baseParams.arrayOfValues);
 	        } // else
 	        
 	        //this.fireEvent('selectionchange', node);

@@ -60,7 +60,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 				if ( checked && node.parentNode !== null ) {
 					// if we're checking the box, check it all the way up
 					if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-						if( !Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
+						if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues)) {
 							baseParams.arrayOfValues.push(node.text);
 						}
 					}
