@@ -938,10 +938,21 @@ Neologism.TermsTree.getXSDDatatype = function() {
 Ext.ns('Neologism.util');
 
 Neologism.util.in_array = function(element, array_of_elements) { 
-	for (var j = 0; j < array_of_elements.length; j++) {
-  		if ( element == array_of_elements[j] ) {
+	//console.log('in_array call ----- ' + element);
+	//console.log(array_of_elements);
+	for(var i = 0, len = array_of_elements.length; i < len; i++) {
+  		if ( element == array_of_elements[i] ) {
   			return true;
   		}
   	}
     return false;
+},
+
+Neologism.util.remove_element = function(element, array_of_elements) { 
+	for(var i = 0, len = array_of_elements.length; i < len; i++) {
+	    if ( array_of_elements[i] == element ) {
+	    	array_of_elements.splice(i, 1);
+	    }
+	}
 };
+

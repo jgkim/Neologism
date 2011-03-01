@@ -34,6 +34,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        // Fires when the node has been successfuly loaded.
 	        // added event to refresh the checkbox from its parent 
 	        load: function(loader, node, response){
+		    	var treePanel = node.getOwnerTree();
+	    		Neologism.TermsTree.traverse(node, function(currentNode, path) {
+	    			if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
+	    				path.pop();
+	    				treePanel.expandPath(path.join('/'));
+	    			}
+	    		}, true);
 	        }
 	      }
 	    }),
@@ -48,40 +55,37 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    }),
 	  
 	    listeners: {
-		      // behaviour for on checkchange in superclassesTree TreePanel object 
-		      checkchange: function(node, checked) {
-		        if ( checked && node.parentNode !== null ) {
-		          // if we're checking the box, check it all the way up
-		    		if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-		    			if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
-		    				baseParams.arrayOfValues.push(node.text);
-		    			}
-		    		}
-		    	} else {
-		          for (var i = 0, len = baseParams.arrayOfValues.length; i < len; i++) {
-		            if ( baseParams.arrayOfValues[i] == node.attributes.text ) {
-		              baseParams.arrayOfValues.splice(i, 1);
-		            }
-		          }    
-		        }
-		        
-		      } // checkchange
-	
-				,expandnode: function( node ) {
-					node.eachChild(function(currentNode){
-						if ( currentNode !== undefined ) {
-							if (currentNode.attributes.text == editingValue) {
-				            	currentNode.remove();
-				            }
-				          	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-				          		if ( currentNode.attributes.text == baseParams.arrayOfValues[j] ) {
-				          			currentNode.getUI().toggleCheck(true);
-				          		}
-				          	}
+			// behaviour for on checkchange in superclassesTree TreePanel object 
+			checkchange: function(node, checked) {
+				if ( checked && node.parentNode !== null ) {
+					// if we're checking the box, check it all the way up
+					if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
+						if( !Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
+							baseParams.arrayOfValues.push(node.text);
 						}
-					});
-				}
-			} // listeners
+					}
+				} else {
+					Neologism.util.remove_element(node.attributes.text, baseParams.arrayOfValues);
+			    }
+			} // checkchange
+	
+			,expandnode: function( node ) {
+				var node_to_remove = null;
+				node.eachChild(function(currentNode){
+					if ( currentNode !== undefined ) {
+						if (currentNode.attributes.text == editingValue) {
+							node_to_remove = currentNode;
+			            }
+						else if( Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
+							currentNode.getUI().toggleCheck(true);
+						}
+						
+					}
+				});
+				// if the editting node was found then it must be removed
+				if (node_to_remove != null) node_to_remove.remove();
+			}
+		} // listeners
 		/*
 		,onSelectionChange:function(objectSender) {
 			// do whatever is necessary to assign the employee to position

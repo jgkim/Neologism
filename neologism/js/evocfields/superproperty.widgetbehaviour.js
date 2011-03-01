@@ -29,6 +29,13 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
 	    	// Fires when the node has been successfuly loaded.
 	    	// added event to refresh the checkbox from its parent 
 	    	load: function(loader, node, response){
+		    	var treePanel = node.getOwnerTree();
+				Neologism.TermsTree.traverse(node, function(currentNode, path) {
+					if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
+						path.pop();
+						treePanel.expandPath(path.join('/'));
+					}
+				}, true);
 			}
     	}
     }),
@@ -80,19 +87,20 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
       } // checkchange
   
 		,expandnode: function( node ) {
+			var node_to_remove = null;
 			node.eachChild(function(currentNode){
 				if ( currentNode !== undefined ) {
-		            if (currentNode.attributes.text == editingValue) {
-		            	currentNode.remove();
+					if (currentNode.attributes.text == editingValue) {
+						node_to_remove = currentNode;
 		            }
-		              
-		          	for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-		          		if ( currentNode.attributes.text == baseParams.arrayOfValues[j] ) {
-		          			currentNode.getUI().toggleCheck(true);
-		          		}
-		          	}
+					else if( Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
+						currentNode.getUI().toggleCheck(true);
+					}
+					
 				}
-		});
+			});
+			// if the editting node was found then it must be removed
+			if (node_to_remove != null) node_to_remove.remove();
 		}
     }
   });
