@@ -505,12 +505,12 @@ function neologism_update($node) {
       if ($term->vocabulary->prefix == $node->original_prefix) {
         $term->vocabulary->prefix = $node->prefix;
       }
-      _neologism_update_evoc_references($term, 'field_superclass2', $node->original_prefix, $node->prefix);
-      _neologism_update_evoc_references($term, 'field_disjointwith2', $node->original_prefix, $node->prefix);
-      _neologism_update_evoc_references($term, 'field_domain2', $node->original_prefix, $node->prefix);
-      _neologism_update_evoc_references($term, 'field_range2', $node->original_prefix, $node->prefix);
-      _neologism_update_evoc_references($term, 'field_superproperty2', $node->original_prefix, $node->prefix);
-      _neologism_update_evoc_references($term, 'field_inverse2', $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_SUPERCLASSES, $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_DISJOINTWITH, $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_DOMAINS, $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_RANGES, $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_SUPERPROPERTIES, $node->original_prefix, $node->prefix);
+      _neologism_update_evoc_references($term, EVOC_FIELDNAME_INVERSES, $node->original_prefix, $node->prefix);
       node_save($term);
     }
   }
@@ -721,6 +721,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
     case 'update':
       // Update the term in the evoc repository
       $term = _neologism_make_evoc_term_array($node);
+      
       if ($node->type == NEOLOGISM_CT_CLASS) {
         evoc_update_class($term);  
       }
@@ -753,17 +754,17 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
       if ($node->type == NEOLOGISM_CT_CLASS) {
         // Check for other classes or properties that reference
         // this class as a superclass, disjoint class, domain or range.
-        _neologism_delete_evoc_references('field_superclass2', $node->qname, true);
-        _neologism_delete_evoc_references('field_disjointwith2', $node->qname, true);
-        _neologism_delete_evoc_references('field_domain2', $node->qname, true);
-        _neologism_delete_evoc_references('field_range2', $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_SUPERCLASSES, $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_DISJOINTWITH, $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_DOMAINS, $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_RANGES, $node->qname, true);
         evoc_remove_class(array('prefix' => $node->vocabulary->prefix, 'id' => $node->title));
       }
       else if ($node->type == NEOLOGISM_CT_PROPERTY) {
         // Check for other properties that reference
         // this property as a superproperty or inverse.
-        _neologism_delete_evoc_references('field_superproperty2', $node->qname, true);
-        _neologism_delete_evoc_references('field_inverse2', $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_SUPERPROPERTIES, $node->qname, true);
+        _neologism_delete_evoc_references(EVOC_FIELDNAME_INVERSES, $node->qname, true);
         evoc_remove_property(array('prefix' => $node->vocabulary->prefix, 'id' => $node->title));
       }
 
@@ -784,12 +785,12 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
 function neologism_removed_external_vocabulary($prefix) {
   // We need to remove any references to terms from this vocabulary
   // as superclasses, domains, ranges etc
-  _neologism_delete_evoc_references('field_superclass2', $prefix, false);
-  _neologism_delete_evoc_references('field_disjointwith2', $prefix, false);
-  _neologism_delete_evoc_references('field_domain2', $prefix, false);
-  _neologism_delete_evoc_references('field_range2', $prefix, false);
-  _neologism_delete_evoc_references('field_superproperty2', $prefix, false);
-  _neologism_delete_evoc_references('field_inverse2', $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_SUPERCLASSES, $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_DISJOINTWITH, $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_DOMAINS, $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_RANGES, $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_SUPERPROPERTIES, $prefix, false);
+  _neologism_delete_evoc_references(EVOC_FIELDNAME_INVERSES, $prefix, false);
 }
 
 /**
@@ -1365,14 +1366,14 @@ function _neologism_make_evoc_term_array(&$node) {
   $term['comment'] = $node->field_comment[0]['value'];
   if ($node->type == NEOLOGISM_CT_CLASS) {
     $term['type'] = 'class';
-    $term[EVOC_SUPERCLASSES] = _neologism_list_evoc_references_from_field($node, 'field_superclass2');
-    $term[EVOC_DISJOINTS] = _neologism_list_evoc_references_from_field($node, 'field_disjointwith2');
+    $term[EVOC_SUPERCLASSES] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_SUPERCLASSES);
+    $term[EVOC_DISJOINTS] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_DISJOINTWITH);
   } elseif ($node->type == NEOLOGISM_CT_PROPERTY) {
     $term['type'] = 'property';
-    $term[EVOC_DOMAINS] = _neologism_list_evoc_references_from_field($node, 'field_domain2');
-    $term[EVOC_RANGES] = _neologism_list_evoc_references_from_field($node, 'field_range2');
-    $term[EVOC_SUPERPROPERTIES] = _neologism_list_evoc_references_from_field($node, 'field_superproperty2');
-    $term[EVOC_INVERSES] = _neologism_list_evoc_references_from_field($node, 'field_inverses2');
+    $term[EVOC_DOMAINS] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_DOMAINS);
+    $term[EVOC_RANGES] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_RANGES);
+    $term[EVOC_SUPERPROPERTIES] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_SUPERPROPERTIES);
+    $term[EVOC_INVERSES] = _neologism_list_evoc_references_from_field($node, EVOC_FIELDNAME_INVERSES);
   }
   return $term;
 }
