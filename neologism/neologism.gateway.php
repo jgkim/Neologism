@@ -11,14 +11,14 @@ function neologism_gateway_get_classes_tree() {
   $store = array();
   $nodes = array();
   if ( $node == 'super' ) {
-    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where prefix = "'.$voc['title'].'"'));  
+    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where prefix = "%s"'), $voc['title']);  
     
     while ( $class = db_fetch_object($classes) ) {
       $qname = $class->prefix.':'.$class->id;
       $store[$qname]['comment'] = $class->comment;
       $store[$qname]['label'] = $class->label;
       if ( $class->superclasses > 0 ) {
-      	$superclasses = db_query('select superclass from {evoc_rdf_superclasses} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'"');
+      	$superclasses = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
       	while ( $object = db_fetch_object($superclasses) ) {
       		$store[$object->superclass]['subclasses'][] = $qname; 
       		$store[$qname]['rdfs:subClassOf'][] = $object->superclass; 
@@ -159,10 +159,10 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 		$parentNode = $currentNode;
 		$indexCount = 0;
 		
- 	  $children = db_query('select prefix, reference from {evoc_rdf_superclasses} where superclass = "'.$classname.'"');
+ 	  $children = db_query(db_rewrite_sql('select prefix, reference from {evoc_rdf_superclasses} where superclass = "%s"'), $classname);
 	   
 	  while ($child = db_fetch_object($children)) {
-	    $class = db_fetch_object(db_query('select * from evoc_rdf_classes where prefix = "'.$child->prefix.'" and id = "'.$child->reference.'" '));
+	    $class = db_fetch_object(db_query(db_rewrite_sql('select * from evoc_rdf_classes where prefix = "%s" and id = "%s"'), $child->prefix, $child->reference));
 	    if ( $class ) {
 	    	$class->prefix = trim($class->prefix);
 	      $class->id = trim($class->id); 
@@ -187,7 +187,7 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      // fetch the disjointwith
 	      $disjointwith = array();
 	      if( $class->ndisjointwith > 0 ) {
-					$result = db_query('select disjointwith from {evoc_rdf_disjointwith} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
+					$result = db_query(db_rewrite_sql('select disjointwith from {evoc_rdf_disjointwith} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
 					while( $c = db_fetch_object($result) ) {
 						$disjointwith[] = $c->disjointwith;
 					}
@@ -200,7 +200,7 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      // fetch the superclasses
 	    	$superclasses = array();
 	      if( $class->superclasses > 0 ) {
-					$result = db_query('select superclass from {evoc_rdf_superclasses} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
+					$result = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
 					while( $s = db_fetch_object($result) ) {
 						$superclasses[] = $s->superclass;
 					}
@@ -356,10 +356,10 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
   $nodes = array();
   //static $array_of_id = array();
   
-  $children = db_query('select prefix, reference from {evoc_rdf_superproperties} where superproperty = "'.$node.'"');
+  $children = db_query(db_rewrite_sql('select prefix, reference from {evoc_rdf_superproperties} where superproperty = "%s"'), $node);
     
   while ($child = db_fetch_object($children)) {
-    $property = db_fetch_object(db_query('select * from evoc_rdf_properties where prefix = "'.$child->prefix.'" and id = "'.$child->reference.'" '));
+    $property = db_fetch_object(db_query(db_rewrite_sql('select * from evoc_rdf_properties where prefix = "%s" and id = "%s"'), $child->prefix, $child->reference));
     if ( $property ) {
       $property->prefix = trim($property->prefix);
       $property->id = trim($property->id); 
@@ -481,7 +481,7 @@ function neologism_gateway_get_full_classes_tree() {
     	// fetch the disjointwith for root classes
       $disjointwith = array();
       if( $class->ndisjointwith > 0 ) {
-				$result = db_query('select disjointwith from evoc_rdf_disjointwith where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
+				$result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
 				while( $c = db_fetch_object($result) ) {
 					$disjointwith[] = $c->disjointwith;
 				}
@@ -746,36 +746,36 @@ function _neologism_gateway_in_nodes($prefix, array $nodes) {
  * Construct a tree structure for an specific vocabulary. This' the gateway for the treeview
  * @return json with the tree structure 
  */
-function neologism_gateway_get_classes_tree_old() {
-  $voc['id'] = $_POST['voc_id'];
-  $voc['title'] = $_POST['voc_title'];
-  
-  $node = $_POST['node'];
-  $nodes = array();
-  if ( $node == 'super' ) {
-    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where superclasses = "0"'));  
-    
-    while ( $class = db_fetch_object($classes) ) {
-      $qname = $class->prefix.':'.$class->id;
-      $children = neologism_gateway_get_class_children($qname, $voc['title']);
-      if( $class->prefix == $voc['title'] || _neologism_gateway_in_nodes($voc['title'], $children) ) {
-        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-        $leaf = count($children) == 0;
-        $nodes[] = array(
-          'text' => $qname, 
-          'id' => $qname, 
-          'leaf' => $leaf, 
-          'iconCls' => ($class->prefix == $voc['title']) ? 'class-samevoc' : 'class-diffvoc',
-          'cls' => ($class->prefix == $voc['title']) ? 'currentvoc' : '', 
-          'children' => $children, 
-          'qtip' => $qtip
-        );        
-      }
-    }
-  }
-
-  drupal_json($nodes);
-}
+//function neologism_gateway_get_classes_tree_old() {
+//  $voc['id'] = $_POST['voc_id'];
+//  $voc['title'] = $_POST['voc_title'];
+//  
+//  $node = $_POST['node'];
+//  $nodes = array();
+//  if ( $node == 'super' ) {
+//    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where superclasses = "0"'));  
+//    
+//    while ( $class = db_fetch_object($classes) ) {
+//      $qname = $class->prefix.':'.$class->id;
+//      $children = neologism_gateway_get_class_children($qname, $voc['title']);
+//      if( $class->prefix == $voc['title'] || _neologism_gateway_in_nodes($voc['title'], $children) ) {
+//        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
+//        $leaf = count($children) == 0;
+//        $nodes[] = array(
+//          'text' => $qname, 
+//          'id' => $qname, 
+//          'leaf' => $leaf, 
+//          'iconCls' => ($class->prefix == $voc['title']) ? 'class-samevoc' : 'class-diffvoc',
+//          'cls' => ($class->prefix == $voc['title']) ? 'currentvoc' : '', 
+//          'children' => $children, 
+//          'qtip' => $qtip
+//        );        
+//      }
+//    }
+//  }
+//
+//  drupal_json($nodes);
+//}
 
 /**
  * This recurive function search for chindren of $node return class from the same $voc. 
@@ -785,110 +785,110 @@ function neologism_gateway_get_classes_tree_old() {
  * @param object $add_checkbox [optional]
  * @return 
  */
-function neologism_gateway_get_class_children_old($node, $voc = NULL, $add_checkbox = FALSE, array &$disjointwith_array = NULL) {
-  $nodes = array();
-  
-  static $array_of_id = array();
-  
-  $children = db_query('select prefix, reference from {evoc_rdf_superclasses} where superclass = "'.$node.'"');
-    
-  while ($child = db_fetch_object($children)) {
-    $class = db_fetch_object(db_query('select * from evoc_rdf_classes where prefix = "'.$child->prefix.'" and id = "'.$child->reference.'" '));
-    if ( $class ) {
-      $class->prefix = trim($class->prefix);
-      $class->id = trim($class->id); 
-      $qname = $class->prefix.':'.$class->id;
-      
-      // extra information needed by the treeview
-      $extra_information = true;
-      $realId = '';
-      if( isset($array_of_id[$qname]) ) {
-      	$modified_id = $array_of_id[$qname].'_'.$qname;
-      	$array_of_id[$qname] += 1;
-      	$realId = $qname;
-      }
-      else {
-      	$array_of_id[$qname] = 1;	
-      	$extra_information = false;
-      }
-      
-      //-----------------------------------------
-      // fetch extra information
-      
-      // fetch the disjointwith
-      $disjointwith = array();
-      if( $class->ndisjointwith > 0 ) {
-				$result = db_query('select disjointwith from {evoc_rdf_disjointwith} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
-				while( $c = db_fetch_object($result) ) {
-					$disjointwith[] = $c->disjointwith;
-				}
-				
-				if( isset($disjointwith_array) && is_array($disjointwith_array) ) {
-					$disjointwith_array[$qname] = $disjointwith;
-				}
-      }
-      
-      // fetch the superclasses
-    	$superclasses = array();
-      if( $class->superclasses > 0 ) {
-				$result = db_query('select superclass from {evoc_rdf_superclasses} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
-				while( $s = db_fetch_object($result) ) {
-					$superclasses[] = $s->superclass;
-				}
-      }
-      
-      $children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array);  
-      if( $voc ) {
-        if( $class->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
-          $leaf = count($children_nodes) == 0;
-          $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-          $nodes[] = array(
-            'text' => $qname, 
-            'id' => (!$extra_information) ? $qname : $modified_id, 
-            'leaf' => $leaf, 
-            'iconCls' => ($class->prefix == $voc) ? 'class-samevoc' : 'class-diffvoc', 
-            'cls' => ($class->prefix == $voc) ? 'currentvoc' : '',            
-            'children' => $children_nodes, 
-            'qtip' => $qtip,
-          	'disjointwith' => $disjointwith,
-          	'superclasses' => $superclasses,
-          	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-          );
-          
-          if( $extra_information ) {
-          	$nodes[count($nodes)-1]['realid'] = $qname; 
-          } 
-          
-          if( $add_checkbox ) {
-            $nodes[count($nodes)-1]['checked'] = false;
-          }
-        }
-      } else {
-        $leaf = count($children_nodes) == 0;
-        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-        $nodes[] = array(
-          'text' => $qname, 
-          'id' => (!$extra_information) ? $qname : $modified_id, 
-          'leaf' => $leaf, 
-          'iconCls' => 'class-samevoc', 
-          'children' => $children_nodes, 
-          'qtip' => $qtip,
-        	'disjointwith' => $disjointwith,
-        	'superclasses' => $superclasses,
-        	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-        );
-        
-      	if( $extra_information ) {
-        	$nodes[count($nodes)-1]['realid'] = $qname; 
-        }
-          
-        if( $add_checkbox ) {
-          $nodes[count($nodes)-1]['checked'] = false;
-        }  
-      }
-      
-    }
-  }
-  
-  return $nodes;
-}
+//function neologism_gateway_get_class_children_old($node, $voc = NULL, $add_checkbox = FALSE, array &$disjointwith_array = NULL) {
+//  $nodes = array();
+//  
+//  static $array_of_id = array();
+//  
+//  $children = db_query('select prefix, reference from {evoc_rdf_superclasses} where superclass = "'.$node.'"');
+//    
+//  while ($child = db_fetch_object($children)) {
+//    $class = db_fetch_object(db_query('select * from evoc_rdf_classes where prefix = "'.$child->prefix.'" and id = "'.$child->reference.'" '));
+//    if ( $class ) {
+//      $class->prefix = trim($class->prefix);
+//      $class->id = trim($class->id); 
+//      $qname = $class->prefix.':'.$class->id;
+//      
+//      // extra information needed by the treeview
+//      $extra_information = true;
+//      $realId = '';
+//      if( isset($array_of_id[$qname]) ) {
+//      	$modified_id = $array_of_id[$qname].'_'.$qname;
+//      	$array_of_id[$qname] += 1;
+//      	$realId = $qname;
+//      }
+//      else {
+//      	$array_of_id[$qname] = 1;	
+//      	$extra_information = false;
+//      }
+//      
+//      //-----------------------------------------
+//      // fetch extra information
+//      
+//      // fetch the disjointwith
+//      $disjointwith = array();
+//      if( $class->ndisjointwith > 0 ) {
+//				$result = db_query('select disjointwith from {evoc_rdf_disjointwith} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
+//				while( $c = db_fetch_object($result) ) {
+//					$disjointwith[] = $c->disjointwith;
+//				}
+//				
+//				if( isset($disjointwith_array) && is_array($disjointwith_array) ) {
+//					$disjointwith_array[$qname] = $disjointwith;
+//				}
+//      }
+//      
+//      // fetch the superclasses
+//    	$superclasses = array();
+//      if( $class->superclasses > 0 ) {
+//				$result = db_query('select superclass from {evoc_rdf_superclasses} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
+//				while( $s = db_fetch_object($result) ) {
+//					$superclasses[] = $s->superclass;
+//				}
+//      }
+//      
+//      $children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array);  
+//      if( $voc ) {
+//        if( $class->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
+//          $leaf = count($children_nodes) == 0;
+//          $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
+//          $nodes[] = array(
+//            'text' => $qname, 
+//            'id' => (!$extra_information) ? $qname : $modified_id, 
+//            'leaf' => $leaf, 
+//            'iconCls' => ($class->prefix == $voc) ? 'class-samevoc' : 'class-diffvoc', 
+//            'cls' => ($class->prefix == $voc) ? 'currentvoc' : '',            
+//            'children' => $children_nodes, 
+//            'qtip' => $qtip,
+//          	'disjointwith' => $disjointwith,
+//          	'superclasses' => $superclasses,
+//          	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
+//          );
+//          
+//          if( $extra_information ) {
+//          	$nodes[count($nodes)-1]['realid'] = $qname; 
+//          } 
+//          
+//          if( $add_checkbox ) {
+//            $nodes[count($nodes)-1]['checked'] = false;
+//          }
+//        }
+//      } else {
+//        $leaf = count($children_nodes) == 0;
+//        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
+//        $nodes[] = array(
+//          'text' => $qname, 
+//          'id' => (!$extra_information) ? $qname : $modified_id, 
+//          'leaf' => $leaf, 
+//          'iconCls' => 'class-samevoc', 
+//          'children' => $children_nodes, 
+//          'qtip' => $qtip,
+//        	'disjointwith' => $disjointwith,
+//        	'superclasses' => $superclasses,
+//        	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
+//        );
+//        
+//      	if( $extra_information ) {
+//        	$nodes[count($nodes)-1]['realid'] = $qname; 
+//        }
+//          
+//        if( $add_checkbox ) {
+//          $nodes[count($nodes)-1]['checked'] = false;
+//        }  
+//      }
+//      
+//    }
+//  }
+//  
+//  return $nodes;
+//}
