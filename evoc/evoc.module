@@ -9,6 +9,21 @@ define("EVOC_SUPERPROPERTIES", "superproperties");
 define("EVOC_INVERSES", "inverses");    // new form -- multiple inverses
 define("EVOC_INVERSE", "inverse");      // old form -- one inverse
 
+// field name definitions
+define("EVOC_SUPERCLASSES_FIELD_NAME","field_superclass2");
+define("EVOC_DISJOINTWITH_FIELD_NAME","field_disjointwith2");
+define("EVOC_DOMAINS_FIELD_NAME","field_domain2");
+define("EVOC_RANGES_FIELD_NAME","field_range2");
+define("EVOC_SUPERPROPERTIES_FIELD_NAME","field_superproperty2");
+define("EVOC_INVERSES_FIELD_NAME","field_inverse2");
+
+define("EVOC_RELATIONSHIP_TYPE_DOMAIN", 1); 
+define("EVOC_RELATIONSHIP_TYPE_RANGE", 2);
+define("EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY", 3);
+define("EVOC_RELATIONSHIP_TYPE_INVERSE", 4);
+define("EVOC_RELATIONSHIP_TYPE_SUPERCLASS", 5);
+define("EVOC_RELATIONSHIP_TYPE_DISJOINTWITH", 6);
+
 /**
  * Implementation of hook_perm().
  */
@@ -212,6 +227,49 @@ function evoc_save_vocabulary($vocabulary, $showdetails = false) {
 }
 
 /**
+ * Insert into the database the relationship between the term and a list of terms
+ * @param $relationship_type Relationship type between the term and the list of term.
+ * @param $array_terms Array of terms
+ * @param $prefix Prefix of the term
+ * @param $id Id of the term
+ * @return the number of terms in the list of terms or 0 if there is not term(s) to insert
+ */
+function _evoc_insert_relationship_terms($relationship_type, array &$array_terms, $prefix, $id) {
+  $count = 0;
+  if( is_array($array_terms) ) {
+    $table_name = '';
+    $column_name = '';
+    
+  if($relationship_type == EVOC_RELATIONSHIP_TYPE_DOMAIN) { 
+      $table_name = 'evoc_rdf_propertiesdomains';
+      $column_name = 'rdf_domain';   
+    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_RANGE) {
+      $table_name = 'evoc_rdf_propertiesranges';
+      $column_name = 'rdf_range';   
+    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY) {
+      $table_name = 'evoc_rdf_superproperties';
+      $column_name = 'superproperty';  
+    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_INVERSE) {
+      $table_name = 'evoc_rdf_inversesproperties';
+      $column_name = 'inverseof';
+    }else if($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERCLASS) { 
+      $table_name = 'evoc_rdf_superclasses';
+      $column_name = 'superclass';   
+    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_DISJOINTWITH) {
+      $table_name = 'evoc_rdf_disjointwith';
+      $column_name = 'disjointwith';   
+    } 
+    
+    $count = count($array_terms);
+    foreach ( $array_terms as $term ) {
+        $sql = "insert into {".$table_name."} (prefix, reference, ".$column_name.") values ('%s', '%s', '%s')";
+        db_query(db_rewrite_sql($sql), $prefix, $id, $term);
+    }
+  }
+  return $count;
+}
+
+/**
  * Store an external RDF class in the database.
  * 
  * @param object $class it's a keyed array containing the class information to be added. 
@@ -227,28 +285,9 @@ function evoc_write_class($class, $showdetails = false) {
     drupal_set_message('Importing Class '.$class['prefix']." : ".$class['id']." already exists in the system.", 'status', FALSE);
   }
   else {
-    $count_superclasses = 0;
-    $superclasses = $class[EVOC_SUPERCLASSES];
-    if( !empty($superclasses) && is_array($superclasses) ) {
-      $count_superclasses = count($superclasses);
-      foreach ( $superclasses as $superclass ) {
-        if( !empty($superclass) ) {
-          db_query(db_rewrite_sql('insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $superclass);
-        }
-      }
-    }
-    
-  	$count_disjointwith = 0;
-  	$disjointwith_array = $class[EVOC_DISJOINTS];
-    if( !empty($disjointwith_array) && is_array($disjointwith_array) ) {
-      $count_disjointwith = count($disjointwith_array);
-      foreach ( $disjointwith_array as $disjointwith ) {
-        if( !empty($disjointwith) ) {
-          db_query(db_rewrite_sql('insert into {evoc_rdf_disjointwith} (prefix, reference, disjointwith) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $disjointwith);
-        }
-      }
-    }
-    
+    $count_superclasses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERCLASS, $class[EVOC_SUPERCLASSES], $class['prefix'], $class['id']);
+  	$count_disjointwith = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_DISJOINTWITH, $class[EVOC_DISJOINTS], $class['prefix'], $class['id']);
+  	
     if( db_query(db_rewrite_sql('insert into {evoc_rdf_classes} (prefix, id, label, comment, superclasses, ndisjointwith) 
       values ("%s", "%s", "%s", "%s", "%d", "%d")'), $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith ) ) {
       if( $showdetails ) {
@@ -319,34 +358,14 @@ function evoc_update_class($class, $cascade_update = TRUE) {
     if( $currentclass->superclasses > 0 ) {
       db_query(db_rewrite_sql('delete from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $currentclass->prefix, $currentclass->id);
     }
-    
-    $count_superclasses = 0;
-    $superclasses = $class[EVOC_SUPERCLASSES];
-    if( !empty($superclasses) && is_array($superclasses) ) {
-      $count_superclasses = count($superclasses);
-      foreach ( $superclasses as $superclass ) {
-        if( !empty($superclass) ) {
-          db_query(db_rewrite_sql('insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $superclass);
-        }
-      }
-    }
-    
-  	// update disjointwith table
-    if( $currentclass->disjointwith > 0 ) {
+    $count_superclasses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERCLASS, $class[EVOC_SUPERCLASSES], $class['prefix'], $class['id']);
+  	
+    // update disjointwith table
+    if( $currentclass->ndisjointwith > 0 ) {
       db_query(db_rewrite_sql('delete from {evoc_rdf_disjointwith} where prefix = "%s" and reference = "%s"'), $currentclass->prefix, $currentclass->id);
     }
-    
-    $count_disjointwith = 0;
-    $disjointwith_array = $class[EVOC_DISJOINTS];
-    if( !empty($disjointwith_array) && is_array($disjointwith_array) ) {
-      $count_disjointwith = count($disjointwith_array);
-      foreach ( $disjointwith_array as $disjointwith ) {
-        if( !empty($disjointwith) ) {
-          db_query(db_rewrite_sql('insert into {evoc_rdf_disjointwith} (prefix, reference, disjointwith) values ("%s", "%s", "%s")'), $class['prefix'], $class['id'], $disjointwith);
-        }
-      }
-    }
-    
+    $count_disjointwith = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_DISJOINTWITH, $class[EVOC_DISJOINTS], $class['prefix'], $class['id']);
+  	    
     $result = db_query(db_rewrite_sql('update {evoc_rdf_classes} set prefix = "%s", id = "%s", label = "%s", comment = "%s", superclasses = "%d", ndisjointwith = "%d" where prefix = "%s" and id = "%s"'), 
       $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith, $currentclass->prefix, $currentclass->id);
       
@@ -454,46 +473,15 @@ function evoc_remove_class($class) {
  * @return none 
  */
 function evoc_write_property($property, $showdetails = false) {
-  $count = db_result(db_query(db_rewrite_sql('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix="%s" AND id = "%s"'), $property['prefix'], $property['id'])) > 0;
+  $count = db_result(db_query(db_rewrite_sql("SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix='%s' AND id = '%s'"), $property['prefix'], $property['id'])) > 0;
   if ($count) {
     drupal_set_message('Importing Property. Property '.$property['prefix']." : ".$property['id']." already exists in the system.", 'status', FALSE);
   }
   else {
-    $count_domains = 0;
-    $domains = $property[EVOC_DOMAINS];
-    if( !empty($domains) && is_array($domains) ) {
-      $count_domains = count($domains);
-      foreach ( $domains as $rdf_domain ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_domain);
-      }
-    }
-    
-    $count_ranges = 0;
-    $ranges = $property[EVOC_RANGES];
-    if( !empty($ranges) && is_array($ranges) ) {
-      $count_ranges = count($ranges);
-      foreach ( $ranges as $rdf_range ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_range);
-      }
-    }
-    
-    $count_superproperties = 0;
-    $superproperties = $property[EVOC_SUPERPROPERTIES];
-    if( !empty($superproperties) && is_array($superproperties) ) {
-      $count_superproperties = count($superproperties);
-      foreach ( $superproperties as $superproperty ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_superproperties} (prefix, reference, superproperty) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $superproperty);
-      }
-    }
-    
-  	$count_inverses = 0;
-    $inverses = $property[EVOC_INVERSES];
-    if( !empty($inverses) && is_array($inverses) ) {
-      $count_inverses = count($inverses);
-      foreach ( $inverses as $inverse ) {
-        db_query(db_rewrite_sql('INSERT INTO {evoc_rdf_inversesproperties} (prefix, reference, inverseof) VALUES ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $inverse);
-      }
-    }
+    $count_domains = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_DOMAIN, $property[EVOC_DOMAINS], $property['prefix'], $property['id']);
+    $count_ranges = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_RANGE, $property[EVOC_RANGES], $property['prefix'], $property['id']);
+    $count_superproperties = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY, $property[EVOC_SUPERPROPERTIES], $property['prefix'], $property['id']);
+    $count_inverses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_INVERSE, $property[EVOC_INVERSES], $property['prefix'], $property['id']);
     
     if( db_query(db_rewrite_sql('INSERT INTO {evoc_rdf_properties} (prefix, id, label, comment, superproperties, domains, ranges, inverses) 
       VALUES ("%s", "%s", "%s", "%s", "%d", "%d", "%d", "%d")'), 
@@ -530,7 +518,7 @@ function evoc_update_property($property, $cascade_update = TRUE) {
   if (!$property['previous_prefix']) $property['previous_prefix'] = $property['prefix'];
   if (!$property['previous_id']) $property['previous_id'] = $property['id'];
   
-  $currentproperty = db_fetch_object(db_query(db_rewrite_sql('select * from {evoc_rdf_properties} where prefix="%s" and id = "%s"'), 
+  $currentproperty = db_fetch_object(db_query(db_rewrite_sql("select * from {evoc_rdf_properties} where prefix='%s' and id = '%s'"), 
   	$property['previous_prefix'], $property['previous_id']));
   
   if( $currentproperty ) {
@@ -558,57 +546,26 @@ function evoc_update_property($property, $cascade_update = TRUE) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_propertiesdomains} where prefix = "%s" and reference = "%s"'), 
       	$currentproperty->prefix, $currentproperty->id);
     }
-    $count_domains = 0;
-    $domains = $property[EVOC_DOMAINS];
-    if( !empty($domains) && is_array($domains) ) {
-      $count_domains = count($domains);
-      foreach ( $domains as $rdf_domain ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("%s", "%s", "%s")'), 
-        	$property['prefix'], $property['id'], $rdf_domain);
-      }
-    }
+    $count_domains = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_DOMAIN, $property[EVOC_DOMAINS], $property['prefix'], $property['id']);
     
     // check for rdf_ranges, if has domains then remove them
     if( $currentproperty->ranges > 0 ) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_propertiesranges} where prefix = "%s" and reference = "%s"'), 
       	$currentproperty->prefix, $currentproperty->id);
     }
-    $count_ranges = 0;
-    $ranges = $property[EVOC_RANGES];
-    if( !empty($ranges) && is_array($ranges) ) {
-      $count_ranges = count($ranges);
-      foreach ( $ranges as $rdf_range ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("%s", "%s", "%s")'), $property['prefix'], $property['id'], $rdf_range);
-      }
-    }
+    $count_ranges = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_RANGE, $property[EVOC_RANGES], $property['prefix'], $property['id']);
     
     if( $currentproperty->superproperties > 0 ) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_superproperties} where prefix = "%s" and reference = "%s"'), 
       	$currentproperty->prefix, $currentproperty->id);
     }
-    $count_superproperties = 0;
-    $superproperties = $property[EVOC_SUPERPROPERTIES];
-    if( !empty($superproperties) && is_array($superproperties) ) {
-      $count_superproperties = count($superproperties);
-      foreach ( $superproperties as $superproperty ) {
-        db_query(db_rewrite_sql('insert into {evoc_rdf_superproperties} (prefix, reference, superproperty) values ("%s", "%s", "%s")'), 
-        	$property['prefix'], $property['id'], $superproperty);
-      }
-    }
+    $count_superproperties = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY, $property[EVOC_SUPERPROPERTIES], $property['prefix'], $property['id']);
     
   	if( $currentproperty->inverses > 0 ) {
       $result = db_query(db_rewrite_sql('delete from {evoc_rdf_inversesproperties} where prefix = "%s" and reference = "%s"'), 
       	$currentproperty->prefix, $currentproperty->id);
     }
-  	$count_inverses = 0;
-    $inverses = $property[EVOC_INVERSES];
-    if( !empty($inverses) && is_array($inverses) ) {
-      $count_inverses = count($inverses);
-      foreach ( $inverses as $inverse ) {
-        db_query(db_rewrite_sql('INSERT INTO {evoc_rdf_inversesproperties} (prefix, reference, inverseof) VALUES ("%s", "%s", "%s")'), 
-        	$property['prefix'], $property['id'], $inverse);
-      }
-    }
+    $count_inverses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_INVERSE, $property[EVOC_INVERSES], $property['prefix'], $property['id']);
         
     // update the property
     $result = db_query(db_rewrite_sql('UPDATE {evoc_rdf_properties} SET prefix = "%s", id = "%s", label = "%s", comment = "%s", superproperties = "%d", domains = "%d", ranges = "%d", inverses = "%d" WHERE prefix = "%s" AND id = "%s"'), 
