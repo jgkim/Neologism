@@ -764,7 +764,7 @@ function evocreference_user($type, &$edit, &$account) {
         }
       }
       foreach ($search_tables as $table => $column) {
-        $ids = db_query(db_rewrite_sql("SELECT DISTINCT(n.nid) FROM {node} n LEFT JOIN {". $table ."} f ON n.vid = f.vid WHERE f.". $column ."='%d' AND n.status = 1"), $account->uid);
+        $ids = db_query(db_rewrite_sql("SELECT DISTINCT(n.nid) FROM {node} n LEFT JOIN {". $table ."} f ON n.vid = f.vid WHERE f.". $column ."=%d AND n.status = 1"), $account->uid);
         while ($data = db_fetch_object($ids)) {
           // TODO, do we really want a complete node_load() here? We only need the title to create a link.
           $node = node_load($data->nid);
