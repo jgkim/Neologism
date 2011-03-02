@@ -10,12 +10,12 @@ define("EVOC_INVERSES", "inverses");    // new form -- multiple inverses
 define("EVOC_INVERSE", "inverse");      // old form -- one inverse
 
 // field name definitions
-define("EVOC_SUPERCLASSES_FIELD_NAME","field_superclass2");
-define("EVOC_DISJOINTWITH_FIELD_NAME","field_disjointwith2");
-define("EVOC_DOMAINS_FIELD_NAME","field_domain2");
-define("EVOC_RANGES_FIELD_NAME","field_range2");
-define("EVOC_SUPERPROPERTIES_FIELD_NAME","field_superproperty2");
-define("EVOC_INVERSES_FIELD_NAME","field_inverse2");
+define("EVOC_FIELDNAME_SUPERCLASSES","field_superclass2");
+define("EVOC_FIELDNAME_DISJOINTWITH","field_disjointwith2");
+define("EVOC_FIELDNAME_DOMAINS","field_domain2");
+define("EVOC_FIELDNAME_RANGES","field_range2");
+define("EVOC_FIELDNAME_SUPERPROPERTIES","field_superproperty2");
+define("EVOC_FIELDNAME_INVERSES","field_inverse2");
 
 define("EVOC_RELATIONSHIP_TYPE_DOMAIN", 1); 
 define("EVOC_RELATIONSHIP_TYPE_RANGE", 2);
