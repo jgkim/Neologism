@@ -140,7 +140,7 @@ function _neologism_buildSubclassesTreeInOrder(array &$store, $class, $vocabular
  * @return 
  * @version 1.1
  */
-function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox = FALSE, array &$disjointwith_array = NULL) {
+function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_disjointwith = NULL) {
   $nodes = array();
   $stack = array();
   $referenceToCurrentNode = &$nodes;
@@ -186,24 +186,16 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      
 	      // fetch the disjointwith
 	      $disjointwith = array();
-	      if( $class->ndisjointwith > 0 ) {
-					$result = db_query(db_rewrite_sql('select disjointwith from {evoc_rdf_disjointwith} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
-					while( $c = db_fetch_object($result) ) {
-						$disjointwith[] = $c->disjointwith;
-					}
-					
-					if( isset($disjointwith_array) && is_array($disjointwith_array) ) {
-						$disjointwith_array[$qname] = $disjointwith;
-					}
+        if( $class->ndisjointwith > 0 ) {
+  				$disjointwith = _neologism_get_class_disjoinwith_terms($class->prefix, $class->id);
+  				// add disjointwith to the main array to use it after build the nodes
+  				$array_disjointwith[$qname] = $disjointwith;
 	      }
 	      
 	      // fetch the superclasses
 	    	$superclasses = array();
 	      if( $class->superclasses > 0 ) {
-					$result = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
-					while( $s = db_fetch_object($result) ) {
-						$superclasses[] = $s->superclass;
-					}
+					$superclasses = _neologism_get_superclasses_terms($class->prefix, $class->id);
 	      }
 	      
 	      //$children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array); 
@@ -455,20 +447,39 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
 //
 
 /**
- * Construct the tree structure for a Tree using ExtJS Tree structure
+ * Query for prefix:id term disjoinwith classes 
+ * @param string $prefix
+ * @param string $id
+ * @return Array of disjoinewith classes
+ */
+function _neologism_get_class_disjoinwith_terms($prefix, $id) {
+  $disjointwith = array();
+  $result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $c = db_fetch_object($result) ) {
+		$disjointwith[] = $c->disjointwith;
+	}
+	return $disjointwith;
+}
+
+function _neologism_get_superclasses_terms($prefix, $id) {
+  $superclasses = array();
+  $result = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $s = db_fetch_object($result) ) {
+		$superclasses[] = $s->superclass;
+	}
+	return $superclasses;
+}
+
+/**
+ * Construct the tree structure for a Tree using ExtJS Tree structure. This structure normally is shown in a termtree component.
  * @return json with the tree structure 
  */
 function neologism_gateway_get_full_classes_tree() {
-	// For debugging!
-//	error_reporting(E_ALL);
-//	ini_set('display_errors', 1);
-	
   $nodes = array();
   $node = $_REQUEST['node'];
   
   // TODO we could pass as a parameter when to use the function to infer the disjointwith
-  $infer_disjoint = TRUE;
-  static $disjointwith_array = array();
+  $array_disjointwith = array();
   
   $count = 0;
     
@@ -481,19 +492,13 @@ function neologism_gateway_get_full_classes_tree() {
     	// fetch the disjointwith for root classes
       $disjointwith = array();
       if( $class->ndisjointwith > 0 ) {
-				$result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
-				while( $c = db_fetch_object($result) ) {
-					$disjointwith[] = $c->disjointwith;
-				}
-				
+				$disjointwith = _neologism_get_class_disjoinwith_terms($class->prefix, $class->id);
 				// add disjointwith to the main array to use it after build the nodes
-				$disjointwith_array[$qname] = $disjointwith;
+				$array_disjointwith[$qname] = $disjointwith;
       }
       
       $children = NULL;
-      if( $count++ < 500000) {
-      	$children = neologism_gateway_get_class_children($qname, NULL, TRUE, $disjointwith_array);
-      }
+      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith);
       $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
@@ -504,23 +509,17 @@ function neologism_gateway_get_full_classes_tree() {
         'children' => $children, 
         'checked' => false,
         'qtip' => $qtip,
-      	'disjointwith' => null,//$disjointwith,
+      	'disjointwith' => $disjointwith,
+      	//'inferred_disjointwith' => $inferred_disjointwith,
       	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
       );        
     }
   
-  
-	  // TODO At this point should exists an array with all the disjointwith classes and 
-	  // we execute some functio that works as a rasoner to infer all the posibles disjointwith 
-	  // between classes
-	  //infer_disjointwith($nodes, $disjointwith_array);
+    // infer disjointness between classes
+	  _neologism_infer_disjointness($nodes, $array_disjointwith);
   }
 
   drupal_json($nodes);
-//  global $processed_classes;
-//  var_dump($processed_classes);
-//  var_dump(count($processed_classes));
-//  echo "Done\n";
 }
 
 /**
@@ -530,24 +529,31 @@ function neologism_gateway_get_full_classes_tree() {
  * @param array $disjointwith_array
  * @return unknown_type
  */
-function infer_disjointwith(&$nodes, array $disjointwith_array, array $parent_disjointwith = NULL) {
+function _neologism_infer_disjointness(&$nodes, array &$array_disjointwith, array &$parent_disjointwith = NULL) {
 	for ($i = 0; $i < count($nodes); $i++ ) {
 		
-		if( $parent_disjointwith != NULL ) {
-			$nodes[$i]['disjointwith'] = array_merge($parent_disjointwith, $nodes[$i]['disjointwith']);	
+	  $node = &$nodes[$i];
+		// if A disjointwith B and C subset of B => C disjointwith A
+	  if ($parent_disjointwith != NULL ) {
+			$node['inferred_disjointwith'] = $parent_disjointwith;	
 		}
 		
-		foreach( $disjointwith_array as $key => $array_values ) {
-			foreach( $array_values as $value ) {
-				if( $nodes[$i]['text'] == $value && !in_array($key, $nodes[$i]['disjointwith']) )	{
-					$nodes[$i]['disjointwith'][] = $key;	
+		foreach ($array_disjointwith as $qname => $array_of_disjoinwith ) {
+			foreach ($array_of_disjoinwith as $value ) {
+				if ($node['text'] == $value ) {
+				  if (in_array($qname, $node['disjointwith']) || (is_array($node['inferred_disjointwith']) && in_array($qname, $node['inferred_disjointwith']))) {
+				    continue;
+				  }  
+					$node['inferred_disjointwith'][] = $qname;	
 				}
 			}
 		}
 		
-		if( count($nodes[$i]['children']) > 0 ) {
-			infer_disjointwith($nodes[$i]['children'], $disjointwith_array, $nodes[$i]['disjointwith']);
+		if (count($node['children']) > 0) {
+		  $delegated_disjointness = ( is_array($node['inferred_disjointwith']) == TRUE ? array_merge($node['disjointwith'], $node['inferred_disjointwith']) : $node['disjointwith']);
+			_neologism_infer_disjointness($node['children'], $array_disjointwith, $delegated_disjointness);
 		}
+		
 	}
 }
 

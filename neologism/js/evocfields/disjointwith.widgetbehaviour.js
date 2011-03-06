@@ -3,6 +3,10 @@
  * 
  * @param {Object} field_name
  */
+
+Neologism.DisjointnessTermsTree = Ext.extend(Neologism.TermsTree, {
+});
+
 Neologism.createDisjointwithSelecctionWidget = function(field_name) {
   var objectToRender = Drupal.settings.evocwidget.field_id[field_name];
   var editingValue = Drupal.settings.evocwidget.editing_value[field_name];
@@ -14,10 +18,11 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
   Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
   baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
   
-  Neologism.disjointwithTreePanel = new Neologism.TermsTree({
+  Neologism.disjointwithTreePanel = new Neologism.DisjointnessTermsTree({
     //renderTo: objectToRender,
     title: Drupal.t('Disjoint with class(es)'),
     disabled: false,
+    paths: [],
     
     loader: new Ext.tree.TreeLoader({
       dataUrl: dataUrl,
@@ -25,12 +30,22 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
       listeners: {
     	load: function(loader, node, response){
     		var treePanel = node.getOwnerTree();
+    		var paths = 0;
 			Neologism.TermsTree.traverse(node, function(currentNode, path) {
 				if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
 					path.pop();
 					treePanel.expandPath(path.join('/'));
 				}
+				
+				// get all paths of the editing value
+				if (currentNode.text == editingValue) {
+					Neologism.disjointwithTreePanel.paths[paths++] = path.slice();
+				}
 			}, true);
+			
+			//TODO: after got all the paths disable all the parent of editing value
+			// because they cannot be possible disjointness. This widget should be synchronized
+			// with superclasses widget.
         }
       }
     }),
@@ -47,6 +62,10 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
     listeners: {
 	  	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
     	checkchange: function(node, checked) {
+	  		// the call comes from checkDisjointness method the event must be cancelled.
+	  		if (checked && Neologism.util.in_array(editingValue, node.attributes.disjointwith)) 
+	  			return;
+	  		
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
 	  		
 	        if ( checked  ) {
@@ -68,12 +87,16 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
 				node.eachChild(function(currentNode){
 					if ( currentNode !== undefined ) {
 						if (currentNode.attributes.text == editingValue) {
+							//currentNode.disable();
 							node_to_remove = currentNode;
 			            }
 						else if( Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
 							currentNode.getUI().toggleCheck(true);
 						}
 						
+						// this method from Tree
+						this.checkDisjointness(currentNode, editingValue);
+						console.log(currentNode.attributes);
 					}
 				});
 				// if the editting node was found then it must be removed
@@ -83,9 +106,7 @@ Neologism.createDisjointwithSelecctionWidget = function(field_name) {
     } // listeners
   
   	//this event sometime is fired for other component
-   
   	,onSelectionChange:function(node) {
-	      // do whatever is necessary to assign the employee to position
   	}
     
   });

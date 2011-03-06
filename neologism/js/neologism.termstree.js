@@ -322,9 +322,18 @@ Ext.tree.TreePanel.prototype.isSomeChildCheckedOrStatus = function(node, status)
 	});
 	
 	return someoneChecked;
-}
+};
 
-;
+Ext.tree.TreeNode.prototype.checkDisjointness = function(/*TreeNode*/node, /*string*/editingNodeValue) {
+	// if some node comes checked is because it is a real disjointwith
+	if (Neologism.util.in_array(editingNodeValue, node.attributes.disjointwith)) {
+		node.getUI().toggleCheck(true);
+		node.disable();
+	}
+	else if (node.attributes.inferred_disjointwith != undefined) {
+		node.disable();
+	}
+};
  
 //Ext.extend(Ext.tree.CheckboxNodeUI, Ext.tree.TreeNodeUI, {   
 /*

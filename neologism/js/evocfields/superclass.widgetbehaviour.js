@@ -37,10 +37,14 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
         load: function(loader, node, response){
     		var treePanel = node.getOwnerTree();
     		Neologism.TermsTree.traverse(node, function(currentNode, path) {
+    			// expand selected values
     			if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
     				path.pop();
     				treePanel.expandPath(path.join('/'));
     			}
+    			
+    			// detect suprclasses' superclasses
+    			
     		}, true);
         }
       }
@@ -73,7 +77,7 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
 	        	}
 	        }
 	        
-	        //this.fireEvent('selectionchange', node);
+	        this.fireEvent('selectionchange', node);
   		} // checkchange  
   
   		,expandnode: function( node ) {
@@ -96,32 +100,36 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
     
   	
   	// override method onSelectionChange called when a fireEvent('selectionchange', ...); is invoked
-  	,onSelectionChange:function(object) {
-        // do whatever is necessary to assign the employee to position
-    	// notify Observers if there is someone
-    	this.notifyObservers('selectionchange', object);
-    },
+//    ,onSelectionChange:function(object) {
+//        // do whatever is necessary to assign the employee to position
+//    	// notify Observers directly
+//    	this.notifyObservers('selectionchange', {
+//    		widget: 'superclass', 
+//    		rootNode: this.getRootNode(), 
+//    		selectedValues: baseParams.arrayOfValues}
+//    	);
+//    }
     
-    updatselection: function(){
-      this.root.eachChild(function(currentNode){
-        currentNode.cascade(function(){
-          // expand the node to iterate over it
-          this.getOwnerTree().expandPath(this.getPath());
-          
-          if (this.id == editingValue) {
-            this.getUI().addClass('locked-for-edition');
-            this.getUI().checkbox.disabled = true;
-            this.getUI().checkbox.checked = false;
-          }
-          
-          for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
-            if (this.id == baseParams.arrayOfValues[j]) {
-              this.getUI().toggleCheck(true);
-            }
-          }
-        }, null);
-      });
-    }
+//    updatselection: function(){
+//      this.root.eachChild(function(currentNode){
+//        currentNode.cascade(function(){
+//          // expand the node to iterate over it
+//          this.getOwnerTree().expandPath(this.getPath());
+//          
+//          if (this.id == editingValue) {
+//            this.getUI().addClass('locked-for-edition');
+//            this.getUI().checkbox.disabled = true;
+//            this.getUI().checkbox.checked = false;
+//          }
+//          
+//          for (var j = 0, lenValues = baseParams.arrayOfValues.length; j < lenValues; j++) {
+//            if (this.id == baseParams.arrayOfValues[j]) {
+//              this.getUI().toggleCheck(true);
+//            }
+//          }
+//        }, null);
+//      });
+//    }
     
   });
 
