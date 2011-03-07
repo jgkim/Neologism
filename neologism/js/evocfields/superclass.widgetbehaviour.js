@@ -62,6 +62,10 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
 	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	  		
+	  		// check for node references that should be updated together
+	  		node.checkNodeReferences(checked);
+	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
 		        // add selection to array of values
         		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
@@ -70,11 +74,8 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
 	            
 	        }
 	        else {
-	        	for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-	        		if ( baseParams.arrayOfValues[i] == node.text ) {
-	        			baseParams.arrayOfValues.splice(i, 1);
-	        		}
-	        	}
+	    		// if we are unchecked a checkbox
+	        	Neologism.util.remove_element(node.text, baseParams.arrayOfValues);
 	        }
 	        
 	        this.fireEvent('selectionchange', node);

@@ -53,18 +53,18 @@ Neologism.createDomainSelecctionWidget = function( field_name ) {
     listeners: {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
-	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
-	  		var id = ( node.attributes.realid !== undefined ) ? node.attributes.realid : node.id;
-	  		
-	        if ( checked /*&& node.parentNode !== null*/ ) {
+	  		// check for node references that should be updated together
+			node.checkNodeReferences(checked);
+			
+	        if ( checked ) {
 		        // add selection to array of values
-	        	if( !Neologism.util.in_array(id, baseParams.arrayOfValues) ) {
-	            	baseParams.arrayOfValues.push(id);
+	        	if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues) ) {
+	            	baseParams.arrayOfValues.push(node.attributes.text);
 	            }
 	    	} 
 	        else {
 	    		// if we are unchecked a checkbox
-	        	Neologism.util.remove_element(id, baseParams.arrayOfValues);
+	        	Neologism.util.remove_element(node.attributes.text, baseParams.arrayOfValues);
 	        } // else
 	        
 	        //this.fireEvent('selectionchange', node);

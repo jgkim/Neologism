@@ -2,8 +2,6 @@
  * @author guicec
  */
 
-//Ext.ns('Neologism');
-
 /**
  * Override TreePanel onClick and onDblClick events
  * @param {Object} e
@@ -103,7 +101,7 @@ Ext.override(Ext.tree.TreePanel, {
 	    };
 	    curNode.expand(false, false, f);
 	    return curNode;
-	}
+	} 
 });
 
 /*
@@ -118,6 +116,8 @@ Ext.override(Ext.tree.TreeNodeUI, {
     }
 }); 
 */
+
+
 
 /* Extending/depending on:  
 ~ = modified function (when updating from SVN be sure to check these for changes, especially to Ext.tree.TreeNodeUI.render() )  
@@ -160,8 +160,6 @@ Ext.tree.TreePanel.prototype.getChecked = function(node){
 
 //-------------------------------------------------------
 // especifies methods for TermsTree
-
-
 
 /**
  * Note: we are working with node.text becuase the id could be modified or had not the right value
@@ -324,14 +322,54 @@ Ext.tree.TreePanel.prototype.isSomeChildCheckedOrStatus = function(node, status)
 	return someoneChecked;
 };
 
-Ext.tree.TreeNode.prototype.checkDisjointness = function(/*TreeNode*/node, /*string*/editingNodeValue) {
+Ext.tree.TreeNode.prototype.checkDisjointness = function(/*TreeNode*/node, /*string*/editingNodeValue, /*Mutidimensional array*/parentPaths) {
 	// if some node comes checked is because it is a real disjointwith
+	if (node.getUI().isChecked()) 
+		return;
 	if (Neologism.util.in_array(editingNodeValue, node.attributes.disjointwith)) {
 		node.getUI().toggleCheck(true);
 		node.disable();
 	}
 	else if (node.attributes.inferred_disjointwith != undefined) {
-		node.disable();
+		for (var i = 0; i < parentPaths.length; i++) {
+			for (var tindex = 1; tindex < parentPaths[i].length; tindex++) {
+				//console.log(parentPaths[i][tindex]);
+				if (Neologism.util.in_array(parentPaths[i][tindex], node.attributes.inferred_disjointwith)) {
+					node.disable();
+					return;
+				}
+			}
+		}
+	}
+},
+
+/**
+ * Check for possible references to a node. The references are stored in the first node of the tree.
+ * @param node Node to check for possible references.
+ * @return
+ */
+Ext.tree.TreeNode.prototype.checkNodeReferences = function(checked) {
+	//,/*TreeNode*/node
+	var nodeTocheck = this;
+//	if (node) {
+//		nodeTocheck = node;
+//	}
+	
+	var tree = nodeTocheck.getOwnerTree();
+  	var rootNode = tree.getRootNode();
+  	if ( rootNode.childNodes[0].attributes.references != undefined ) {
+  		var references = rootNode.childNodes[0].attributes.references;
+  		if (references[nodeTocheck.text] != undefined) {
+  			var reference = references[nodeTocheck.text];
+  			for ( var p = 0; p < reference.paths.length; p++ ) {
+  				var rnode = tree.expandPath(reference.paths[p])
+  				if ( rnode != undefined ) {
+  					if (rnode.attributes.checked != checked) {
+  						rnode.getUI().toggleCheck(checked);
+  					}
+  				}
+  			}
+  		}
 	}
 };
  

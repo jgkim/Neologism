@@ -51,39 +51,19 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
     listeners: {
       // behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       checkchange: function(node, checked){
-
-	  	var tree = node.getOwnerTree();
-	  	var rootNode = tree.getRootNode();
-	  	if ( rootNode.childNodes[0].attributes.references != undefined ) {
-	  		var references = rootNode.childNodes[0].attributes.references;
-	  		if (references[node.text] != undefined) {
-	  			var reference = references[node.text];
-	  			for ( var p = 0; p < reference.paths.length; p++ ) {
-	  				var rnode = tree.expandPath(reference.paths[p])
-	  				if ( rnode != undefined ) {
-	  					if (rnode.attributes.checked != checked) {
-	  						rnode.getUI().toggleCheck(checked);
-	  					}
-	  				}
-	  			}
-	  		}
-		}
+	  	// check for node references that should be updated together
+		node.checkNodeReferences(checked);
 	  
         if ( checked /*&& node.parentNode !== null*/ ) {
 	        // add selection to array of values
     		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
             	baseParams.arrayOfValues.push(node.text);
-            	
-            	//check for dependences 
             }
         }
         else {
-        	for ( var i = 0, len = baseParams.arrayOfValues.length; i < len; i++ ) {
-        		if ( baseParams.arrayOfValues[i] == node.text ) {
-        			baseParams.arrayOfValues.splice(i, 1);
-        		}
-        	}
-        }
+    		// if we are unchecked a checkbox
+        	Neologism.util.remove_element(node.text, baseParams.arrayOfValues);
+        } // else
       } // checkchange
   
 		,expandnode: function( node ) {

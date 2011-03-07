@@ -66,7 +66,10 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
     listeners: {
       	// behaviour for on checkchange in Neologism.superclassesTree TreePanel object 
       	checkchange: function(node, checked) {
-	  		node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	  		//node.attributes.nodeStatus = Ext.tree.TreePanel.nodeStatus.NORMAL;
+	  		
+	  		// check for node references that should be updated together
+	  		node.checkNodeReferences(checked);
 	  		
 	        if ( checked /*&& node.parentNode !== null*/ ) {
 		        // add selection to array of values

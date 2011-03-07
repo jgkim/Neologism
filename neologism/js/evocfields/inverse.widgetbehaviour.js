@@ -57,12 +57,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    listeners: {
 			// behaviour for on checkchange in superclassesTree TreePanel object 
 			checkchange: function(node, checked) {
-				if ( checked && node.parentNode !== null ) {
+				// check for node references that should be updated together
+		  		node.checkNodeReferences(checked);
+  		
+				if ( checked ) {
 					// if we're checking the box, check it all the way up
-					if ( node.parentNode.isRoot || !node.parentNode.getUI().isChecked() ) {
-						if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues)) {
-							baseParams.arrayOfValues.push(node.text);
-						}
+					if( !Neologism.util.in_array(node.attributes.text, baseParams.arrayOfValues)) {
+						baseParams.arrayOfValues.push(node.attributes.text);
 					}
 				} else {
 					Neologism.util.remove_element(node.attributes.text, baseParams.arrayOfValues);
