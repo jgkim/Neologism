@@ -1,6 +1,21 @@
 /**
- * @author guicec
- */
+   @author guicec
+
+ Extending/depending on:  
+~ = modified function (when updating from SVN be sure to check these for changes, especially to Ext.tree.TreeNodeUI.render() )  
++ = added function  
+  
+Ext.tree.TreeNodeUI: ~onClick(), ~onDblClick()
+Ext.tree.TreePanel : ~expandPath(), 
+						+getChecked(), +someChildOrParentIsChecked(), +checkDisjointWidth(),
+						+isSomeChildChecked(), +isSomeChildCheckedOrStatus()
+						
+Ext.tree.TreeNode: +checkDisjointness(), +checkNodeReferences()
+
+Neologism.TermsTree: +addObserver(), +notifyObservers(), +findNodeByText(), +computeInverses(),
+						+findChildInNode(), +traverse(), +getXSDDatatype()
+
+*/   
 
 /**
  * Override TreePanel onClick and onDblClick events
@@ -119,24 +134,7 @@ Ext.override(Ext.tree.TreeNodeUI, {
 
 
 
-/* Extending/depending on:  
-~ = modified function (when updating from SVN be sure to check these for changes, especially to Ext.tree.TreeNodeUI.render() )  
-+ = added function  
-  
-TreeSelectionModel.js  
-    Ext.tree.CheckNodeMultiSelectionModel : ~init(), ~onNodeClick(), +extendSelection(), ~onKeyDown()  
-  
-TreeNodeUI.js  
-    Ext.tree.CheckboxNodeUI : ~render(), +checked(), +check(), +toggleCheck()  
-  
-TreePanel.js  
-    Ext.tree.TreePanel : +getChecked()  
-  
-TreeLoader.js  
-    Ext.tree.TreeLoader : ~createNode()  
-  
-*/   
-   
+
 /**  
  * Retrieve an array of ids of checked nodes  
  * @return {Array} array of ids of checked nodes  
