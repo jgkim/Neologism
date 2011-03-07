@@ -140,12 +140,12 @@ function _neologism_buildSubclassesTreeInOrder(array &$store, $class, $vocabular
  * @return 
  * @version 1.1
  */
-function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_disjointwith = NULL) {
+function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_disjointwith = NULL, $rootName, array &$references) {
   $nodes = array();
   $stack = array();
   $referenceToCurrentNode = &$nodes;
   $ancestors_and_self = array($node);
-  static $array_of_id = array();
+//  static $array_of_id = array();
 //  static $total_classes_processed;
 //  global $processed_classes;
   
@@ -168,18 +168,21 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      $class->id = trim($class->id); 
 	      $qname = $class->prefix.':'.$class->id;
 	      
-	      // extra information needed by the treeview
-	      $extra_information = true;
-	      $realId = '';
-	      if( isset($array_of_id[$qname]) ) {
-	      	$modified_id = $array_of_id[$qname].'_'.$qname;
-	      	$array_of_id[$qname] += 1;
-	      	$realId = $qname;
-	      }
-	      else {
-	      	$array_of_id[$qname] = 1;	
-	      	$extra_information = false;
-	      }
+	      // extra information needed by the treeview. This extra information is needed when there node has more than 
+	      // one parent.
+        $extra_information = true;
+        $realId = '';
+        if( isset($references[$qname]) ) {
+        	$modified_id = $references[$qname]['references'].'_'.$qname;
+        	$references[$qname]['paths'][] = $rootName.'/'.implode('/',$ancestors_and_self).'/'.$modified_id; 
+        	$references[$qname]['references'] += 1;
+        	$realId = $qname;
+        }
+        else {
+        	$references[$qname]['paths'] = array($rootName.'/'.implode('/',$ancestors_and_self).'/'.$qname);
+        	$references[$qname]['references'] = 1;	
+        	$extra_information = false;
+        }
 	      
 	      //-----------------------------------------
 	      // fetch extra information
@@ -480,6 +483,7 @@ function neologism_gateway_get_full_classes_tree() {
   
   // TODO we could pass as a parameter when to use the function to infer the disjointwith
   $array_disjointwith = array();
+  $references = array(); 
   
   $count = 0;
     
@@ -498,7 +502,7 @@ function neologism_gateway_get_full_classes_tree() {
       }
       
       $children = NULL;
-      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith);
+      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, '/'.$node, $references);
       $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
@@ -515,6 +519,10 @@ function neologism_gateway_get_full_classes_tree() {
       );        
     }
   
+    if ( $references != NULL ) {
+      $nodes[0]['references'] = $references;
+    }
+     
     // infer disjointness between classes
 	  _neologism_infer_disjointness($nodes, $array_disjointwith);
   }
