@@ -10,14 +10,14 @@ function neologism_gateway_get_classes_tree() {
   $store = array();
   $nodes = array();
   if ( $node == 'super' ) {
-    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where prefix = "%s"'), $voc['title']);  
+    $classes = db_query(db_rewrite_sql("select * from {evoc_rdf_classes} where prefix = '%s'"), $voc['title']);  
     
     while ( $class = db_fetch_object($classes) ) {
       $qname = $class->prefix.':'.$class->id;
       $store[$qname]['comment'] = $class->comment;
       $store[$qname]['label'] = $class->label;
       if ( $class->superclasses > 0 ) {
-      	$superclasses = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $class->prefix, $class->id);
+      	$superclasses = db_query(db_rewrite_sql("select superclass from {evoc_rdf_superclasses} where prefix = '%s' and reference = '%s'"), $class->prefix, $class->id);
       	while ( $object = db_fetch_object($superclasses) ) {
       		$store[$object->superclass]['subclasses'][] = $qname; 
       		$store[$qname]['rdfs:subClassOf'][] = $object->superclass; 
@@ -122,12 +122,6 @@ function _neologism_buildSubclassesTreeInOrder(array &$store, $class, $vocabular
 		}
 	}
 	
-	/*
-	'qtip' => $qtip,
-          	//'disjointwith' => $disjointwith,
-          	//'superclasses' => $superclasses,
-          	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-	*/
 	return $nodes;
 }
 
@@ -145,9 +139,6 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
   $stack = array();
   $referenceToCurrentNode = &$nodes;
   $ancestors_and_self = array($node);
-//  static $array_of_id = array();
-//  static $total_classes_processed;
-//  global $processed_classes;
   
   $stack[] = array($node, &$referenceToCurrentNode, $ancestors_and_self);
   
@@ -159,10 +150,10 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 		$parentNode = $currentNode;
 		$indexCount = 0;
 		
- 	  $children = db_query(db_rewrite_sql('select prefix, reference from {evoc_rdf_superclasses} where superclass = "%s"'), $classname);
+ 	  $children = db_query(db_rewrite_sql("select prefix, reference from {evoc_rdf_superclasses} where superclass = '%s'"), $classname);
 	   
 	  while ($child = db_fetch_object($children)) {
-	    $class = db_fetch_object(db_query(db_rewrite_sql('select * from evoc_rdf_classes where prefix = "%s" and id = "%s"'), $child->prefix, $child->reference));
+	    $class = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_classes where prefix = '%s' and id = '%s'"), $child->prefix, $child->reference));
 	    if ( $class ) {
 	    	$class->prefix = trim($class->prefix);
 	      $class->id = trim($class->id); 
@@ -286,7 +277,7 @@ function neologism_gateway_get_properties_tree() {
   $nodes = array();
   
   if ( $node == 'super' ) {
-    $properties = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_properties} where superproperties = "0"'));
+    $properties = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_properties} where superproperties = '0'"));
 
     $parentPath = '/root';
     while ($property = db_fetch_object($properties)) {
@@ -339,10 +330,10 @@ function neologism_gateway_get_root_superproperties($property) {
 
 function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_inverses, $parent_path, &$references) {
   $nodes = array();
-  $children = db_query(db_rewrite_sql('select prefix, reference from {evoc_rdf_superproperties} where superproperty = "%s"'), $node);
+  $children = db_query(db_rewrite_sql("select prefix, reference from {evoc_rdf_superproperties} where superproperty = '%s'"), $node);
     
   while ($child = db_fetch_object($children)) {
-    $property = db_fetch_object(db_query(db_rewrite_sql('select * from evoc_rdf_properties where prefix = "%s" and id = "%s"'), $child->prefix, $child->reference));
+    $property = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_properties where prefix = '%s' and id = '%s'"), $child->prefix, $child->reference));
     if ( $property ) {
       $property->prefix = trim($property->prefix);
       $property->id = trim($property->id); 
@@ -482,7 +473,7 @@ function _neologism_get_element_property_terms($property, $prefix, $id) {
     $column_name = 'superclass';
   }
   
-  $result = db_query(db_rewrite_sql('select %s from {%s} where prefix = "%s" and reference = "%s"'), $column_name, $table_name, $prefix, $id);
+  $result = db_query(db_rewrite_sql("select %s from {%s} where prefix = '%s' and reference = '%s'"), $column_name, $table_name, $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 	  $result = array_values($c);
 		$array_terms[] = $result[0];
@@ -492,7 +483,7 @@ function _neologism_get_element_property_terms($property, $prefix, $id) {
 
 function _neologism_get_class_disjoinwith_terms($prefix, $id) {
   $array_disjointwith = array();
-  $result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select disjointwith from evoc_rdf_disjointwith where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_disjointwith[] = $obj->disjointwith;
 	}
@@ -501,7 +492,7 @@ function _neologism_get_class_disjoinwith_terms($prefix, $id) {
 
 function _neologism_get_superclasses_terms($prefix, $id) {
   $array_superclasses = array();
-  $result = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select superclass from {evoc_rdf_superclasses} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_superclasses[] = $obj->superclass;
 	}
@@ -510,7 +501,7 @@ function _neologism_get_superclasses_terms($prefix, $id) {
 
 function _neologism_get_inverseof_terms($prefix, $id) {
   $array_inverses = array();
-  $result = db_query(db_rewrite_sql('select inverseof from {evoc_rdf_inversesproperties} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select inverseof from {evoc_rdf_inversesproperties} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_inverses[] = $obj->inverseof;
 	}
@@ -519,7 +510,7 @@ function _neologism_get_inverseof_terms($prefix, $id) {
 
 function _neologism_get_superproperties_terms($prefix, $id) {
   $array_superproperties = array();
-  $result = db_query(db_rewrite_sql('select superproperty from {evoc_rdf_superproperties} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select superproperty from {evoc_rdf_superproperties} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_superproperties[] = $obj->superproperty;
 	}
@@ -528,7 +519,7 @@ function _neologism_get_superproperties_terms($prefix, $id) {
       	
 function _neologism_get_domain_terms($prefix, $id) {
   $array_domains = array();
-  $result = db_query(db_rewrite_sql('select rdf_domain from {evoc_rdf_propertiesdomains} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select rdf_domain from {evoc_rdf_propertiesdomains} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_domains[] = $obj->rdf_domain;
 	}
@@ -537,7 +528,7 @@ function _neologism_get_domain_terms($prefix, $id) {
 
 function _neologism_get_range_terms($prefix, $id) {
   $array_ranges = array();
-  $result = db_query(db_rewrite_sql('select rdf_range from {evoc_rdf_propertiesranges} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select rdf_range from {evoc_rdf_propertiesranges} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_ranges[] = $obj->rdf_range;
 	}
@@ -559,7 +550,7 @@ function neologism_gateway_get_full_classes_tree() {
   $count = 0;
     
   if ( $node == 'root' ) {
-    $classes = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_classes} where superclasses = "0"'));
+    $classes = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_classes} where superclasses = '0'"));
 
     while ($class = db_fetch_object($classes)) {
       $qname = $class->prefix.':'.$class->id;
@@ -721,7 +712,7 @@ function neologism_gateway_get_full_properties_tree() {
   $array_inverses = array();
     
   if ( $node == 'root' ) {
-    $properties = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_properties} where superproperties = "0"'));
+    $properties = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_properties} where superproperties = '0'"));
     
     while ($property = db_fetch_object($properties)) {
       $qname = $property->prefix.':'.$property->id;
