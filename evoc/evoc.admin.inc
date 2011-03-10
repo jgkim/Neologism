@@ -23,7 +23,7 @@ function evoc_manage_vocabularies() {
   // is a hack; it will fail if any other modules register namespaces into
   // that table
   // @todo Make sure that we get only namespaces imported via evoc
-  $result = db_query('SELECT v.prefix, v.uri FROM {rdf_namespaces} v');
+  $result = db_query("SELECT v.prefix, v.uri FROM {rdf_namespaces} v");
   $namespaces = array();
   while ($row = db_fetch_object($result)) {
     $namespaces[$row->prefix] = $row->uri;

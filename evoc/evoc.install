@@ -217,12 +217,13 @@ function evoc_update_6100() {
   while ($class = db_fetch_object($classes)) {
     $has_superclass = FALSE;
     if( !empty($class->superclass) ) {
-      $query = 'insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ("'.$class->prefix.'", "'.$class->id.'", "'.$class->superclass.'")';  
+      $query = "insert into {evoc_rdf_superclasses} (prefix, reference, superclass) values ('".$class->prefix."', '".$class->id."', '".$class->superclass."')";  
       $ret[] = update_sql($query);
       $has_superclass = TRUE;
     }
    
-    $ret[] = update_sql('update {evoc_rdf_classes} set superclasses = "'.$has_superclass.'" where prefix = "'.$class->prefix.'" and  id = "'.$class->id.'"');
+    $query = "update {evoc_rdf_classes} set superclasses = '".$has_superclass."' where prefix='".$class->prefix."' and id='".$class->id."'";
+    $ret[] = update_sql($query);
     $sandbox['progress']++;
   }
   
@@ -232,19 +233,20 @@ function evoc_update_6100() {
     
     // check for property domains
     if( !empty($property->rdf_domain) ) {
-      $query = 'insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ("'.$property->prefix.'", "'.$property->id.'", "'.$property->rdf_domain.'")';  
+      $query = "insert into {evoc_rdf_propertiesdomains} (prefix, reference, rdf_domain) values ('".$property->prefix."', '".$property->id."', '".$property->rdf_domain."')";  
       $ret[] = update_sql($query);
       $has_domain = TRUE;
     }
         
     // check for property range
     if( !empty($property->rdf_range) ) {
-      $query = 'insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ("'.$property->prefix.'", "'.$property->id.'", "'.$property->rdf_range.'")';  
+      $query = "insert into {evoc_rdf_propertiesranges} (prefix, reference, rdf_range) values ('".$property->prefix."', '".$property->id."', '".$property->rdf_range."')";  
       $ret[] = update_sql($query);
       $has_range = TRUE;
     }
    
-    $ret[] = update_sql('update {evoc_rdf_properties} set domains = "'.$has_domain.'", ranges = "'.$has_range.'" where prefix = "'.$property->prefix.'" and  id = "'.$property->id.'"');
+    $query = "update {evoc_rdf_properties} set domains='".$has_domain."', ranges='".$has_range."' where prefix='".$property->prefix."' and id='".$property->id."'";
+    $ret[] = update_sql($query);
     $sandbox['progress']++;
   }
   
@@ -287,19 +289,20 @@ function evoc_update_6102() {
 
   if (!isset($sandbox['progress'])) {
     $sandbox['progress'] = 0;
-    $sandbox['max'] = db_result(db_query('SELECT COUNT(*) FROM {evoc_rdf_properties}'));
+    $sandbox['max'] = db_result(db_query("SELECT COUNT(*) FROM {evoc_rdf_properties}"));
   }
   
   $properties = db_query("SELECT prefix, id, inverseof FROM {evoc_rdf_properties}");
   while ($property = db_fetch_object($properties)) {
     $has_inverse = FALSE;
     if( !empty($property->inverseof) ) {
-      $query = 'INSERT INTO {evoc_rdf_inversesproperties} (prefix, reference, inverseof) VALUES ("'.$property->prefix.'", "'.$property->id.'", "'.$property->inverseof.'")';  
+      $query = "INSERT INTO {evoc_rdf_inversesproperties} (prefix, reference, inverseof) VALUES ('".$property->prefix."', '".$property->id."', '".$property->inverseof."')";  
       $ret[] = update_sql($query);
       $has_inverse = TRUE;
     }
    
-    $ret[] = update_sql('UPDATE {evoc_rdf_properties} SET inverses = "'.$has_inverse.'" WHERE prefix = "'.$property->prefix.'" AND  id = "'.$property->id.'"');
+    $query = "UPDATE {evoc_rdf_properties} SET inverses='".$has_inverse."' WHERE prefix='".$property->prefix."' AND  id='".$property->id."'";
+    $ret[] = update_sql($query);
     $sandbox['progress']++;
   }
   
