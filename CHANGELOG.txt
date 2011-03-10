@@ -1,0 +1,23 @@
+
+Changes for v0.5
+
+* Show tree widgets side-by-side where there is enough space
+* Fixed SQL queries that would not work on PostgreSQL
+* Fixed an SQL injection issue
+* No longer set default superclass/domain/range to rdfs:Resource
+* Improved logic for expanding trees in editor widgets
+* Better handle reverse relationships in editor widgets
+* Show relationships between terms in both directions on the overview page
+* Add ability to add custom Turtle triples to any vocabulary's RDF output
+* Add a warning when Drupal's Clean URLs setting is not enabled
+* Add date of last modification in RDF output
+* New 'add inverse property' link on properties that don't have one yet
+* Installation now imports the built-in vocabularies directly from filesystem
+* Slightly improved display of vocabularies on homepage
+* Major refactorings
+* Upgrade from Ext JS 3.0.0 to 3.1.1
+* Fixed Issue 146: "Prefix in use" error when removing and re-adding a vocabulary
+* Bugfix: Prevented Neologism from showing up as an updatable project/module in
+  Drupal's Available Updates report
+* Fixed some small errors in the release procedure
+
