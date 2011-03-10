@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Construct a tree structure for an specific vocabulary. This' the gateway for the treeview
  * @return json with the tree structure 
@@ -44,6 +43,7 @@ function &array_rpop(&$a){
     return $v;
 }
 
+// TODO: improve this function together with neologism_gateway_get_classes_tree()
 function _neologism_buildSubclassesTreeInOrder(array &$store, $class, $vocabulary) {
 	$stack = array();
 	$nodes = array();
@@ -262,17 +262,7 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 		      $indexCount++;
 	      }
 	        
-	      //$children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array);
 	      if (!in_array($qname, $ancestors_and_self)) {
-	      //if (!isset($processed_classes[$qname])) {
-//	      	$total_classes_processed += 1;
-//	      	if ($total_classes_processed > 37000) {
-//	      		var_dump($processed_classes);
-//  					var_dump(count($processed_classes));
-//	      		die("Total reached\n");
-//	      	}
-//					$processed_classes[$qname] += 1;
-
 					$copy = $ancestors_and_self;
 					$copy[] = $qname;
 					$stack[] = array($qname, &$referenceToCurrentNode, $copy);
@@ -347,10 +337,8 @@ function neologism_gateway_get_root_superproperties($property) {
 }
 
 
-function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkbox = FALSE, $parentPath, &$references) {
+function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_inverses, $parent_path, &$references) {
   $nodes = array();
-  //static $array_of_id = array();
-  
   $children = db_query(db_rewrite_sql('select prefix, reference from {evoc_rdf_superproperties} where superproperty = "%s"'), $node);
     
   while ($child = db_fetch_object($children)) {
@@ -360,38 +348,48 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
       $property->id = trim($property->id); 
       $qname = $property->prefix.':'.$property->id;
       
-    	$domain = array();
+      $array_domain = array();
       if( $property->domains > 0 ) {
-      	$domains = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesdomains} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
-      	while ($obj = db_fetch_object($domains)) {
-      		$domain[]	= $obj->rdf_domain;
-      	}
+        $array_domain = _neologism_get_domain_terms($property->prefix, $property->id);
       }
       
-    	$range = array();
+    	$array_ranges = array();
       if( $property->ranges > 0 ) {
-      	$ranges = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesranges} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
-      	while ($obj = db_fetch_object($ranges)) {
-      		$range[] = $obj->rdf_range;
-      	}
+        $array_ranges = _neologism_get_range_terms($property->prefix, $property->id);
       }
       
+      // fetch the superproperties
+    	$superproperties = array();
+      if( $property->superproperties > 0 ) {
+				$superproperties = _neologism_get_superproperties_terms($property->prefix, $property->id);
+      }
+      
+      // fetch the inverses
+      $inverses = array();
+      if( $property->inverses > 0 ) {
+				$inverses = _neologism_get_inverseof_terms($property->prefix, $property->id);
+				// add inverses to the main array to use it after build the nodes
+				$array_inverses[$qname] = $inverses;
+      }
+	      
     	// extra information needed by the treeview
       $extra_information = true;
       $realId = '';
       if( isset($references[$qname]) ) {
       	$modified_id = $references[$qname]['references'].'_'.$qname;
-      	$references[$qname]['paths'][] = $parentPath.'/'.$modified_id;  
+      	$references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
       	$references[$qname]['references'] += 1;
       	$realId = $qname;
       }
       else {
-      	$references[$qname]['paths'] = array($parentPath.'/'.$qname);
+      	$references[$qname]['paths'] = array($parent_path.'/'.$qname);
       	$references[$qname]['references'] = 1;	
       	$extra_information = false;
       }
       
-      $children_nodes = neologism_gateway_get_property_children($qname, $voc, $add_checkbox, $parentPath.'/'.((!$extra_information) ? $qname : $modified_id), $references);  
+      $real_parent_path = $parent_path.'/'.((!$extra_information) ? $qname : $modified_id);
+      $children_nodes = neologism_gateway_get_property_children($qname, $voc, $add_checkbox, $array_inverses, $real_parent_path, $references);
+
       if( $voc ) {
         if( $property->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
           $leaf = count($children_nodes) == 0;
@@ -404,8 +402,10 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
             'cls' => ($property->prefix == $voc) ? 'currentvoc' : '',
             'children' => $children_nodes, 
             'qtip' => $qtip,
-          	'domain' => $domain,
-      			'range' => $range	
+          	'domain' => $array_domain,
+      			'range' => $array_ranges,
+            'superproperties' => $superproperties,
+            'inverses' => $inverses
           );
           
           if( $add_checkbox ) {
@@ -426,8 +426,10 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
           'iconCls' => 'property-samevoc', 
           'children' => $children_nodes, 
           'qtip' => $qtip,
-	        'domain' => $domain,
-	      	'range' => $range
+	        'domain' => $array_domain,
+	      	'range' => $array_ranges,
+        	'superproperties' => $superproperties,
+          'inverses' => $inverses
         );
           
         if( $add_checkbox ) {
@@ -455,22 +457,91 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
  * @param string $id
  * @return Array of disjoinewith classes
  */
-function _neologism_get_class_disjoinwith_terms($prefix, $id) {
-  $disjointwith = array();
-  $result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $prefix, $id);
-	while( $c = db_fetch_object($result) ) {
-		$disjointwith[] = $c->disjointwith;
+function _neologism_get_element_property_terms($property, $prefix, $id) {
+  $array_terms = array();
+  $table_name = '';
+  $column_name = '';
+  
+  if ($property == 'rdfs:domain') {
+    $table_name = 'evoc_rdf_propertiesdomains';  
+    $column_name = 'rdf_domain';
+  } elseif ($property == 'rdfs:range') {
+    $table_name = 'evoc_rdf_propertiesranges';
+    $column_name = 'rdf_range';
+  } elseif ($property == 'rdfs:subPropertyOf') {
+    $table_name = 'evoc_rdf_superproperties';
+    $column_name = 'superproperty';
+  } elseif ($property == 'owl:inverseOf') {
+    $table_name = 'evoc_rdf_inversesproperties';
+    $column_name = 'inverseof';
+  } elseif ($property == 'owl:disjointWith') {
+    $table_name = 'evoc_rdf_disjointwith';
+    $column_name = 'disjointwith';
+  } elseif ($property == 'rdfs:subClassOf') {
+    $table_name = 'evoc_rdf_superclasses';
+    $column_name = 'superclass';
+  }
+  
+  $result = db_query(db_rewrite_sql('select %s from {%s} where prefix = "%s" and reference = "%s"'), $column_name, $table_name, $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+	  $result = array_values($c);
+		$array_terms[] = $result[0];
 	}
-	return $disjointwith;
+	return $array_terms;
+}
+
+function _neologism_get_class_disjoinwith_terms($prefix, $id) {
+  $array_disjointwith = array();
+  $result = db_query(db_rewrite_sql('select disjointwith from evoc_rdf_disjointwith where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+		$array_disjointwith[] = $obj->disjointwith;
+	}
+	return $array_disjointwith;
 }
 
 function _neologism_get_superclasses_terms($prefix, $id) {
-  $superclasses = array();
+  $array_superclasses = array();
   $result = db_query(db_rewrite_sql('select superclass from {evoc_rdf_superclasses} where prefix = "%s" and reference = "%s"'), $prefix, $id);
-	while( $s = db_fetch_object($result) ) {
-		$superclasses[] = $s->superclass;
+	while( $obj = db_fetch_object($result) ) {
+		$array_superclasses[] = $obj->superclass;
 	}
-	return $superclasses;
+	return $array_superclasses;
+}
+
+function _neologism_get_inverseof_terms($prefix, $id) {
+  $array_inverses = array();
+  $result = db_query(db_rewrite_sql('select inverseof from {evoc_rdf_inversesproperties} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+		$array_inverses[] = $obj->inverseof;
+	}
+	return $array_inverses;
+}
+
+function _neologism_get_superproperties_terms($prefix, $id) {
+  $array_superproperties = array();
+  $result = db_query(db_rewrite_sql('select superproperty from {evoc_rdf_superproperties} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+		$array_superproperties[] = $obj->superproperty;
+	}
+	return $array_superproperties;
+}
+      	
+function _neologism_get_domain_terms($prefix, $id) {
+  $array_domains = array();
+  $result = db_query(db_rewrite_sql('select rdf_domain from {evoc_rdf_propertiesdomains} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+		$array_domains[] = $obj->rdf_domain;
+	}
+	return $array_domains;
+}
+
+function _neologism_get_range_terms($prefix, $id) {
+  $array_ranges = array();
+  $result = db_query(db_rewrite_sql('select rdf_range from {evoc_rdf_propertiesranges} where prefix = "%s" and reference = "%s"'), $prefix, $id);
+	while( $obj = db_fetch_object($result) ) {
+		$array_ranges[] = $obj->rdf_range;
+	}
+	return $array_ranges;
 }
 
 /**
@@ -483,7 +554,7 @@ function neologism_gateway_get_full_classes_tree() {
   
   // TODO we could pass as a parameter when to use the function to infer the disjointwith
   $array_disjointwith = array();
-  $references = array(); 
+  $array_references = array(); 
   
   $count = 0;
     
@@ -501,13 +572,29 @@ function neologism_gateway_get_full_classes_tree() {
 				$array_disjointwith[$qname] = $disjointwith;
       }
       
-      $children = NULL;
-      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, '/'.$node, $references);
+      // extra information needed by the treeview
+      $parent_path = '/'.$node;
+      $extra_information = true;
+      $realId = '';
+      if( isset($array_references[$qname]) ) {
+      	$modified_id = $array_references[$qname]['references'].'_'.$qname;
+      	$array_references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
+      	$array_references[$qname]['references'] += 1;
+      	$realId = $qname;
+      }
+      else {
+      	$array_references[$qname]['paths'] = array($parent_path.'/'.$qname);
+      	$array_references[$qname]['references'] = 1;	
+      	$extra_information = false;
+      }
+      
+      $real_parent_path = $parent_path.'/'.((!$extra_information) ? $qname : $modified_id);
+      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, $real_parent_path, $array_references);
       $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
         'text' => $qname, 
-        'id' => $qname, 
+        'id' => (!$extra_information) ? $qname : $modified_id, 
         'leaf' => $leaf, 
         'iconCls' => 'class-samevoc', 
         'children' => $children, 
@@ -519,9 +606,7 @@ function neologism_gateway_get_full_classes_tree() {
       );        
     }
   
-    if ( $references != NULL ) {
-      $nodes[0]['references'] = $references;
-    }
+    $nodes[0]['references'] = $array_references;
      
     // infer disjointness between classes
 	  _neologism_infer_disjointness($nodes, $array_disjointwith);
@@ -549,7 +634,7 @@ function _neologism_infer_disjointness(&$nodes, array &$array_disjointwith, arra
 		foreach ($array_disjointwith as $qname => $array_of_disjoinwith ) {
 			foreach ($array_of_disjoinwith as $value ) {
 				if ($node['text'] == $value ) {
-				  if (in_array($qname, $node['disjointwith']) || (is_array($node['inferred_disjointwith']) && in_array($qname, $node['inferred_disjointwith']))) {
+				  if (is_array($node['disjointwith']) && in_array($qname, $node['disjointwith']) || (is_array($node['inferred_disjointwith']) && in_array($qname, $node['inferred_disjointwith']))) {
 				    continue;
 				  }  
 					$node['inferred_disjointwith'][] = $qname;	
@@ -558,8 +643,36 @@ function _neologism_infer_disjointness(&$nodes, array &$array_disjointwith, arra
 		}
 		
 		if (count($node['children']) > 0) {
-		  $delegated_disjointness = ( is_array($node['inferred_disjointwith']) == TRUE ? array_merge($node['disjointwith'], $node['inferred_disjointwith']) : $node['disjointwith']);
-			_neologism_infer_disjointness($node['children'], $array_disjointwith, $delegated_disjointness);
+		  $delegated_disjointness = is_array($node['disjointwith']) && is_array($node['inferred_disjointwith']) ? array_merge($node['disjointwith'], $node['inferred_disjointwith']) : $node['disjointwith'];
+		  _neologism_infer_disjointness($node['children'], $array_disjointwith, $delegated_disjointness);
+		}
+		
+	}
+}
+
+/**
+ * 
+ * @param $nodes
+ * @param $array_inverses
+ * @return unknown_type
+ */
+function _neologism_infer_inverses(&$nodes, array &$array_inverses) {
+	for ($i = 0; $i < count($nodes); $i++ ) {
+		
+	  $node = &$nodes[$i];
+		foreach ($array_inverses as $qname => $array_of_inverses ) {
+			foreach ($array_of_inverses as $value ) {
+				if ($node['text'] == $value ) {
+				  if (is_array($node['inverses']) && in_array($qname, $node['inverses']) || (is_array($node['inferred_inverses']) && in_array($qname, $node['inferred_inverses']))) {
+				    continue;
+				  }  
+					$node['inferred_inverses'][] = $qname;	
+				}
+			}
+		}
+		
+		if (count($node['children']) > 0) {
+			_neologism_infer_disjointness($node['children'], $array_inverses);
 		}
 		
 	}
@@ -595,75 +708,6 @@ function neologism_gateway_get_root_superclasses($class) {
   return $root_superclasses;
 }
 
-/**
- * This recursive function return all the children from $node
- * @param object $node
- * @return 
- */
-/*
-function neologism_gateway_get_children($node, $reset = false) {
-  $nodes = array();
-  
-  // search for the children in all the tables
-  $children = db_query(db_rewrite_sql("select n.title, n.nid from 
-    content_field_superclass2 as c inner join node as n on c.nid = n.nid 
-    where c.field_superclass2_evoc_term = '%s'"), $node);
-   
-  // get children from vocabularies on Drupal content 
-  $arr_children = array();  
-  while ($child = db_fetch_object($children)) {
-    $classes = db_query(db_rewrite_sql("select e.prefix, e.superclass from {evoc_rdf_classes} as e where e.id = '%s'"), $child->title);
-    // may there is more than one class with the same title but belong to a different vocabulary
-    while ($class = db_fetch_object($classes)) {
-      $class->prefix = trim($class->prefix);
-      $class->superclass = trim($class->superclass); 
-      // check if the current $class is well selected, because might be a class with same title/id and different vocabulary/prefix
-      // otherwise we need to join more tables to make the correct query.
-      // this fix when there is two class with same name but different prefix, eg: eg:Agent and foaf:Agent
-      if( $class->superclass == $node ) {
-        $arr = array('prefix' => $class->prefix, 'id' => $child->title);
-        if( !in_array($arr, $arr_children) ) {
-          $arr_children[] = $arr; 
-        }
-      }
-    }
-  }
-  
-  // get child from evoc classes
-  $children = db_query(db_rewrite_sql("select e.prefix, e.id from {evoc_rdf_classes} as e where e.superclass = '%s'"), $node);
-  while ($child = db_fetch_object($children)) {
-    $child->prefix = trim($child->prefix);
-    $child->id = trim($child->id);
-    // may there is more than one class with the same title but belong to a different vocabulary
-    $arr = array('prefix' => $child->prefix, 'id' => $child->id);
-    if( !in_array($arr, $arr_children) ) {
-      $arr_children[] = $arr; 
-    }
-  }
-  
-  // at this point we are finished to search all children of current node.
-  // now  we need to expand the children
-  
-  
-  // iterate through the children
-  foreach( $arr_children as $child ) {
-    $class_qname = $child['prefix'].':'.$child['id'];
-    $children = neologism_gateway_get_children($class_qname);
-    $leaf = count($children) == 0;
-    $nodes[] = array(
-      'text' => $class_qname, 
-      'id' => $class_qname, 
-      'leaf' => $leaf, 
-      'iconCls' => 'class-samevoc', 
-      'children' => $children, 
-      'checked' => false
-    ); 
-  }
-  
-  return $nodes;
-}
-*/
-
 // properties
 
 /**
@@ -673,7 +717,8 @@ function neologism_gateway_get_children($node, $reset = false) {
 function neologism_gateway_get_full_properties_tree() {
   $nodes = array();
   $node = $_REQUEST['node'];
-  static $references = array();
+  $array_references = array();
+  $array_inverses = array();
     
   if ( $node == 'root' ) {
     $properties = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_properties} where superproperties = "0"'));
@@ -681,46 +726,71 @@ function neologism_gateway_get_full_properties_tree() {
     while ($property = db_fetch_object($properties)) {
       $qname = $property->prefix.':'.$property->id;
       
-      $domain = array();
+      $array_domain = array();
       if( $property->domains > 0 ) {
-      	$domains = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesdomains} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
-      	while ($obj = db_fetch_object($domains)) {
-      		$domain[]	= $obj->rdf_domain;
-      	}
+        $array_domain = _neologism_get_domain_terms($property->prefix, $property->id);
       }
       
-    	$range = array();
+    	$array_ranges = array();
       if( $property->ranges > 0 ) {
-      	$ranges = db_query(db_rewrite_sql('SELECT * FROM {evoc_rdf_propertiesranges} WHERE prefix = "%s" AND reference = "%s"'), $property->prefix, $property->id);
-      	while ($obj = db_fetch_object($ranges)) {
-      		$range[]	= $obj->rdf_range;
-      	}
+        $array_ranges = _neologism_get_range_terms($property->prefix, $property->id);
       }
       
-      $parentPath = '/root';
-      $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $parentPath.'/'.$qname, $references);
+      // fetch the inverses
+      $inverses = array();
+      if( $property->inverses > 0 ) {
+				$inverses = _neologism_get_inverseof_terms($property->prefix, $property->id);
+				// add inverses to the main array to use it after build the nodes
+				$array_inverses[$qname] = $inverses;
+      }
+      
+      // extra information needed by the treeview
+      $parent_path = '/'.$node;
+      $extra_information = true;
+      $real_id = '';
+      if( isset($array_references[$qname]) ) {
+      	$modified_id = $array_references[$qname]['references'].'_'.$qname;
+      	$array_references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
+      	$array_references[$qname]['references'] += 1;
+      	$real_id = $qname;
+      }
+      else {
+      	$array_references[$qname]['paths'] = array($parent_path.'/'.$qname);
+      	$array_references[$qname]['references'] = 1;	
+      	$extra_information = false;
+      }
+      
+      
+      
+      $real_parent_path = $parent_path.'/'.((!$extra_information) ? $qname : $modified_id);
+      $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $array_inverses, $real_parent_path, $array_references);
+      
       $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
         'text' => $qname, 
-        'id' => $qname, 
+        'id' => (!$extra_information) ? $qname : $modified_id, 
         'leaf' => $leaf, 
         'iconCls' => 'property-samevoc', 
         'children' => $children, 
         'checked' => false,
         'qtip' => $qtip,
-      	'domain' => $domain,
-      	'range' => $range
-      	//'references' => drupal_json($references)
-      );        
-    }
-  }
+      	'domain' => $array_domain,
+      	'range' => $array_ranges,
+        'inverses' => $inverses
+      );   
 
-  $nodes[0]['references'] = $references; 
-  //var_dump($nodes[0]);
+      if( $extra_information ) {
+        $nodes[count($nodes)-1]['realid'] = $qname; 
+      }
+    }
+    
+    $nodes[0]['references'] = $array_references; 
+    
+    // infer disjointness between classes
+	  _neologism_infer_inverses($nodes, $array_inverses);
+  }
   
-  //var_dump($nodes);
-  //var_dump($references);
   drupal_json($nodes);
 }
 
@@ -753,156 +823,3 @@ function _neologism_gateway_in_nodes($prefix, array $nodes) {
   }
   return $result;  
 }
-
-//------------------------------------------------------------------------
-// version old
-/**
- * Construct a tree structure for an specific vocabulary. This' the gateway for the treeview
- * @return json with the tree structure 
- */
-//function neologism_gateway_get_classes_tree_old() {
-//  $voc['id'] = $_POST['voc_id'];
-//  $voc['title'] = $_POST['voc_title'];
-//  
-//  $node = $_POST['node'];
-//  $nodes = array();
-//  if ( $node == 'super' ) {
-//    $classes = db_query(db_rewrite_sql('select * from {evoc_rdf_classes} where superclasses = "0"'));  
-//    
-//    while ( $class = db_fetch_object($classes) ) {
-//      $qname = $class->prefix.':'.$class->id;
-//      $children = neologism_gateway_get_class_children($qname, $voc['title']);
-//      if( $class->prefix == $voc['title'] || _neologism_gateway_in_nodes($voc['title'], $children) ) {
-//        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-//        $leaf = count($children) == 0;
-//        $nodes[] = array(
-//          'text' => $qname, 
-//          'id' => $qname, 
-//          'leaf' => $leaf, 
-//          'iconCls' => ($class->prefix == $voc['title']) ? 'class-samevoc' : 'class-diffvoc',
-//          'cls' => ($class->prefix == $voc['title']) ? 'currentvoc' : '', 
-//          'children' => $children, 
-//          'qtip' => $qtip
-//        );        
-//      }
-//    }
-//  }
-//
-//  drupal_json($nodes);
-//}
-
-/**
- * This recurive function search for chindren of $node return class from the same $voc. 
- * If the parent does not belong to the $voc but has children that does, this parent is added as well.
- * @param object $node
- * @param object $voc
- * @param object $add_checkbox [optional]
- * @return 
- */
-//function neologism_gateway_get_class_children_old($node, $voc = NULL, $add_checkbox = FALSE, array &$disjointwith_array = NULL) {
-//  $nodes = array();
-//  
-//  static $array_of_id = array();
-//  
-//  $children = db_query('select prefix, reference from {evoc_rdf_superclasses} where superclass = "'.$node.'"');
-//    
-//  while ($child = db_fetch_object($children)) {
-//    $class = db_fetch_object(db_query('select * from evoc_rdf_classes where prefix = "'.$child->prefix.'" and id = "'.$child->reference.'" '));
-//    if ( $class ) {
-//      $class->prefix = trim($class->prefix);
-//      $class->id = trim($class->id); 
-//      $qname = $class->prefix.':'.$class->id;
-//      
-//      // extra information needed by the treeview
-//      $extra_information = true;
-//      $realId = '';
-//      if( isset($array_of_id[$qname]) ) {
-//      	$modified_id = $array_of_id[$qname].'_'.$qname;
-//      	$array_of_id[$qname] += 1;
-//      	$realId = $qname;
-//      }
-//      else {
-//      	$array_of_id[$qname] = 1;	
-//      	$extra_information = false;
-//      }
-//      
-//      //-----------------------------------------
-//      // fetch extra information
-//      
-//      // fetch the disjointwith
-//      $disjointwith = array();
-//      if( $class->ndisjointwith > 0 ) {
-//				$result = db_query('select disjointwith from {evoc_rdf_disjointwith} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
-//				while( $c = db_fetch_object($result) ) {
-//					$disjointwith[] = $c->disjointwith;
-//				}
-//				
-//				if( isset($disjointwith_array) && is_array($disjointwith_array) ) {
-//					$disjointwith_array[$qname] = $disjointwith;
-//				}
-//      }
-//      
-//      // fetch the superclasses
-//    	$superclasses = array();
-//      if( $class->superclasses > 0 ) {
-//				$result = db_query('select superclass from {evoc_rdf_superclasses} where prefix = "'.$class->prefix.'" and reference = "'.$class->id.'" ');
-//				while( $s = db_fetch_object($result) ) {
-//					$superclasses[] = $s->superclass;
-//				}
-//      }
-//      
-//      $children_nodes = neologism_gateway_get_class_children($qname, $voc, $add_checkbox, $disjointwith_array);  
-//      if( $voc ) {
-//        if( $class->prefix == $voc || _neologism_gateway_in_nodes($voc, $children_nodes) ) {
-//          $leaf = count($children_nodes) == 0;
-//          $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-//          $nodes[] = array(
-//            'text' => $qname, 
-//            'id' => (!$extra_information) ? $qname : $modified_id, 
-//            'leaf' => $leaf, 
-//            'iconCls' => ($class->prefix == $voc) ? 'class-samevoc' : 'class-diffvoc', 
-//            'cls' => ($class->prefix == $voc) ? 'currentvoc' : '',            
-//            'children' => $children_nodes, 
-//            'qtip' => $qtip,
-//          	'disjointwith' => $disjointwith,
-//          	'superclasses' => $superclasses,
-//          	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-//          );
-//          
-//          if( $extra_information ) {
-//          	$nodes[count($nodes)-1]['realid'] = $qname; 
-//          } 
-//          
-//          if( $add_checkbox ) {
-//            $nodes[count($nodes)-1]['checked'] = false;
-//          }
-//        }
-//      } else {
-//        $leaf = count($children_nodes) == 0;
-//        $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-//        $nodes[] = array(
-//          'text' => $qname, 
-//          'id' => (!$extra_information) ? $qname : $modified_id, 
-//          'leaf' => $leaf, 
-//          'iconCls' => 'class-samevoc', 
-//          'children' => $children_nodes, 
-//          'qtip' => $qtip,
-//        	'disjointwith' => $disjointwith,
-//        	'superclasses' => $superclasses,
-//        	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-//        );
-//        
-//      	if( $extra_information ) {
-//        	$nodes[count($nodes)-1]['realid'] = $qname; 
-//        }
-//          
-//        if( $add_checkbox ) {
-//          $nodes[count($nodes)-1]['checked'] = false;
-//        }  
-//      }
-//      
-//    }
-//  }
-//  
-//  return $nodes;
-//}
