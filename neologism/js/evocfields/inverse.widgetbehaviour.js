@@ -15,9 +15,13 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	Drupal.settings.evocwidget.field_values[field_name] = Ext.util.JSON.decode(Drupal.settings.evocwidget.field_values[field_name]);
 	baseParams.arrayOfValues = Drupal.settings.evocwidget.field_values[field_name];
 	
-	var domain = [];
-	var range = [];
-	var lastSender = null;
+//	var domain = [];
+//	var range = [];
+//	var lastSender = null;
+	
+	var parentPaths = new Array();
+	var pathsToExpand = new Array();
+	var treeloaded = false;
 	 
 	Neologism.inverseTermsTree = new Neologism.TermsTree({
 	    //renderTo: objectToRender,
@@ -35,12 +39,9 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	        // added event to refresh the checkbox from its parent 
 	        load: function(loader, node, response){
 		    	var treePanel = node.getOwnerTree();
-	    		Neologism.TermsTree.traverse(node, function(currentNode, path) {
-	    			if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
-	    				path.pop();
-	    				treePanel.expandPath(path.join('/'));
-	    			}
-	    		}, true);
+				for (var i = 0; i < pathsToExpand.length; i++) {
+					treePanel.expandPath(pathsToExpand[i]);
+				}
 	        }
 	      }
 	    }),
@@ -51,7 +52,32 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	      id		: 'root',                  // this IS the id of the startnode
 	      iconCls: 'class-samevoc',
 	      disabled: true,
-	      expanded: false
+	      expanded: false,
+	      
+	      listeners: {
+	      	beforeexpand: function( /*Node*/ node, /*Boolean*/ deep, /*Boolean*/ anim ) {
+	  	    	if (treeloaded) return;
+	  	    	
+	      		var treePanel = node.getOwnerTree();
+	  			parentPaths = [];
+	  			Neologism.TermsTree.traverse(node, function(currentNode, path) {
+	  				if( Neologism.util.in_array(currentNode.text, baseParams.arrayOfValues) ) {
+	  					var pathToExpand = path.slice();
+	  					pathToExpand.pop();
+	  					pathsToExpand.push(pathToExpand.join('/'));
+	  				}
+	  				
+	  				// get all paths of the editing value
+	  				if (currentNode.text == editingValue) {
+	  					var pathCopy = path.slice();
+	  					pathCopy.pop();
+	  					parentPaths.push(pathCopy.slice());
+	  				}
+	  			}, true);
+	  			
+	  			treeloaded = true;
+	      	}
+	      }
 	    }),
 	  
 	    listeners: {
@@ -80,7 +106,9 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 						else if( Neologism.util.in_array(currentNode.attributes.text, baseParams.arrayOfValues)) {
 							currentNode.getUI().toggleCheck(true);
 						}
-						
+						if (treeloaded) {
+							this.checkInverses(currentNode, editingValue);
+						}
 					}
 				});
 				// if the editting node was found then it must be removed

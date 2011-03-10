@@ -341,6 +341,27 @@ Ext.tree.TreeNode.prototype.checkDisjointness = function(/*TreeNode*/node, /*str
 	}
 },
 
+Ext.tree.TreeNode.prototype.checkInverses = function(/*TreeNode*/node, /*string*/editingNodeValue) {
+	// if some node comes checked is because it is a real disjointwith
+	if (node.getUI().isChecked()) 
+		return;
+	if (Neologism.util.in_array(editingNodeValue, node.attributes.inverses)) {
+		node.getUI().toggleCheck(true);
+		node.disable();
+	}
+//	else if (node.attributes.inferred_inverses != undefined) {
+//		for (var i = 0; i < parentPaths.length; i++) {
+//			for (var tindex = 1; tindex < parentPaths[i].length; tindex++) {
+//				//console.log(parentPaths[i][tindex]);
+//				if (Neologism.util.in_array(parentPaths[i][tindex], node.attributes.inferred_disjointwith)) {
+//					node.disable();
+//					return;
+//				}
+//			}
+//		}
+//	}
+},
+
 /**
  * Check for possible references to a node. The references are stored in the first node of the tree.
  * @param node Node to check for possible references.
