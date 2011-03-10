@@ -271,18 +271,19 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 function neologism_gateway_get_properties_tree() {
   $voc['id'] = $_POST['voc_id'];
   $voc['title'] = $_POST['voc_title'];
-  static $references = array();
+  $references = array();
+  $array_inverses = array();
   
   $node = $_POST['node'];
   $nodes = array();
   
   if ( $node == 'super' ) {
-    $properties = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_properties} where superproperties = '0'"));
+    $properties = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_properties} where superproperties='0'"));
 
     $parentPath = '/root';
     while ($property = db_fetch_object($properties)) {
       $qname = $property->prefix.':'.$property->id;
-      $children = neologism_gateway_get_property_children($qname, $voc['title'], FALSE, $parentPath.'/'.$qname, $references);
+      $children = neologism_gateway_get_property_children($qname, $voc['title'], FALSE, $array_inverses, $parentPath.'/'.$qname, $references);
       if( $property->prefix == $voc['title'] || _neologism_gateway_in_nodes($voc['title'], $children) ) {
         $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;
         $leaf = count($children) == 0;
@@ -333,7 +334,7 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
   $children = db_query(db_rewrite_sql("select prefix, reference from {evoc_rdf_superproperties} where superproperty = '%s'"), $node);
     
   while ($child = db_fetch_object($children)) {
-    $property = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_properties where prefix = '%s' and id = '%s'"), $child->prefix, $child->reference));
+    $property = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_properties where prefix='%s' and id = '%s'"), $child->prefix, $child->reference));
     if ( $property ) {
       $property->prefix = trim($property->prefix);
       $property->id = trim($property->id); 
@@ -354,6 +355,8 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
       if( $property->superproperties > 0 ) {
 				$superproperties = _neologism_get_superproperties_terms($property->prefix, $property->id);
       }
+      
+      
       
       // fetch the inverses
       $inverses = array();
