@@ -97,10 +97,14 @@ function _neologism_form_alter_class(&$form, &$form_state, $mode, &$related_term
   $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperclassSelecctionWidget';
   $form['field_superclass2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+  $form['field_superclass2']['#prefix'] = '<div id="superclass-panel">';
+  $form['field_superclass2']['#suffix'] = '</div>';
 
   $form['field_disjointwith2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_disjointwith2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDisjointwithSelecctionWidget'; 
   $form['field_disjointwith2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree'; 
+  $form['field_disjointwith2']['#prefix'] = '<div id="disjointwith-panel">';
+  $form['field_disjointwith2']['#suffix'] = '</div>';
 
   $form['#validate'][] = '_neologism_form_validate_class';
 }
@@ -134,27 +138,32 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
   $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
   $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+  $form['field_domain2']['#prefix'] = '<div id="domain-panel">';
+  $form['field_domain2']['#suffix'] = '</div>';
   
   $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
   $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
   $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
-  $form['field_range2']['#prefix'] = '<div id="range-treeview">';
-  $form['field_range2']['#suffix'] = '</div>';
-  
+ 
   // add behaviours for evoc fields if they are using the MXCheckBox selection widget
   $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
   $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
+  $form['field_superproperty2']['#prefix'] = '<div id="superproperty-panel">';
+  $form['field_superproperty2']['#suffix'] = '</div>';
   
   // add behaviours for field_inverse2 field
   $form['field_inverse2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_inverse2']['#mxcbs_behaviour']['handler'] = 'Neologism.createInverseSelecctionWidget';
   $form['field_inverse2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
-  $form['field_inverse2']['#prefix'] = '<div id="inverse-treeview">';
-  $form['field_inverse2']['#suffix'] = '</div>';
+  //$form['field_inverse2']['#prefix'] = '<div  style="float:left; width:47%; margin-right:5px;">';
+  $form['field_inverse2']['#prefix'] = '<div id="inverse-panel"><div id="inverse-treeview">';
+  $form['field_inverse2']['#suffix'] = '</div></div>';
   
   // add the group for ranges
   $form['range_group']['#type'] = 'fieldset';
+  $form['range_group']['#prefix'] = '<div id="range-panel"><div id="range-treeview">';
+  $form['range_group']['#suffix'] = '</div></div>';
   $form['range_group']['#weight'] = $form['field_range2']['#weight'] - 0.5;
   $form['range_group']['resource_type'] = array(
     '#type' => 'radios',

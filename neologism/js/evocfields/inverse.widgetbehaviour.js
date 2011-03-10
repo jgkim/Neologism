@@ -27,7 +27,7 @@ Neologism.createInverseSelecctionWidget = function( field_name ) {
 	    //renderTo: objectToRender,
 	    title: Drupal.t('Classes'),
 	    disabled: false,
-	    height: 200,
+	    //height: 200,
 	    
 	    loader: new Ext.tree.TreeLoader({
 	      dataUrl: dataUrl,

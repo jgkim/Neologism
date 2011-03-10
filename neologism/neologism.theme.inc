@@ -205,8 +205,14 @@ function neologism_export_html($node) {
   //ext_load_library();
   drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->prefix)), 'setting');
   
+  $tree_view_class = 'treepanel-fullwidth';
+  if ($classes && $properties) {
+    $output .= '<div id="treeview-panel" class="clearfix">';
+    $tree_view_class = 'treepanel-halfwidth';
+  }
+  
   if ($classes) {
-    $output .= '<div id="class-tree" ></div>';
+    $output .= '<div id="class-tree" class="'.$tree_view_class.'"></div>';
     
     $opts = array('absolute' => TRUE);
     $json_url = url('neologism/json/classestree', $opts);
@@ -219,12 +225,16 @@ function neologism_export_html($node) {
   
   if ($properties) {
     // object property hierarchy tree
-    $output .= '<div id="object-property-tree" ></div>';
+    $output .= '<div id="object-property-tree" class="'.$tree_view_class.'"></div>';
     
     $opts = array('absolute' => TRUE);
     $json_url = url('neologism/json/objectpropertytree', $opts);
     drupal_add_js( array('neologism' => array('property_json_url' => $json_url)), 'setting');
     drupal_add_js( drupal_get_path('module', 'neologism') . '/js/object_property_treeview.js');
+  }
+  
+  if ($classes && $properties) {
+    $output .= '</div>';  
   }
   
   $base = base_path();
@@ -238,7 +248,7 @@ function neologism_export_html($node) {
   
   $flex_params = "editMode=$edit_mode&vocabulary=$vocabulary&token=$token";
   $output .= '
-    <div id="diagram">
+    <div id="diagram-panel">
     <h2>Overview diagram</h2>
     <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
         id="Diagram" width="'.$width.'" height="'.$height.'"

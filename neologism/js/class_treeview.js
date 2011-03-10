@@ -32,7 +32,7 @@ Ext.onReady(function() {
         containerScroll  : true,
         height           : 400,
         autoHeight       : true,
-        width            : '100%',
+        //width            : '100%',
         loader           : treeLoader,
         root             : rootNode,
         rootVisible      : false,
