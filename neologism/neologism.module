@@ -886,7 +886,7 @@ function _neologism_namespace_uri($path, $custom_uri = null) {
 function &neologism_get_rdf_model($node) {
   $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann');
   list($classes) = _neologism_get_all_classes($node, FALSE, FALSE, $required_namespaces);
-  list($properties) = _neologism_get_all_properties($node, FALSE, $required_namespaces);
+  list($properties) = _neologism_get_all_properties($node, FALSE, FALSE, $required_namespaces);
   
   // Set up model with all necessary namespaces
   $namespaces = rdf_get_namespaces();
@@ -1160,18 +1160,22 @@ function neologism_write_layout($node, $layout) {
 /**
  * Get all properties in a vocabulary
  */
-function _neologism_get_all_properties($node, $retrive_inverses = FALSE, array &$detect_namespaces = NULL) {
+function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, $retrive_inverses = FALSE, array &$detect_namespaces = NULL) {
   $properties_resource = db_query(db_rewrite_sql("select n.nid from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid where c.field_vocabulary_nid = %d and n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
   $properties = array(); 
-  $inverse_properties_array = array();
+  $array_superproperties = array();
+  $array_inverse_properties = array();
   
   $i = 0;
   while ( $item = db_fetch_object($properties_resource) ) {
     $fullnode = node_load($item->nid);
     
+    if ($retrive_superproperties) {
+      _neologism_retrieve_implicit_values($fullnode->field_superproperty2, $fullnode->qname, $array_superproperties);
+    }
     //_neologism_find_implicit_inverses()
     if ($retrive_inverses) {
-      _neologism_retrieve_implicit_values($fullnode->field_inverse2, $fullnode->qname, $inverse_properties_array);
+      _neologism_retrieve_implicit_values($fullnode->field_inverse2, $fullnode->qname, $array_inverse_properties);
     }
     
     $properties[$i]['nid'] = $item->nid;
@@ -1238,7 +1242,7 @@ function _neologism_get_all_properties($node, $retrive_inverses = FALSE, array &
     $i++;
   }
   
-  return array($properties, $inverse_properties_array);
+  return array($properties, $array_superproperties, $array_inverse_properties);
 }
 
 /**

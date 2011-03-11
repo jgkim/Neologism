@@ -42,6 +42,7 @@ function neologism_preprocess_node(&$variables) {
     
     // dummy fields
     $variables['subclasses'] = _neologism_themed_qnames($variables['subclasses']);
+    $variables['subproperties'] = _neologism_themed_qnames($variables['subproperties']);
     
     $variables['types'] = array();
     if (!empty($variables['field_fp'][0]['value'])) {
@@ -118,7 +119,7 @@ function neologism_export_html($node) {
   list($classes, $superclasses_array, $disjoin_classes_array) = _neologism_get_all_classes($node, TRUE, TRUE);
   usort($classes, '_neologism_cmp_2array_alphabetically');
   
-  list($properties, $inverse_properties_array) = _neologism_get_all_properties($node, TRUE);
+  list($properties, $array_superproperties, $array_inverse_properties) = _neologism_get_all_properties($node, TRUE, TRUE);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
   $html = ''; $author_count = 0;
@@ -298,7 +299,8 @@ function neologism_export_html($node) {
     $output .= '<h2 id="sec_properties">Properties</h2>';
     foreach ($properties as $term) {
       $loaded_node = node_load($term['nid']);
-      _neologism_normalize_implicit_values($inverse_properties_array, $loaded_node->qname, $loaded_node->field_inverse2);
+      _neologism_normalize_implicit_values($array_superproperties, $loaded_node->qname, $loaded_node->subproperties);
+      _neologism_normalize_implicit_values($array_inverse_properties, $loaded_node->qname, $loaded_node->field_inverse2);
       $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }
   }

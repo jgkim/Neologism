@@ -27,6 +27,10 @@
       <dt><?php print count($superproperties) == 1 ? t('Superproperty') : t('Superproperties'); ?>:</dt>
       <dd><?php print join(', ', $superproperties); ?></dd>
     <?php } ?>
+    <?php if ($subproperties) { ?>
+      <dt><?php print count($subproperties) == 1 ? t('Subproperty') : t('Subproperties'); ?>:</dt>
+      <dd><?php print join(', ', $subproperties); ?></dd>
+    <?php } ?>
     <?php if ($inverses) { ?>
       <dt><?php print count($inverses) == 1 ? t('Inverse') : t('Inverses'); ?>:</dt>
       <dd><?php print join(', ', $inverses); ?></dd>
@@ -35,7 +39,7 @@
       <dt><?php print count($superclasses) == 1 ? t('Superclass') : t('Superclasses'); ?>:</dt>
       <dd><?php print join(', ', $superclasses); ?></dd>
     <?php } ?>
-     <?php if ($subclasses) { ?>
+    <?php if ($subclasses) { ?>
       <dt><?php print count($subclasses) == 1 ? t('Subclass') : t('Subclasses'); ?>:</dt>
       <dd><?php print join(', ', $subclasses); ?></dd>
     <?php } ?>
