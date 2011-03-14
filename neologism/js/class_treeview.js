@@ -42,37 +42,9 @@ Ext.onReady(function() {
             e.stopEvent();
             var term = node.id.split(":"); 
             window.location = '#' + term[1].toString();
-            //alert(window.location);
-            
-            //Ext.Msg.alert('Info!',  window.location.href);  
-            //Ext.Msg.alert('Info!', term[1].toString());
             return false;
           }
-        },
-        
-        /*
-        tbar: {
-            cls:'top-toolbar',
-            items:[' ',
-			        {
-                xtype: 'tbbutton',
-                iconCls: 'icon-expand-all', 
-                tooltip: Drupal.t('Expand all'),
-                handler: function(){ 
-                  rootNode.expand(true); 
-                }
-              }, {
-                xtype: 'tbseparator' // equivalent to '-'
-              }, {
-                iconCls: 'icon-collapse-all',
-                tooltip: Drupal.t('Collapse all'),
-                handler: function(){ 
-                  rootNode.collapse(true); 
-                }
-              }
-            ]
         }
-        */
     });
     
     tree.render();

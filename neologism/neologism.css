@@ -269,15 +269,19 @@ img#legend {
 
 /* widget panels */
 #domain-panel {
-/*	float: left; 
-	width: 47%; 
-	margin-right: 5px;	*/
+	float: left; 
+	width: 49%; 
+	height: 530px;
 }
 
 #range-panel {
-/*	float: left; 
-	width: 47%; 
-	height: 700px;*/
+	float: right; 
+	width: 49%; 
+	height: 530px;
+}
+
+#range-panel fieldset {
+	height: 475px;
 }
 
 #superproperty-panel {

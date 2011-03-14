@@ -23,6 +23,8 @@ Neologism.createRangeSelecctionWidget = function( field_name ) {
     //renderTo: objectToRender,
     title: Drupal.t('Range'),
     disabled: false,
+    height: 319,
+    
     arrayOfValues: baseParams.arrayOfValues,
     
     loader: new Ext.tree.TreeLoader({

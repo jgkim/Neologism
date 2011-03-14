@@ -135,15 +135,24 @@ function _neologism_form_validate_class($form, &$form_state) {
 function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_term) {
 
   // add behaviours for evoc fields if they are using the MXCheckBox selection widget
+  $form['domain_group']['#type'] = 'fieldset';
+  $form['domain_group']['#prefix'] = '<div id="domain-panel">';
+  $form['domain_group']['#suffix'] = '</div>';
+  $form['domain_group']['#weight'] = $form['field_domain2']['#weight'] - 0.5;
+  
   $form['field_domain2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_domain2']['#mxcbs_behaviour']['handler'] = 'Neologism.createDomainSelecctionWidget';
   $form['field_domain2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
-  $form['field_domain2']['#prefix'] = '<div id="domain-panel">';
-  $form['field_domain2']['#suffix'] = '</div>';
+  
+  // Move Range selector into the fieldset
+  $form['domain_group']['field_domain2'] = $form['field_domain2'];
+  unset($form['field_domain2']);
   
   $form['field_range2']['#mxcbs_behaviour']['owntitle'] = TRUE;
   $form['field_range2']['#mxcbs_behaviour']['handler'] = 'Neologism.createRangeSelecctionWidget';
   $form['field_range2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/fulltree';
+  $form['field_range2']['#prefix'] = '<div id="range-treeview" class="clearfix">';
+  $form['field_range2']['#suffix'] = '</div>';
  
   // add behaviours for evoc fields if they are using the MXCheckBox selection widget
   $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
@@ -156,14 +165,13 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
   $form['field_inverse2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_inverse2']['#mxcbs_behaviour']['handler'] = 'Neologism.createInverseSelecctionWidget';
   $form['field_inverse2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
-  //$form['field_inverse2']['#prefix'] = '<div  style="float:left; width:47%; margin-right:5px;">';
-  $form['field_inverse2']['#prefix'] = '<div id="inverse-panel"><div id="inverse-treeview">';
+  $form['field_inverse2']['#prefix'] = '<div id="inverse-panel" class="clearfix"><div id="inverse-treeview">';
   $form['field_inverse2']['#suffix'] = '</div></div>';
   
   // add the group for ranges
   $form['range_group']['#type'] = 'fieldset';
-  $form['range_group']['#prefix'] = '<div id="range-panel"><div id="range-treeview">';
-  $form['range_group']['#suffix'] = '</div></div>';
+  $form['range_group']['#prefix'] = '<div id="range-panel">';
+  $form['range_group']['#suffix'] = '</div>';
   $form['range_group']['#weight'] = $form['field_range2']['#weight'] - 0.5;
   $form['range_group']['resource_type'] = array(
     '#type' => 'radios',
