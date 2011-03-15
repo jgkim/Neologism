@@ -221,7 +221,7 @@ function neologism_export_html($node) {
     //create the variable into the namespace neologism
     // eg: Drupal.settings.neologism.json_url
     drupal_add_js( array('neologism' => array('json_url' => $json_url)), 'setting');
-    drupal_add_js( drupal_get_path('module', 'neologism') . '/js/class_treeview.js');
+    drupal_add_js( drupal_get_path('module', 'neologism').'/js/neologism.classestreeview.js');
   }
   
   if ($properties) {
@@ -231,7 +231,7 @@ function neologism_export_html($node) {
     $opts = array('absolute' => TRUE);
     $json_url = url('neologism/json/objectpropertytree', $opts);
     drupal_add_js( array('neologism' => array('property_json_url' => $json_url)), 'setting');
-    drupal_add_js( drupal_get_path('module', 'neologism') . '/js/object_property_treeview.js');
+    drupal_add_js( drupal_get_path('module', 'neologism').'/js/neologism.propertiestreeview.js');
   }
   
   if ($classes && $properties) {

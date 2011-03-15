@@ -1,36 +1,30 @@
-
-
 if( Drupal.jsEnabled ) {
-	
-	// declare Neologism namespace
-	var Neologism = {};
-	
 	$(document).ready( function() {
 		// need for the Ext module
 		Ext.QuickTips.init();
 		
 		// we need to check for the form and later ask for the rest
-		if( Neologism.superclassesTreePanel !== undefined ) {
+		if ( Neologism.superclassesTreePanel !== undefined ) {
 			Neologism.superclassesTreePanel.render(Neologism.superclassesTreePanel.objectToRender);
 		}
 		
-		if( Neologism.disjointwithTreePanel !== undefined ) {
+		if ( Neologism.disjointwithTreePanel !== undefined ) {
 			Neologism.disjointwithTreePanel.render(Neologism.disjointwithTreePanel.objectToRender);
 		}
 		
-		if( Neologism.domainTermsTree !== undefined ) {
+		if ( Neologism.domainTermsTree !== undefined ) {
 			Neologism.domainTermsTree.render(Neologism.domainTermsTree.objectToRender);
 		}
 		
-		if( Neologism.rangeTermsTree !== undefined ) {
+		if ( Neologism.rangeTermsTree !== undefined ) {
 			Neologism.rangeTermsTree.render(Neologism.rangeTermsTree.objectToRender);
 		}
 		
-		if( Neologism.superpropertyTermsTree !== undefined ) {
+		if ( Neologism.superpropertyTermsTree !== undefined ) {
 			Neologism.superpropertyTermsTree.render(Neologism.superpropertyTermsTree.objectToRender);
 		}
 		
-		if( Neologism.inverseTermsTree !== undefined ) {
+		if ( Neologism.inverseTermsTree !== undefined ) {
 			// if Neologism.domainsTermsTree is defined we are in the add/edit property form
 			Neologism.domainTermsTree.addObserver(Neologism.inverseTermsTree);
 			Neologism.rangeTermsTree.addObserver(Neologism.inverseTermsTree);
@@ -39,6 +33,13 @@ if( Drupal.jsEnabled ) {
 			Neologism.domainTermsTree.fireEvent('selectionchange', Neologism.domainTermsTree.rootNode);
 			Neologism.inverseTermsTree.render(Neologism.inverseTermsTree.objectToRender);
 		}
+		
+//		if (Neologism.classesTreeViewPanel !== undefined && Neologism.propertiesTreeViewPanel !== undefined) {
+//			Neologism.classesTreeViewPanel.render();
+//			Neologism.propertiesTreeViewPanel.render();
+//			Neologism.classesTreeViewPanel.on('fullexpanded', Neologism.checkTreeViewsHeight);
+//			Neologism.propertiesTreeViewPanel.on('fullexpanded', Neologism.checkTreeViewsHeight);
+//		}
 		
 		    //$('#edit-field-literal-as-range-value').click(Neologism.checkRangeField);
 		// check if the checkbox is checked is so, then hide rangeField show it otherwise
@@ -93,4 +94,23 @@ if( Drupal.jsEnabled ) {
 			Neologism.rangeTermsTree.clearValues();
 	    }
 	  };
+	  
+	  /**
+	   * 
+	   */
+	  Neologism.checkTreeViewsHeight = function(object) {
+		  if (object.name == 'classesTreeViewPanel') {
+			  Neologism.ctpHeight = object.newHeight;
+		  }
+		  else if (object.name == 'propertiesTreeViewPanel') {
+			  Neologism.ptpHeight = object.newHeight;
+		  }
+		  
+		  if (typeof Neologism.ctpHeight !== 'undefined' && typeof Neologism.ptpHeight !== 'undefined') {
+			  var maxHeight = (Neologism.ctpHeight > Neologism.ptpHeight) ? Neologism.ctpHeight : Neologism.ptpHeight; 
+			  $('#ext-gen5').animate({height:maxHeight},"slow");
+			  $('#ext-gen11').animate({height:maxHeight},"slow");
+		  }
+	  };
 }
+

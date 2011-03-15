@@ -9,7 +9,7 @@ function neologism_gateway_get_classes_tree() {
   $node = $_POST['node'];
   $store = array();
   $nodes = array();
-  if ( $node == 'super' ) {
+  if ( $node == 'root' ) {
     $classes = db_query(db_rewrite_sql("select * from {evoc_rdf_classes} where prefix = '%s'"), $voc['title']);  
     
     while ( $class = db_fetch_object($classes) ) {
@@ -277,7 +277,7 @@ function neologism_gateway_get_properties_tree() {
   $node = $_POST['node'];
   $nodes = array();
   
-  if ( $node == 'super' ) {
+  if ( $node == 'root' ) {
     $properties = db_query(db_rewrite_sql("SELECT * FROM {evoc_rdf_properties} where superproperties='0'"));
 
     $parentPath = '/root';

@@ -40,7 +40,8 @@ function neologism_init() {
 
   drupal_add_css(drupal_get_path('module', 'neologism') .'/neologism.css');
   $scripts = array(
-    '/js/neologism.js',
+   	'/js/neologism.init.js',
+    '/js/neologism.termstreeview.js',
     '/js/neologism.termstree.js',
     '/js/evocfields/superclass.widgetbehaviour.js',
     '/js/evocfields/disjointwith.widgetbehaviour.js',
@@ -48,6 +49,7 @@ function neologism_init() {
     '/js/evocfields/range.widgetbehaviour.js',
     '/js/evocfields/superproperty.widgetbehaviour.js',
     '/js/evocfields/inverse.widgetbehaviour.js',
+  	'/js/neologism.js',
   );
   foreach ($scripts as $script) {
     drupal_add_js(drupal_get_path('module', 'neologism') . $script);
