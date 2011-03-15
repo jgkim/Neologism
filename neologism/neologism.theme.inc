@@ -206,9 +206,9 @@ function neologism_export_html($node) {
   //ext_load_library();
   drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->prefix)), 'setting');
   
+  $output .= '<div id="treeview-panel" class="clearfix">';
   $tree_view_class = 'treepanel-fullwidth';
   if ($classes && $properties) {
-    $output .= '<div id="treeview-panel" class="clearfix">';
     $tree_view_class = 'treepanel-halfwidth';
   }
   
@@ -234,45 +234,46 @@ function neologism_export_html($node) {
     drupal_add_js( drupal_get_path('module', 'neologism').'/js/neologism.propertiestreeview.js');
   }
   
-  if ($classes && $properties) {
-    $output .= '</div>';  
+  $output .= '</div>'; 
+  
+  // show the diagram is there is at least one class or a property
+  if ($classes || $properties) {
+    $base = base_path();
+    $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
+    $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
+    $edit_mode = user_access('edit vocabularies');
+    $vocabulary = $base.$node->path;
+    $token = drupal_get_token();
+    $width = '100%';
+    $height = '600px';
+    
+    $flex_params = "editMode=$edit_mode&vocabulary=$vocabulary&token=$token";
+    $output .= '
+      <div id="diagram-panel">
+      <h2>Overview diagram</h2>
+      <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
+          id="Diagram" width="'.$width.'" height="'.$height.'"
+          codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
+              <param name="movie" value="'.$swf.'" />
+              <param name="quality" value="high" />
+              <param name="bgcolor" value="#ffffff" />
+              <param name="flashVars" value="'.$flex_params.'" />
+              <param name="allowScriptAccess" value="sameDomain" />
+              <embed src="'.$swf.'" quality="high" bgcolor="#ffffff"
+                  width="'.$width.'"
+                  height="'.$height.'"
+                  name="Diagram"
+                  align="middle"
+                  play="true"
+                  loop="false"
+                  quality="high"
+                  allowScriptAccess="sameDomain"
+                  type="application/x-shockwave-flash"
+                  pluginspage="http://www.adobe.com/go/getflashplayer"
+                  flashVars="'.$flex_params.'" />
+      </object>
+    </div>';
   }
-  
-  $base = base_path();
-  $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
-  $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
-  $edit_mode = user_access('edit vocabularies');
-  $vocabulary = $base.$node->path;
-  $token = drupal_get_token();
-  $width = '100%';
-  $height = '600px';
-  
-  $flex_params = "editMode=$edit_mode&vocabulary=$vocabulary&token=$token";
-  $output .= '
-    <div id="diagram-panel">
-    <h2>Overview diagram</h2>
-    <object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000"
-        id="Diagram" width="'.$width.'" height="'.$height.'"
-        codebase="http://fpdownload.macromedia.com/get/flashplayer/current/swflash.cab">
-            <param name="movie" value="'.$swf.'" />
-            <param name="quality" value="high" />
-            <param name="bgcolor" value="#ffffff" />
-            <param name="flashVars" value="'.$flex_params.'" />
-            <param name="allowScriptAccess" value="sameDomain" />
-            <embed src="'.$swf.'" quality="high" bgcolor="#ffffff"
-                width="'.$width.'"
-                height="'.$height.'"
-                name="Diagram"
-                align="middle"
-                play="true"
-                loop="false"
-                quality="high"
-                allowScriptAccess="sameDomain"
-                type="application/x-shockwave-flash"
-                pluginspage="http://www.adobe.com/go/getflashplayer"
-                flashVars="'.$flex_params.'" />
-    </object>
-  </div>';
   
   // insert the vocabulary's dscription
   $output .= '<div id="description">'.$node->body.'</div>';
