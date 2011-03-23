@@ -536,6 +536,7 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
   //props (overridable by caller)
   height           : 400,
   width            : '100%',
+  autoWidth		   : true, // to force TreePanel.syncSize(); to sync the inherited width
   disabled         : false,
   rootVisible      : false,
   header           : false,

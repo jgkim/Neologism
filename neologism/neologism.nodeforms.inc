@@ -158,7 +158,7 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
   $form['field_superproperty2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_superproperty2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperpropertySelecctionWidget';
   $form['field_superproperty2']['#mxcbs_behaviour']['url_gateway'] = 'neologism/json/propertiesfulltree';
-  $form['field_superproperty2']['#prefix'] = '<div id="superproperty-panel">';
+  $form['field_superproperty2']['#prefix'] = '<div id="superproperty-panel" class="half-size-panel">';
   $form['field_superproperty2']['#suffix'] = '</div>';
   
   // add behaviours for field_inverse2 field

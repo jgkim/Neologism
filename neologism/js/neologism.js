@@ -34,13 +34,6 @@ if( Drupal.jsEnabled ) {
 			Neologism.inverseTermsTree.render(Neologism.inverseTermsTree.objectToRender);
 		}
 		
-//		if (Neologism.classesTreeViewPanel !== undefined && Neologism.propertiesTreeViewPanel !== undefined) {
-//			Neologism.classesTreeViewPanel.render();
-//			Neologism.propertiesTreeViewPanel.render();
-//			Neologism.classesTreeViewPanel.on('fullexpanded', Neologism.checkTreeViewsHeight);
-//			Neologism.propertiesTreeViewPanel.on('fullexpanded', Neologism.checkTreeViewsHeight);
-//		}
-		
 		    //$('#edit-field-literal-as-range-value').click(Neologism.checkRangeField);
 		// check if the checkbox is checked is so, then hide rangeField show it otherwise
 		//Neologism.checkRangeField();
@@ -79,6 +72,10 @@ if( Drupal.jsEnabled ) {
 		if ( $('#edit-resource-type-1').attr('checked') ) {
 			$('#range-group-datatypes').hide();
 			$('#range-treeview').show();
+			// show inverse widget
+			$('#inverse-panel').show();
+			$('#superproperty-panel').removeClass('full-size-panel');
+			$('#superproperty-panel').addClass('half-size-panel');
 		}
 		// A literal (string, number, date, ...)
 		else if ( $('#edit-resource-type-2').attr('checked') ) {
@@ -86,13 +83,24 @@ if( Drupal.jsEnabled ) {
 			$('#range-group-datatypes').show();
 			// the inverse selection widget should be hidden if the range field also are hidden
 			Neologism.rangeTermsTree.clearValues();
+			$('#inverse-panel').hide();
+			$('#superproperty-panel').removeClass('half-size-panel');
+			$('#superproperty-panel').addClass('full-size-panel');
 		}
 		// Either
 		else if ( $('#edit-resource-type-3').attr('checked') ) {
 			$('#range-group-datatypes').hide();
 			$('#range-treeview').hide();
 			Neologism.rangeTermsTree.clearValues();
+			$('#inverse-panel').hide();
+			$('#superproperty-panel').removeClass('half-size-panel');
+			$('#superproperty-panel').addClass('full-size-panel');
 	    }
+		
+		var propertyTreePanel = Ext.getCmp('ext-comp-1001');
+		if (propertyTreePanel) {
+			propertyTreePanel.syncSize();
+		}
 	  };
 	  
 	  /**

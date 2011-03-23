@@ -286,7 +286,6 @@ img#legend {
 
 #superproperty-panel {
 	float: left; 
-	width: 49%; 
 	margin-right: 0px;		
 }
 
@@ -295,6 +294,13 @@ img#legend {
 	width: 49%; 
 }
 
+.full-size-panel {
+	width: 100%;
+}
+
+.half-size-panel {
+	width: 49%;
+}
 
 /*********** field_superclass2_id ***********/
 #field_superclass2_id {
