@@ -186,11 +186,29 @@ function _evoc_extract_schema(&$model, $namespaces, $ns_prefix, $ns_uri) {
 
   _evoc_prepare_import_namespaces($ns_uri, $ns_prefix, $namespaces);
 
+  $title = _evoc_query_for_title($model, $ns_uri);
+  if ($title == NULL) {
+    $vocabulary_uri = _evoc_query_for_vocabulary_uri($model);
+    if ($vocabulary_uri) {
+      $title = _evoc_query_for_title($model, $vocabulary_uri);
+    }
+  }
+  
+  $description = _evoc_query_for_description($model, $ns_uri);
+  if ($description == NULL) {
+    if ( !isset($vocabulary_uri) ) {
+      $vocabulary_uri = _evoc_query_for_vocabulary_uri($model);
+    }
+    if ($vocabulary_uri) {
+      $description = _evoc_query_for_description($model, $vocabulary_uri);
+    }
+  }
+ 
   $vocabulary = array(
       'prefix' => $ns_prefix,
       'uri' => $ns_uri,
-      'title' => _evoc_query_for_title($model, $ns_uri),
-      'description' => _evoc_query_for_description($model, $ns_uri),
+      'title' => $title,
+      'description' => $description,
       'body' => null,   // string with detailed HTML description
       'classes' => array(),
       'properties' => array(),
@@ -527,6 +545,20 @@ function _evoc_import_get_new_namespaces() {
     }
   }
   return $result;
+}
+
+/**
+ * Return the vocabulary page uri for vocabularies that have custom namespace uri.
+ * @param unknown_type $model 
+ * @param unknown_type $ns_uri This field is not used at the moment but it has been added for future use.
+ * @return unknown_type
+ */
+function _evoc_query_for_vocabulary_uri(&$model, $ns_uri = NULL) {
+  $triple = _evoc_query_find_first($model, '?', 'http://purl.org/vocab/vann/preferredNamespaceUri', '?');
+  if ($triple) {
+    return $triple['s'];
+  }
+  return NULL;
 }
 
 ?>
