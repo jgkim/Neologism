@@ -116,8 +116,8 @@ if( Drupal.jsEnabled ) {
 		  
 		  if (typeof Neologism.ctpHeight !== 'undefined' && typeof Neologism.ptpHeight !== 'undefined') {
 			  var maxHeight = (Neologism.ctpHeight > Neologism.ptpHeight) ? Neologism.ctpHeight : Neologism.ptpHeight; 
-			  $('#ext-gen5').animate({height:maxHeight}, 0);
-			  $('#ext-gen11').animate({height:maxHeight}, 0);
+			  $('#class-tree.x-panel-body').css({height:maxHeight});
+			  $('#object-property-tree.x-panel-body').css({height:maxHeight});
 		  }
 	  };
 }

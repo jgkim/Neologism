@@ -56,7 +56,7 @@ Neologism.createSuperpropertySelecctionWidget = function(field_name) {
 	  
         if ( checked /*&& node.parentNode !== null*/ ) {
 	        // add selection to array of values
-    		if ( baseParams.arrayOfValues.indexOf(node.text) == -1 ) {
+    		if ( !Neologism.util.in_array(node.text, baseParams.arrayOfValues) ) {
             	baseParams.arrayOfValues.push(node.text);
             }
         }
