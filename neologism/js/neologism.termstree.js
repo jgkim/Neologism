@@ -544,21 +544,8 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
 
   initComponent: function() {
     // Called during component initialization
-    var config = {
-      //props (non-overridable)
-      
-      //------------------------------------------- standard TreePanel properties
-      useArrows        : true,  
-      collapsible      : true,
-      animCollapse     : true,
-      border           : true,
-      autoScroll       : true,
-      animate          : true,
-      containerScroll  : true,
-      enableDD         : false,
-      singleClickExpand: true,
-
-      tbar: [
+	var tb = new Ext.Toolbar(
+	  {items: [
         {
           tooltip: 'Refresh the tree',
           iconCls: 'x-tbar-loading',
@@ -584,11 +571,25 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
           }
         },
         '-'
-      ],
+      ]}
+	);
+	
+    var config = {
+      //props (non-overridable)
       
-      //------------------------------------------- 
-      // standard TreePanel properties
+      //------------------------------------------- standard TreePanel properties
+      useArrows        : true,  
+      collapsible      : true,
+      animCollapse     : true,
+      border           : true,
+      autoScroll       : true,
+      animate          : true,
+      containerScroll  : true,
+      enableDD         : false,
+      singleClickExpand: true,
 
+      tbar: tb,
+      
       //-------------------------------------------
       // custom TermsTree properties 
       hiddenNodes: [],
@@ -639,7 +640,7 @@ Neologism.TermsTree = Ext.extend(Ext.tree.TreePanel, {
     });
     
     // add the text field to the toolbar
-    this.getTopToolbar().add( this.filterField );
+    this.getTopToolbar().addField( this.filterField );
 
     //------------------------------------------- 
     //  event handlers

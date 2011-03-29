@@ -74,8 +74,7 @@ if( Drupal.jsEnabled ) {
 			$('#range-treeview').show();
 			// show inverse widget
 			$('#inverse-panel').show();
-			$('#superproperty-panel').removeClass('full-size-panel');
-			$('#superproperty-panel').addClass('half-size-panel');
+			$('#superproperty-panel').removeClass('full-size-panel').addClass('half-size-panel');
 		}
 		// A literal (string, number, date, ...)
 		else if ( $('#edit-resource-type-2').attr('checked') ) {
@@ -84,8 +83,7 @@ if( Drupal.jsEnabled ) {
 			// the inverse selection widget should be hidden if the range field also are hidden
 			Neologism.rangeTermsTree.clearValues();
 			$('#inverse-panel').hide();
-			$('#superproperty-panel').removeClass('half-size-panel');
-			$('#superproperty-panel').addClass('full-size-panel');
+			$('#superproperty-panel').removeClass('half-size-panel').addClass('full-size-panel');
 		}
 		// Either
 		else if ( $('#edit-resource-type-3').attr('checked') ) {
@@ -93,8 +91,7 @@ if( Drupal.jsEnabled ) {
 			$('#range-treeview').hide();
 			Neologism.rangeTermsTree.clearValues();
 			$('#inverse-panel').hide();
-			$('#superproperty-panel').removeClass('half-size-panel');
-			$('#superproperty-panel').addClass('full-size-panel');
+			$('#superproperty-panel').removeClass('half-size-panel').addClass('full-size-panel');
 	    }
 		
 		var propertyTreePanel = Ext.getCmp('ext-comp-1001');
