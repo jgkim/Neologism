@@ -99,7 +99,9 @@ Neologism.createSuperclassSelecctionWidget = function( field_name ) {
   		}
     }
     
-  	
+  	,onCheckChange: function(node, cheked, options) {
+  		
+  	}
   	// override method onSelectionChange called when a fireEvent('selectionchange', ...); is invoked
 //    ,onSelectionChange:function(object) {
 //        // do whatever is necessary to assign the employee to position

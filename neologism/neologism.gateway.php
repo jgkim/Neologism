@@ -163,15 +163,15 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
 	      // one parent.
         $extra_information = true;
         $realId = '';
-        if( isset($references[$qname]) ) {
-        	$modified_id = $references[$qname]['references'].'_'.$qname;
+        if ( isset($references[$qname]) ) {
+          $references[$qname]['references'] += 1;
+          $modified_id = $references[$qname]['references'].'_'.$qname;
         	$references[$qname]['paths'][] = $rootName.'/'.implode('/',$ancestors_and_self).'/'.$modified_id; 
-        	$references[$qname]['references'] += 1;
         	$realId = $qname;
         }
         else {
-        	$references[$qname]['paths'] = array($rootName.'/'.implode('/',$ancestors_and_self).'/'.$qname);
-        	$references[$qname]['references'] = 1;	
+          $references[$qname]['paths'] = array($rootName.'/'.implode('/',$ancestors_and_self).'/'.$qname);
+        	$references[$qname]['references'] = 0;	
         	$extra_information = false;
         }
 	      
@@ -370,14 +370,14 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
       $extra_information = true;
       $realId = '';
       if( isset($references[$qname]) ) {
+        $references[$qname]['references'] += 1;
       	$modified_id = $references[$qname]['references'].'_'.$qname;
       	$references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
-      	$references[$qname]['references'] += 1;
       	$realId = $qname;
       }
       else {
       	$references[$qname]['paths'] = array($parent_path.'/'.$qname);
-      	$references[$qname]['references'] = 1;	
+      	$references[$qname]['references'] = 0;	
       	$extra_information = false;
       }
       
@@ -568,27 +568,12 @@ function neologism_gateway_get_full_classes_tree() {
       
       // extra information needed by the treeview
       $parent_path = '/'.$node;
-      $extra_information = true;
-      $realId = '';
-      if( isset($array_references[$qname]) ) {
-      	$modified_id = $array_references[$qname]['references'].'_'.$qname;
-      	$array_references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
-      	$array_references[$qname]['references'] += 1;
-      	$realId = $qname;
-      }
-      else {
-      	$array_references[$qname]['paths'] = array($parent_path.'/'.$qname);
-      	$array_references[$qname]['references'] = 1;	
-      	$extra_information = false;
-      }
-      
-      $real_parent_path = $parent_path.'/'.((!$extra_information) ? $qname : $modified_id);
-      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, $real_parent_path, $array_references);
+      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, $parent_path, $array_references);
       $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
         'text' => $qname, 
-        'id' => (!$extra_information) ? $qname : $modified_id, 
+        'id' => $qname, 
         'leaf' => $leaf, 
         'iconCls' => 'class-samevoc', 
         'children' => $children, 
@@ -600,6 +585,7 @@ function neologism_gateway_get_full_classes_tree() {
       );        
     }
   
+    _neologism_filter_references($array_references);
     $nodes[0]['references'] = $array_references;
      
     // infer disjointness between classes
@@ -607,6 +593,19 @@ function neologism_gateway_get_full_classes_tree() {
   }
 
   drupal_json($nodes);
+}
+
+/**
+ * Remove element from the $references where references are equal to zero. 
+ * @param $references keyed array containing the terms with its references if there is more than one.
+ * @return none
+ */
+function _neologism_filter_references(&$references) {
+  foreach ($references as $key => $reference) {
+    if ($reference['references'] == 0) {
+      unset($references[$key]);
+    }
+  }
 }
 
 /**
@@ -740,30 +739,13 @@ function neologism_gateway_get_full_properties_tree() {
       
       // extra information needed by the treeview
       $parent_path = '/'.$node;
-      $extra_information = true;
-      $real_id = '';
-      if( isset($array_references[$qname]) ) {
-      	$modified_id = $array_references[$qname]['references'].'_'.$qname;
-      	$array_references[$qname]['paths'][] = $parent_path.'/'.$modified_id;  
-      	$array_references[$qname]['references'] += 1;
-      	$real_id = $qname;
-      }
-      else {
-      	$array_references[$qname]['paths'] = array($parent_path.'/'.$qname);
-      	$array_references[$qname]['references'] = 1;	
-      	$extra_information = false;
-      }
-      
-      
-      
-      $real_parent_path = $parent_path.'/'.((!$extra_information) ? $qname : $modified_id);
-      $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $array_inverses, $real_parent_path, $array_references);
+      $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $array_inverses, $parent_path, $array_references);
       
       $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;
       $leaf = count($children) == 0;
       $nodes[] = array(
         'text' => $qname, 
-        'id' => (!$extra_information) ? $qname : $modified_id, 
+        'id' => $qname, 
         'leaf' => $leaf, 
         'iconCls' => 'property-samevoc', 
         'children' => $children, 

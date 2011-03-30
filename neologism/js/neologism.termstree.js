@@ -368,20 +368,16 @@ Ext.tree.TreeNode.prototype.checkInverses = function(/*TreeNode*/node, /*string*
  * @return
  */
 Ext.tree.TreeNode.prototype.checkNodeReferences = function(checked) {
-	//,/*TreeNode*/node
 	var nodeTocheck = this;
-//	if (node) {
-//		nodeTocheck = node;
-//	}
 	
 	var tree = nodeTocheck.getOwnerTree();
   	var rootNode = tree.getRootNode();
   	if ( rootNode.childNodes[0].attributes.references != undefined ) {
   		var references = rootNode.childNodes[0].attributes.references;
-  		if (references[nodeTocheck.text] != undefined) {
+  		if (references[nodeTocheck.text] != undefined && references[nodeTocheck.text].references > 0) {
   			var reference = references[nodeTocheck.text];
   			for ( var p = 0; p < reference.paths.length; p++ ) {
-  				var rnode = tree.expandPath(reference.paths[p])
+  				var rnode = tree.expandPath(reference.paths[p]);
   				if ( rnode != undefined ) {
   					if (rnode.attributes.checked != checked) {
   						rnode.getUI().toggleCheck(checked);
