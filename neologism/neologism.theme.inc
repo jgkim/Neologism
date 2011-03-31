@@ -112,7 +112,7 @@ function neologism_export_html($node) {
   
   $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/rdf_w3c_icon.48.gif', t('RDF/XML version of this vocabulary.'), t('RDF/XML version of this vocabulary.'));
   $link = l($image, $node->path.'.rdf', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
-  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/n3.gif', t('Turtle version of this vocabulary.'), t('Turtle version of this vocabulary.'));
+  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/turtle_icon_32x35.jpg', t('Turtle version of this vocabulary.'), t('Turtle version of this vocabulary.'));
   $link2 = l($image, $node->path.'.ttl', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
