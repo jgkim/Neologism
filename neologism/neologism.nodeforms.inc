@@ -17,7 +17,7 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
     drupal_set_breadcrumb(_neologism_build_breadcrumb($current_voc->path, $current_voc->title));
   } else if (arg(4)) {    // Creating a new subclass, subproperty or inverse of an existing term ...
     // Select the term and mode if provided in the url of type node/1/mode/2
-    $modes = array('sub', 'inverse');
+    $modes = array('sub', 'inverse', 'domain');
     $mode = arg(3); 
     if (in_array($mode, $modes)) {
       $related_term = node_load(arg(4));
@@ -92,7 +92,7 @@ function _neologism_form_alter_class(&$form, &$form_state, $mode, &$related_term
     // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree
     $form['field_superclass2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
     $form['field_superclass2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
-  }
+  } 
   
   $form['field_superclass2']['#mxcbs_behaviour']['owntitle'] = FALSE;
   $form['field_superclass2']['#mxcbs_behaviour']['handler'] = 'Neologism.createSuperclassSelecctionWidget';
@@ -134,6 +134,37 @@ function _neologism_form_validate_class($form, &$form_state) {
 
 function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_term) {
 
+  if ($mode == 'edit') {
+    // why need to inform to the widget that there is comming an edition for a value, so the widget can
+    // handle the situation.
+    $form['field_domain2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
+    $form['field_range2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
+    $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
+    $form['field_inverse2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
+
+    // set the default value depending of the current property range value
+    $range = $form['#node']->field_range2[0]['evoc_term'];
+    if( isset($range) && _neologism_is_literal_datatype($range) ) {
+      $form['range_group']['data_types']['#default_value'] = $range;
+      // set the radio button to The value of this property is a literal (string, number, date, ...).
+      $form['range_group']['resource_type']['#default_value'] = 2;
+    }
+  }
+  else if ($mode == 'sub') {
+    // Check the related term in superproperty widget
+    $form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
+    $form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+  }
+  else if ($mode == 'inverse') {
+    // Check the related term in inverse widget
+    $form['field_inverse2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
+    $form['field_inverse2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
+  } 
+  else if ($mode == 'domain') {
+    $form['field_domain2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
+    $form['field_domain2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;  
+  }
+  
   // add behaviours for evoc fields if they are using the MXCheckBox selection widget
   $form['domain_group']['#type'] = 'fieldset';
   $form['domain_group']['#prefix'] = '<div id="domain-panel">';
@@ -202,33 +233,6 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
   $form['range_group']['field_range2'] = $form['field_range2'];
   unset($form['field_range2']);
  
-  if ($mode == 'edit') {
-    // why need to inform to the widget that there is comming an edition for a value, so the widget can
-    // handle the situation.
-    $form['field_domain2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-    $form['field_range2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-    $form['field_superproperty2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-    $form['field_inverse2']['#mxcbs_behaviour']['editing_value'] = $form['#node']->qname;
-
-    // set the default value depending of the current property range value
-    $range = $form['#node']->field_range2[0]['evoc_term'];
-    if( isset($range) && _neologism_is_literal_datatype($range) ) {
-      $form['range_group']['data_types']['#default_value'] = $range;
-      // set the radio button to The value of this property is a literal (string, number, date, ...).
-      $form['range_group']['resource_type']['#default_value'] = 2;
-    }
-  }
-  else if ($mode == 'sub') {
-    // Check the related term in superproperty widget
-    $form['field_superproperty2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
-    $form['field_superproperty2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
-  }
-  else if ($mode == 'inverse') {
-    // Check the related term in inverse widget
-    $form['field_inverse2']['#mxcbs_behaviour']['extra_values'] = array($related_term->qname);
-    $form['field_inverse2']['#mxcbs_behaviour']['execute_preprocess'] = TRUE;
-  }
-
   $form['#validate'][] = '_neologism_form_validate_property';
 }
 

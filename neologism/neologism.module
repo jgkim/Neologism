@@ -630,6 +630,7 @@ function neologism_link_alter(&$links, $node) {
 function neologism_link($type, $node = NULL, $teaser = FALSE) {
   $links = array();
   $vocabulary_nid = $node->field_vocabulary[0]['nid'];
+  $vocabulary_title = $node->field_vocabulary[0]['safe']['title'];
 
   // Content type in urls are with - instead of _
   $vocabulary_url_str = str_replace('_', '-', NEOLOGISM_CT_VOCABULARY);
@@ -637,39 +638,49 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
   $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
 
   //if( $type == 'node' )
-	if (user_access('edit vocabularies') && $node->type == NEOLOGISM_CT_CLASS) {
+  if ( user_access('edit vocabularies') ) {
+    $qname = $vocabulary_title.':'.$node->title;
+    
+    if ($node->type == NEOLOGISM_CT_CLASS) {
       $links['neologism_edit_class'] = array(
         'title' => t('Edit'),
         'href' => "node/$node->nid/edit",
-	    'attributes' => array('title' => 'Edit '.$node->field_label[0]['value'].' class.')
+      	'attributes' => array('title' => 'Edit '.$qname.' class.')
       );
       $links['neologism_add_subclass'] = array(
         'title' => t('Create new subclass'),
         'href' => "node/" . $node->vocabulary->nid . "/add-class/sub/$node->nid",
-      	'attributes' => array('title' => 'Create a new class as subclass of '.$node->field_label[0]['value'].'.')	
+      	'attributes' => array('title' => 'Create a new class as subclass of '.$qname.'.')	
+      );
+      $links['neologism_add_property'] = array(
+        'title' => t('Create new property'),
+      	'href' => "node/" . $node->vocabulary->nid . "/add-property/domain/$node->nid",
+      	'attributes' => array('title' => 'Create a new property with domain of '.$qname.'.')	
       );
     }
-
-    if (user_access('edit vocabularies') && $node->type == NEOLOGISM_CT_PROPERTY) {
+    
+    if ($node->type == NEOLOGISM_CT_PROPERTY) {
       $links['neologism_edit_property'] = array(
         'title' => t('Edit'),
         'href' => "node/$node->nid/edit",
+      	'attributes' => array('title' => 'Edit '.$qname.' property.')
       );
       $links['neologism_add_subproperty'] = array(
         'title' => t('Create new subproperty'),
         'href' => "node/" . $node->vocabulary->nid . "/add-property/sub/$node->nid",
-      	'attributes' => array('title' => 'Create a new property as subproperty of '.$node->field_label[0]['value'].'.')	
+      	'attributes' => array('title' => 'Create a new property as subproperty of '.$qname.'.')	
       );
       if (!$node->field_inverse2 || !$node->field_inverse2[0]['evoc_term']) {
         $links['neologism_add_inverse'] = array(
           'title' => t('Add inverse property'),
           'href' => "node/" . $node->vocabulary->nid . "/add-property/inverse/$node->nid",
-          'attributes' => array('title' => 'Create a new property as inverse of '.$node->field_label[0]['value'].'.')	
+          'attributes' => array('title' => 'Create a new property as inverse of '.$qname.'.')	
         );
       }
     }
+  }
 
-    return $links;
+  return $links;
 }
 
 /**
@@ -1567,10 +1578,14 @@ function neologism_evoc_widgetbehaviour_preprocess($field_name, $default_of_valu
 			$result = $extra_values;
 			break;
 			
+	  case 'field_domain2':
+      $result = $extra_values;
+      break;
+      
 		case 'field_superproperty2':
 			$result = $extra_values;
 			break;
-
+      
     case 'field_inverse2':
       $result = $extra_values;
       break;

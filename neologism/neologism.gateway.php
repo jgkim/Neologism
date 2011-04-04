@@ -11,10 +11,14 @@ function neologism_gateway_get_classes_tree() {
   $nodes = array();
   $references = array();
   if ( $node == 'root' ) {
+   
+    
     $classes = db_query(db_rewrite_sql("select * from {evoc_rdf_classes} where prefix = '%s'"), $voc['title']);  
+     
     
     while ( $class = db_fetch_object($classes) ) {
       $qname = $class->prefix.':'.$class->id;
+      
       $store[$qname]['comment'] = $class->comment;
       $store[$qname]['label'] = $class->label;
       if ( $class->superclasses > 0 ) {
