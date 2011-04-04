@@ -205,17 +205,6 @@ function evocwidget_dynamic_process($element, $edit, $form_state, $form) {
   
   // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree.
   // At this point we append the extra values to the selected_values list
-  $extra_values = NULL;
-  if ( !empty($element['#mxcbs_behaviour']['extra_values']) ) {
-  	$extra_values = array();
-  	$extra_values = $element['#mxcbs_behaviour']['extra_values'];
-  	//$selected_values = array_merge($selected_values, $element['#mxcbs_behaviour']['extra_values']);
-  }
-  
-  /*
-  if ( isset($element['#mxcbs_behaviour']['preprocess_values']) ) {
-  	$selected_values = $element['#mxcbs_behaviour']['preprocess_values']($selected_values);
-  }*/
   if ( isset($element['#mxcbs_behaviour'][FIELDATTR_EXECUTE_PREPROCESS]) && $element['#mxcbs_behaviour'][FIELDATTR_EXECUTE_PREPROCESS] ) {
 	  // extra_values is an optional parameter for #mxcbs_behaviour attribute that contain extra default values for the widget tree.
 	  // At this point we append the extra values to the selected_values list
