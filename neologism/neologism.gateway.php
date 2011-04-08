@@ -11,11 +11,7 @@ function neologism_gateway_get_classes_tree() {
   $nodes = array();
   $references = array();
   if ( $node == 'root' ) {
-   
-    
     $classes = db_query(db_rewrite_sql("select * from {evoc_rdf_classes} where prefix = '%s'"), $voc['title']);  
-     
-    
     while ( $class = db_fetch_object($classes) ) {
       $qname = $class->prefix.':'.$class->id;
       
@@ -59,7 +55,8 @@ function neologism_gateway_get_classes_tree() {
 function _neologism_build_tree_in_order(array &$store, array &$config, $term, $vocabulary, &$references) {
 	$stack = array();
 	$nodes = array();
-	$stack[] = array($term, &$nodes);
+	$ancestors_and_self = array($term);
+	$stack[] = array($term, &$nodes, $ancestors_and_self);
 	
 	// config
 	$store_property = $config['property']; // this is the property selected when the store was created.
@@ -67,10 +64,12 @@ function _neologism_build_tree_in_order(array &$store, array &$config, $term, $v
 	$icon_class_diffevoc = $config['icon_class_diffvoc'];
 	$text_class_currentvoc = $config['text_class_currentvoc'];
 	
+	$i = 0;
 	while( count($stack) ) {
 		$arr = &_neologism_array_rpop($stack);
 		$current = $arr[0]; 
 		$node = &$arr[1]; 
+		$ancestors_and_self = $arr[2]; 
 		
 		$term_qname_parts = explode(':', $current);
   	$prefix = $term_qname_parts[0];
@@ -116,7 +115,11 @@ function _neologism_build_tree_in_order(array &$store, array &$config, $term, $v
 			}
 			
 			foreach( $store[$current][$store_property] as $key => $val ) {
-				$stack[] = array($val, &$node);
+        if (!in_array($val, $ancestors_and_self)) {
+        	$copy = $ancestors_and_self;
+        	$copy[] = $val;
+        	$stack[] = array($val, &$node, $copy);
+        }
 			}
 			
 			continue;
@@ -147,7 +150,7 @@ function _neologism_build_tree_in_order(array &$store, array &$config, $term, $v
 				'qtip' => $qtip,
 			);
 		}
-	}
+	} // while
 	
 	return $nodes;
 }
