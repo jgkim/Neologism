@@ -11,6 +11,15 @@
   <dl class="term-details">
     <dt>URI:</dt>
     <dd><?php print l($term_uri, $term_uri); ?></dd>
+    
+    <?php if ($in_domain_of) { ?>
+      <dt><?php print t('Properties include'); ?>:</dt>
+      <dd><?php print join(', ', $in_domain_of); ?></dd>
+    <?php } ?>
+    <?php if ($in_range_of) { ?>
+      <dt><?php print t('Used with');?>:</dt>
+      <dd><?php print join(', ', $in_range_of); ?></dd>
+    <?php } ?>
     <?php if ($types) { ?>
       <dt><?php print count($types) == 1 ? t('Type') : t('Types'); ?>:</dt>
       <dd><?php print join(', ', $types); ?></dd>

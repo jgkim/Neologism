@@ -43,6 +43,8 @@ function neologism_preprocess_node(&$variables) {
     // dummy fields
     $variables['subclasses'] = _neologism_themed_qnames($variables['subclasses']);
     $variables['subproperties'] = _neologism_themed_qnames($variables['subproperties']);
+    $variables['in_domain_of'] = _neologism_themed_qnames($variables['in_domain_of']);
+    $variables['in_range_of'] = _neologism_themed_qnames($variables['in_range_of']);
     
     $variables['types'] = array();
     if (!empty($variables['field_fp'][0]['value'])) {
@@ -119,8 +121,10 @@ function neologism_export_html($node) {
   list($classes, $superclasses_array, $disjoin_classes_array) = _neologism_get_all_classes($node, TRUE, TRUE);
   usort($classes, '_neologism_cmp_2array_alphabetically');
   
-  list($properties, $array_superproperties, $array_inverse_properties) = _neologism_get_all_properties($node, TRUE, TRUE);
+  list($properties, $array_superproperties, $array_inverse_properties, $array_class_usages) = _neologism_get_all_properties($node, TRUE, TRUE, TRUE);
   usort($properties, '_neologism_cmp_2array_alphabetically');
+  
+  
   
   $html = ''; $author_count = 0;
   foreach($node->authors as $uid) {
@@ -290,7 +294,23 @@ function neologism_export_html($node) {
       
       // create a dummy variable for the neo_term.tpl
       _neologism_normalize_implicit_values($superclasses_array, $loaded_node->qname, $loaded_node->subclasses);
-      //$loaded_node->subclasses = $superclasses_array;
+      
+      // check for properties in domain and range of $loaded_node->qname and create dummies field to represent them in the html output.
+      if (isset($array_class_usages[$loaded_node->qname])) {
+        // create a dummy variable
+        $p_in_domain_and_range = $array_class_usages[$loaded_node->qname];
+        if (isset($p_in_domain_and_range[IN_DOMAIN_OF]) ) {
+          $array_temp = array();
+          $array_temp[$loaded_node->qname] = $p_in_domain_and_range[IN_DOMAIN_OF];
+          _neologism_normalize_implicit_values($array_temp, $loaded_node->qname, $loaded_node->in_domain_of);
+        }
+        
+        if (isset($p_in_domain_and_range[IN_RANGE_OF]) ) {
+          $array_temp = array();
+          $array_temp[$loaded_node->qname] = $p_in_domain_and_range[IN_RANGE_OF];
+          _neologism_normalize_implicit_values($array_temp, $loaded_node->qname, $loaded_node->in_range_of);
+        }
+      }
       
       $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }

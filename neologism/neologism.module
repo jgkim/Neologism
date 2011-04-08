@@ -20,6 +20,9 @@ define("RANGES", "ranges");
 define("SUBPROPERTYOF", "subpropertyof");
 define("INVERSE", "inverse");
 
+define("IN_RANGE_OF", "in-range-of");
+define("IN_DOMAIN_OF", "in-domain-of");
+
 /**
  * Implementation of hook_init().
  */
@@ -899,7 +902,7 @@ function _neologism_namespace_uri($path, $custom_uri = null) {
 function &neologism_get_rdf_model($node) {
   $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann');
   list($classes) = _neologism_get_all_classes($node, FALSE, FALSE, $required_namespaces);
-  list($properties) = _neologism_get_all_properties($node, FALSE, FALSE, $required_namespaces);
+  list($properties) = _neologism_get_all_properties($node, FALSE, FALSE, FALSE, $required_namespaces);
   
   // Set up model with all necessary namespaces
   $namespaces = rdf_get_namespaces();
@@ -1173,11 +1176,14 @@ function neologism_write_layout($node, $layout) {
 /**
  * Get all properties in a vocabulary
  */
-function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, $retrive_inverses = FALSE, array &$detect_namespaces = NULL) {
+function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, $retrive_inverses = FALSE, 
+    $retrive_objectproperty_scope_in_class = FALSE, array &$detect_namespaces = NULL) {
+        
   $properties_resource = db_query(db_rewrite_sql("select n.nid from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid where c.field_vocabulary_nid = %d and n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
   $properties = array(); 
   $array_superproperties = array();
   $array_inverse_properties = array();
+  $array_classes_usage = array();
   
   $i = 0;
   while ( $item = db_fetch_object($properties_resource) ) {
@@ -1198,13 +1204,21 @@ function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, 
       $properties[$i]['comment'] = $fullnode->field_comment[0]['value'];
     }
     
+    // TODO: think about to use some design pattern to include post-processing to the resulting array in one loop.
     if ( isset($fullnode->field_domain2[0]['evoc_term']) && $fullnode->field_domain2[0]['evoc_term'] ) {
       $properties[$i][DOMAINS] = array();
       foreach ( $fullnode->field_domain2 as $term => $value ) {
-        $properties[$i][DOMAINS][] = $value['evoc_term'];
+        $qname = $value['evoc_term'];
+        $qname_splitted = explode(':', $qname);
+        $properties[$i][DOMAINS][] = $qname;
+        // retrive all the in-domain-of properties
+        if ($retrive_objectproperty_scope_in_class) {
+          if ($qname_splitted[0] == $fullnode->vocabulary->prefix) {
+            $array_classes_usage[$qname][IN_DOMAIN_OF][] = $fullnode->qname; 
+          }
+        }
         
         if ( isset($detect_namespaces) ) {
-          $qname_splitted = explode(':', $value['evoc_term']);
           if( !in_array($qname_splitted[0], $detect_namespaces) ) {
             $detect_namespaces[] = $qname_splitted[0];
           }  
@@ -1215,10 +1229,18 @@ function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, 
     if ( isset($fullnode->field_range2[0]['evoc_term']) && $fullnode->field_range2[0]['evoc_term'] ) {
       $properties[$i][RANGES] = array();
       foreach ( $fullnode->field_range2 as $term => $value ) {
+        $qname = $value['evoc_term'];
+        $qname_splitted = explode(':', $qname);
         $properties[$i][RANGES][] = $value['evoc_term'];
         
+        // retrive all the in-range-of properties
+        if ($retrive_objectproperty_scope_in_class) {
+          if ($qname_splitted[0] == $fullnode->vocabulary->prefix) {
+            $array_classes_usage[$qname][IN_RANGE_OF][] = $fullnode->qname; 
+          }
+        }
+        
         if ( isset($detect_namespaces) ) {
-          $qname_splitted = explode(':', $value['evoc_term']);
           if( !in_array($qname_splitted[0], $detect_namespaces) ) {
             $detect_namespaces[] = $qname_splitted[0];
           }  
@@ -1229,10 +1251,11 @@ function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, 
     if ( isset($fullnode->field_superproperty2[0]['evoc_term']) && $fullnode->field_superproperty2[0]['evoc_term'] ) {
       $properties[$i][SUBPROPERTYOF] = array();
       foreach ( $fullnode->field_superproperty2 as $term => $value ) {
+        $qname = $value['evoc_term'];
+        $qname_splitted = explode(':', $qname);
         $properties[$i][SUBPROPERTYOF][] = $value['evoc_term'];
         
         if ( isset($detect_namespaces) ) {
-          $qname_splitted = explode(':', $value['evoc_term']);
           if( !in_array($qname_splitted[0], $detect_namespaces) ) {
             $detect_namespaces[] = $qname_splitted[0];
           }  
@@ -1255,7 +1278,7 @@ function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, 
     $i++;
   }
   
-  return array($properties, $array_superproperties, $array_inverse_properties);
+  return array($properties, $array_superproperties, $array_inverse_properties, $array_classes_usage);
 }
 
 /**
