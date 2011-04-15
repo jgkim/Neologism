@@ -920,3 +920,19 @@ html[xmlns] .clearfix {
 	height: 1%;
 }
 
+/* Neologism profile feedback form */
+#edit-send-email-address-checkbox-wrapper {
+	padding: 5px 4px 0 0;
+	margin: 0;
+	float: left;
+}
+
+#edit-send-email-address-textfield-wrapper {
+	padding: 5px 0 0 0;
+}
+
+#edit-send-email-address-textfield-wrapper .description {
+	clear: both;
+}
+
+
