@@ -6,6 +6,8 @@
  * Install Profile for Neologism 
  */
  
+
+
 /**
  * Return an array of the modules to be enabled when this profile is installed.
  *
@@ -63,7 +65,9 @@ function neologism_profile_details() {
  */
 function neologism_profile_task_list() {
 	return array(
-		'building-neologism-perspective' => st('Prepare Neologism')
+		'building-neologism-perspective' => st('Preparing Neologism'),
+		'neologism-registration' => st('Register Neologism'),
+	  'completing-installation' => st('Completing installation')
 	);
 }
 
@@ -153,7 +157,7 @@ function neologism_profile_tasks(&$task, $url) {
 	  $task = 'building-neologism-perspective';
   }
   
-  if( $task == 'building-neologism-perspective' ) {
+  if ($task == 'building-neologism-perspective') {
   	// set the default ExtJS library path to same place where is located the ext module
   	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
   	
@@ -284,7 +288,217 @@ function neologism_profile_tasks(&$task, $url) {
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
 
-  	// return control to the installer
-	  $task = 'profile-finished';
+  	$task = 'neologism-registration';
+  	
+  	// clear messages queue 
+  	drupal_get_messages();
   }
+  
+  if ($task == 'neologism-registration') {
+    // Display a form requesting the feedback
+  	$output = drupal_get_form('neologism_registration_form', $url);
+    
+    if (!variable_get('registration_form_submitted', FALSE) && empty($_GET['skip_step'])) {
+      // The variable is still empty, meaning that the drupal_get_form()
+      // call above haven't finished the form yet. We set a page-title
+      // here, and return the rendered form to the installer, to be
+      // shown to the user. Since $task is still set to 'task1', this
+      // code will be re-run on next page request, proceeding further
+      // if possible.
+      drupal_set_title(st('Neologism Registration Form'));
+      return $output;
+    }
+    else {
+      // The form was submitted, so now we advance to the next task.
+      $task = 'completing-installation';
+    }
+  }  
+  
+  // Our second custom task shows a simple page, summarizing the previous
+  // step.
+  if ($task == 'completing-installation') {
+
+    if (empty($_GET['skip_step']) && variable_get('registration_form_submitted', FALSE)) {
+      // The GET string is not present, meaning that this page request
+      // is not coming from the link being clicked, and so we need to
+      // render the page.
+      // TODO: extend the message with a nicer info for the new user.
+      $output = '<p>' . st('Thanks for providing us with your information.').'</p>';
+      // We build the link from $url provided by the installer, adding
+      // the extra GET string mentioned above.
+      $output .= '<p><a href="'.$url.'&skip_step=yes">'.st('Click here to continue') . '</a></p>';
+      
+      drupal_add_js('
+      	jQuery(document).ready(function () { 
+      		window.setTimeout(function () {
+      				location.replace("'.$url.'&skip_step=yes");
+    				}, 3000
+    			);
+    		});
+     	', 'inline');
+      
+      drupal_set_title(st('Thanks for register Neologism'));
+      return $output;
+    }
+    else {
+      variable_del('registration_form_submitted');
+
+      $task = 'profile-finished';
+    }
+  }
+  
+}
+
+/**
+ * 
+ */
+function neologism_registration_form($form_state, $url) {
+  global $base_url, $user;
+  
+  drupal_add_css('profiles/neologism/neologism.profile.css');
+  
+  $form['introduction'] = array(
+    '#type' => 'item', 
+    '#title' => st('Let us know about you'), 
+    '#value' => st('Whether you are evaluating Neologism or setting up a production site, the Neologism team would love to hear from you in order 
+    	to better understand user requirements and prioritize new features.
+    	<br/><br/>This is why we ask for some information about you. You can skip this step.<br/><br/>')
+  );
+  
+  $form['name'] = array(
+      '#type' => 'textfield', 
+      '#title' => st('Your name'), 
+      //'#default_value' => $user->name, 
+      '#size' => 60, 
+      '#maxlength' => 128, 
+  		'#required' => TRUE,
+    );
+    
+  $form['organization'] = array(
+    '#type' => 'textfield', 
+    '#title' => st('Your organization'), 
+    '#default_value' => '', 
+    '#size' => 60, 
+    '#maxlength' => 128, 
+  );
+  
+  $form['send_email_address_checkbox'] = array(
+    '#type' => 'checkbox',
+    '#attributes' => array('style' => 'width: auto; display: inline'),
+   	'#prefix' => '<div id="" class="" style="">',
+  	'#suffix' => '</div>',
+  	'#default_value' => TRUE
+  );
+  
+   $form['send_email_address_textfield'] = array(
+    '#type' => 'textfield', 
+   	'#description' => st('We will send you a questionary after some time.'),
+    '#default_value' => $user->mail, 
+   	'#field_prefix' => st('Send your email address: '),
+    '#size' => 45, 
+    '#maxlength' => 128, 
+    '#required' => TRUE
+  );
+  
+  $form['send_your_website_checkbox'] = array(
+    '#type' => 'checkbox',
+    '#title' => st('Send your website URL: ').$base_url,
+  	'#description' => st('We might have a look to see how your site is coming along, and maybe include it in the list of 
+  		featured sites on the Neologism homepage.'),
+  	'#default_value' => TRUE
+  );
+  
+  $form['neologism_usage'] = array(
+    '#type' => 'textarea', 
+    '#title' => st('What do you plan to use Neologism for?'),
+  	'#description' => st('Add as much or as little detail as you like.'), 
+    //'#default_value' => $node->body, 
+    '#required' => FALSE
+  );
+  
+  $description = '<br/>You can contact us at '.l('neologism-dev', 'http://neologism.deri.ie/support-dev').'. Please consider joining the mailing list!';
+  $form['contact'] = array(
+    '#type' => 'item', 
+    '#value' => st($description)
+  );
+  
+  $form['submit'] = array(
+    '#type' => 'submit', 
+    '#value' => st('Submit'),
+  	//'#executes_submit_callback' => TRUE,
+  );
+  
+  $form['skip_this_step'] = array(
+    '#type' => 'button', 
+    '#value' => st('Skip this step'),
+  	'#attributes' => array('onClick' => 'location.replace("'. $url . '&skip_step=yes"); return false;'),
+  );
+  
+  // force to use a default submit callback
+  //$form['#submit'][] = 'neologism_registration_form_submit';
+  $form['#action'] = $url;
+  $form['#redirect'] = FALSE;
+  
+  return $form;
+}
+
+function neologism_registration_form_validate($form, &$form_state) {
+  if ($error = user_validate_mail($form_state['values']['send_email_address_textfield'])) {
+    form_error($form['values']['send_email_address_textfield'], $error);
+  }
+}
+
+/**
+ * Handle for submission for neologism_registration form.
+ */
+function neologism_registration_form_submit($form, &$form_state) {
+  global $base_url;
+  
+  // current Neologism support 
+  // TODO: move this array for a better place where it can be editted easy
+  $neologism_current_dev_support = array(
+    array('name' => 'Guido Cecilio', 'email' => array('guido.cecilio@deri.org', 'guidocecilio@gmail.com')),
+    array('name' => 'Richard Cyganiak', 'email' => array('richard@cyganiak.de'))
+  );
+  
+  $values = $form_state['values'];
+  
+  // Send from the current user to the requested user.
+  foreach ($neologism_current_dev_support as $support) {
+    if (!empty($to)) {
+      $to .= ','.implode(',', $support['email']);
+    }
+    else {
+      $to = implode(',', $support['email']);
+    }
+  }
+  $from = $form_state['values']['send_email_address_checkbox'] == 1 ? $form_state['values']['send_email_address_textfield'] : '';
+
+  // Save form values for email composition.
+  $values = array(
+    'name' => $form_state['values']['name'],
+    'organization' => $form_state['values']['organization'],
+    'website' => $form_state['values']['send_your_website_checkbox'] == 1 ? $base_url : '',
+    'plan' => $form_state['values']['neologism_usage']
+  );
+ 
+  // Send the e-mail in the requested user language.
+  drupal_mail('neologism', 'registration', $to, language_default(), $values, $from);
+
+  watchdog('mail', '%name-from sent to Neologism dev group [%to] an e-mail.', array('%name-from' => $values['name'], '%to' => $to));
+  
+  variable_set('registration_form_submitted', TRUE);
+}
+
+/**
+ *  hook_mail to prepare the message based on the parameters in $params
+ */
+function neologism_mail($key, &$message, $params) {
+  $message['subject'] = '['.variable_get('site_name', 'Drupal').'] - '. st('New Neologism site registration!');;
+  $message['body'][] = st('A new instance of Neologism was created at: @site_url', array('@site_url' => url($params['website'])));
+  $message['body'][] = st('Customer name: @name.', array('@name' => $params['name']));
+  $message['body'][] = st('Organization: @organization.', array('@organization' => $params['organization']));
+  $message['body'][] = st('eMail address: @email.', array('@email' => $message['from']));
+  $message['body'][] = st('Installed for:');
+  $message['body'][] = $params['plan'];
 }
