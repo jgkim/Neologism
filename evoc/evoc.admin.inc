@@ -15,9 +15,24 @@
  */
 function evoc_manage_vocabularies() {
   
+  if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
+    drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
+      	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
+    return theme('status_messages');
+  }
+  
+  $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
+  if (!$evoc_array_builtin_vocabularies) {
+    drupal_set_message('Error retrieving built-in vocabularies\' information from the database.', 'error');
+    return theme('status_messages');
+  }
+  
   // These are the namespaces imported during installation
-  $builtins = array('rdf', 'rdfs', 'owl', 'dc', 'foaf');
-
+  $builtins = array();
+  foreach ($evoc_array_builtin_vocabularies as $vocab) {
+    $builtins[] =  $vocab['prefix'];
+  }
+  
   // Get namespaces managed by evoc. First get all from the {rdf_namespaces}
   // table, then remove those managed by other modules (neologism). This
   // is a hack; it will fail if any other modules register namespaces into
@@ -53,7 +68,18 @@ function evoc_manage_vocabularies() {
   return $output;
 }
 
-function evoc_add_vocabulary($form_state) {
+function evoc_add_vocabulary() {
+  if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
+    drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
+      	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
+    return theme('status_messages');
+  }
+  else return drupal_get_form('evoc_add_vocabulary_form');
+}
+
+function evoc_add_vocabulary_form($form_state) {
+  $form = array();
+  
   $form['help'] = array(
       '#value' => 'Here you can add external vocabularies. This allows you to use their classes and properties in your own vocabularies, for example, as superclasses. We will attempt to load an RDF/XML file containing an RDFS vocabulary or OWL ontology from the namespace URI.',
   );
@@ -77,7 +103,7 @@ function evoc_add_vocabulary($form_state) {
   return $form;
 }
 
-function evoc_add_vocabulary_validate($form, &$form_state) {
+function evoc_add_vocabulary_form_validate($form, &$form_state) {
   if (!empty($form_state['values']['ns_prefix'])) {
     $ns_prefix = trim($form_state['values']['ns_prefix']);
     if (!rdf_is_valid_qname($ns_prefix . ':x')) {
@@ -144,16 +170,16 @@ function evoc_add_vocabulary_validate($form, &$form_state) {
   $form_state['evoc_processed_vocabulary'] = $vocabulary;
 }
 
-function evoc_add_vocabulary_submit($form, &$form_state) {
+function evoc_add_vocabulary_form_submit($form, &$form_state) {
   // Get the vocabulary array from $form_state, should have been put there by _validate()
   if (!is_array($form_state['evoc_processed_vocabulary'])) {
     drupal_set_message('Internal error: evoc_processed_vocabulary is not present');
     return false;
   }
   $vocabulary = $form_state['evoc_processed_vocabulary'];
-
+  
   evoc_save_vocabulary($vocabulary);
-  drupal_set_message(t('External vocabulary added. Found %classcount classes and %propertycount properties.',
+  drupal_set_message(t('External vocabulary <i>'.$vocabulary['prefix'].'</i> added. Found %classcount classes and %propertycount properties.',
       array('%classcount' => count($vocabulary['classes']), '%propertycount' => count($vocabulary['properties']))));
   $form_state['redirect'] = 'evoc';
 }
@@ -181,7 +207,7 @@ function evoc_remove_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
     $prefix = $form_state['values']['prefix'];
     evoc_remove_vocabulary($prefix);
-    drupal_set_message(t('External vocabulary removed.'));
+    drupal_set_message(t('External vocabulary <i>'.$prefix.'</i> removed.'));
   }
   $form_state['redirect'] = 'evoc'; 
 }

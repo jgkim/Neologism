@@ -120,13 +120,18 @@ function evoc_install() {
     }
   }
 
-  module_load_include('module', 'evoc', 'evoc');
-  $builtin_vocabularies_path = drupal_get_path('module', 'evoc').'/builtin_vocabularies';
-  evoc_import_vocabulary('http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'rdf', $builtin_vocabularies_path.'/rdf.rdf');
-  evoc_import_vocabulary('http://www.w3.org/2000/01/rdf-schema#', 'rdfs', $builtin_vocabularies_path.'/rdf-schema.rdf');
-  evoc_import_vocabulary('http://purl.org/dc/elements/1.1/', 'dc', $builtin_vocabularies_path.'/dcelements.rdf');
-  evoc_import_vocabulary('http://xmlns.com/foaf/0.1/','foaf', $builtin_vocabularies_path.'/foaf.rdf');
-  evoc_import_vocabulary('http://www.w3.org/2002/07/owl#','owl', $builtin_vocabularies_path.'/owl.rdf');
+  // Evoc built-in vocabularies (core vocabularies)
+  $evoc_array_builtin_vocabularies = array(
+    array('uri' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'prefix' => 'rdf', 'filename' => 'rdf.rdf'),
+    array('uri' => 'http://www.w3.org/2000/01/rdf-schema#', 'prefix' => 'rdfs', 'filename' => 'rdf-schema.rdf'),
+    array('uri' => 'http://purl.org/dc/elements/1.1/', 'prefix' => 'dc', 'filename' => 'dcelements.rdf'),
+    array('uri' => 'http://xmlns.com/foaf/0.1/', 'prefix' => 'foaf', 'filename' => 'foaf.rdf'),
+    array('uri' => 'http://www.w3.org/2002/07/owl#', 'prefix' => 'owl', 'filename' => 'owl.rdf')
+  );
+  variable_set('evoc_builtin_vocabularies', $evoc_array_builtin_vocabularies);
+  
+//  module_load_include('inc', 'evoc', 'evoc.batch_import');
+//  evoc_import_builtin_vocabularies();
   
   drupal_set_message( t('Evoc successfully installed.') );
 }
@@ -136,11 +141,16 @@ function evoc_install() {
  */
 function evoc_uninstall() {
   // remove the imported vocabularies
-  evoc_remove_vocabulary('rdf');
-  evoc_remove_vocabulary('rdfs');
-  evoc_remove_vocabulary('dc');
-  evoc_remove_vocabulary('foaf');
-  evoc_remove_vocabulary('owl');
+  $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
+  if ($evoc_array_builtin_vocabularies) {
+    foreach ($evoc_array_builtin_vocabularies as $vocab) {
+      evoc_remove_vocabulary($vocab['prefix']);  
+    }
+    variable_del('evoc_builtin_vocabularies');
+  }
+  
+  // destroy the persistent variable that is used to know when the built-in vocabularies have been imported 
+  variable_del('builtin_vocabularies_imported');
   
   drupal_uninstall_schema('evoc');
   drupal_set_message( t('Evoc successfully uninstalled.') );

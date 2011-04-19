@@ -52,8 +52,7 @@ function evoc_menu() {
   );
   $items['evoc/add'] = array(
     'title' => 'Add new',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('evoc_add_vocabulary'),
+    'page callback' => 'evoc_add_vocabulary',
     'access arguments' => array('manage external vocabularies'),
     'type' => MENU_LOCAL_TASK,
     'file' => 'evoc.admin.inc',
@@ -66,6 +65,14 @@ function evoc_menu() {
     'access arguments' => array('manage external vocabularies'),
     'type' => MENU_CALLBACK,
     'file' => 'evoc.admin.inc',
+  );
+  $items['evoc/import_builtin_vocabs'] = array(
+    'title' => 'Import builtin RDF vocabularies',
+    'description' => 'Perform a batch import of the vocabularies used by Neologism.',
+    'page callback' => 'evoc_import_builtin_vocabularies',
+  	'page arguments' => array('evoc'),
+    'access arguments' => array('manage external vocabularies'),
+    'file' => 'evoc.batch_import.inc',
   );
   return $items;
 }
@@ -131,8 +138,8 @@ function evoc_remove_vocabulary($prefix, $showdetails = false) {
     }
   }
   
-  $result = db_query(db_rewrite_sql('delete from {evoc_rdf_propertiesdomains} where prefix="%s"'), $prefix);
-  $domains = db_query(db_rewrite_sql('select * from {evoc_rdf_propertiesdomains} where rdf_domain like "%s%"'), $prefix);
+  $result = db_query(db_rewrite_sql("delete from {evoc_rdf_propertiesdomains} where prefix='%s'"), $prefix);
+  $domains = db_query(db_rewrite_sql("select * from {evoc_rdf_propertiesdomains} where rdf_domain like '%s%'"), $prefix);
   // remove superclasses references
   while ( $object = db_fetch_object($domains) ) {
     $qname_parts = explode(':', $object->rdf_domain);
@@ -145,7 +152,7 @@ function evoc_remove_vocabulary($prefix, $showdetails = false) {
   }
   
   $result = db_query(db_rewrite_sql("delete from {evoc_rdf_propertiesranges} where prefix='%s'"), $prefix);
-  $ranges = db_query(db_rewrite_sql("select * from {evoc_rdf_propertiesranges} where rdf_range like "%s%""), $prefix);
+  $ranges = db_query(db_rewrite_sql("select * from {evoc_rdf_propertiesranges} where rdf_range like '%s%'"), $prefix);
   // remove superclasses references
   while ( $object = db_fetch_object($ranges) ) {
     $qname_parts = explode(':', $object->rdf_range);
@@ -163,7 +170,7 @@ function evoc_remove_vocabulary($prefix, $showdetails = false) {
   // remove properties
   // removing all the references that could has a property
   $result = db_query(db_rewrite_sql("delete from {evoc_rdf_superproperties} where prefix='%s'"), $prefix);
-  $properties = db_query(db_rewrite_sql("select * from {evoc_rdf_superproperties} where superproperty like "%s%""), $prefix);
+  $properties = db_query(db_rewrite_sql("select * from {evoc_rdf_superproperties} where superproperty like '%s%'"), $prefix);
   // remove superclasses references
   while ( $property = db_fetch_object($properties) ) {
     $qname_parts = explode(':', $property->superproperty);
