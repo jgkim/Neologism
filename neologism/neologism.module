@@ -442,6 +442,13 @@ function neologism_validate($node, &$form) {
  */
 function neologism_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'neo_vocabulary_node_form') {
+    if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
+      drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
+        	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
+      // hidding the form when the external built-in vocabularies are not imported yet.
+      $form['#attributes'] = array('style' => 'display: none;');
+    }
+  
     // Collapse the path fieldset unless the path is customized
     if ($form['#node']->prefix == $form['#node']->path) {
       $form['path']['#collapsed'] = true;

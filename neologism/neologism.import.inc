@@ -14,6 +14,14 @@
  * So we close the connection when the upload form is loaded.
  */
 function neologism_import_form_callback() {
+  // check for the persistent variable whether the external built-in vocabularies have been imported. 
+  // If the variable is FALSE then a message is shown. 
+  if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
+    drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
+      	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
+    return theme('status_messages');
+  }
+  
   header('Connection: close');
   return drupal_get_form('neologism_import_form');
 }
