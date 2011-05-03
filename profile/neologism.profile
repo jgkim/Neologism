@@ -287,18 +287,18 @@ function neologism_profile_tasks(&$task, $url) {
   	);  	
   	// submit the form using these values
   	drupal_execute($form_id, $form_state);
-
-  	$task = 'neologism-registration';
   	
   	// clear messages queue 
   	drupal_get_messages();
+  	
+  	$task = 'neologism-registration';
   }
   
   if ($task == 'neologism-registration') {
     // Display a form requesting the feedback
   	$output = drupal_get_form('neologism_registration_form', $url);
     
-    if (!variable_get('registration_form_submitted', FALSE) && empty($_GET['skip_step'])) {
+    if (empty($_GET['skip_step']) && !variable_get('neologism_profile_registration_form_submitted', FALSE)) {
       // The variable is still empty, meaning that the drupal_get_form()
       // call above haven't finished the form yet. We set a page-title
       // here, and return the rendered form to the installer, to be
@@ -317,34 +317,11 @@ function neologism_profile_tasks(&$task, $url) {
   // Our second custom task shows a simple page, summarizing the previous
   // step.
   if ($task == 'completing-installation') {
-
-    if (empty($_GET['skip_step']) && variable_get('registration_form_submitted', FALSE)) {
-      // The GET string is not present, meaning that this page request
-      // is not coming from the link being clicked, and so we need to
-      // render the page.
-      // TODO: extend the message with a nicer info for the new user.
-      $output = '<p>' . st('Thanks for providing us with your information.').'</p>';
-      // We build the link from $url provided by the installer, adding
-      // the extra GET string mentioned above.
-      $output .= '<p><a href="'.$url.'&skip_step=yes">'.st('Click here to continue') . '</a></p>';
-      
-      drupal_add_js('
-      	jQuery(document).ready(function () { 
-      		window.setTimeout(function () {
-      				location.replace("'.$url.'&skip_step=yes");
-    				}, 3000
-    			);
-    		});
-     	', 'inline');
-      
-      drupal_set_title(st('Thanks for register Neologism'));
-      return $output;
-    }
-    else {
-      variable_del('registration_form_submitted');
-
-      $task = 'profile-finished';
-    }
+    variable_del('neologism_profile_registration_form_submitted');
+    drupal_set_message('Before you can use Neologism, you still need to import the built-in vocabularies. 
+    	To install them click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.');
+    
+    $task = 'profile-finished';
   }
   
 }
@@ -454,51 +431,40 @@ function neologism_registration_form_validate($form, &$form_state) {
 function neologism_registration_form_submit($form, &$form_state) {
   global $base_url;
   
-  // current Neologism support 
-  // TODO: move this array for a better place where it can be editted easy
-  $neologism_current_dev_support = array(
-    array('name' => 'Guido Cecilio', 'email' => array('guido.cecilio@deri.org', 'guidocecilio@gmail.com')),
-    array('name' => 'Richard Cyganiak', 'email' => array('richard@cyganiak.de'))
-  );
-  
-  $values = $form_state['values'];
-  
-  // Send from the current user to the requested user.
-  foreach ($neologism_current_dev_support as $support) {
-    if (!empty($to)) {
-      $to .= ','.implode(',', $support['email']);
-    }
-    else {
-      $to = implode(',', $support['email']);
-    }
-  }
-  $from = $form_state['values']['send_email_address_checkbox'] == 1 ? $form_state['values']['send_email_address_textfield'] : '';
-
   // Save form values for email composition.
   $values = array(
     'name' => $form_state['values']['name'],
     'organization' => $form_state['values']['organization'],
+    'email' => $form_state['values']['send_email_address_checkbox'] == 1 ? $form_state['values']['send_email_address_textfield'] : '',
     'website' => $form_state['values']['send_your_website_checkbox'] == 1 ? $base_url : '',
     'plan' => $form_state['values']['neologism_usage']
   );
  
-  // Send the e-mail in the requested user language.
-  drupal_mail('neologism', 'registration', $to, language_default(), $values, $from);
-
-  watchdog('mail', '%name-from sent to Neologism dev group [%to] an e-mail.', array('%name-from' => $values['name'], '%to' => $to));
+  $parameters = 'customer_name='.urlencode($values['name']);
+  $parameters .= '&organization='.urlencode($values['organization']);
+  $parameters .= '&email='.urlencode($values['email']);
+  $parameters .= '&website_uri='.urlencode($values['website']);
+  $parameters .= '&plan='.urlencode($values['plan']);
   
-  variable_set('registration_form_submitted', TRUE);
-}
-
-/**
- *  hook_mail to prepare the message based on the parameters in $params
- */
-function neologism_mail($key, &$message, $params) {
-  $message['subject'] = '['.variable_get('site_name', 'Drupal').'] - '. st('New Neologism site registration!');;
-  $message['body'][] = st('A new instance of Neologism was created at: @site_url', array('@site_url' => url($params['website'])));
-  $message['body'][] = st('Customer name: @name.', array('@name' => $params['name']));
-  $message['body'][] = st('Organization: @organization.', array('@organization' => $params['organization']));
-  $message['body'][] = st('eMail address: @email.', array('@email' => $message['from']));
-  $message['body'][] = st('Installed for:');
-  $message['body'][] = $params['plan'];
+  // prepare the request to send to the neologism site to registre the new customer.
+  $ch = curl_init();
+  if ($ch) {
+    curl_setopt($ch, CURLOPT_URL, "http://neologism.deri.ie/admin/registration.php");
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    
+    $json_result = curl_exec($ch);
+    $result = json_decode($json_result);
+    if ($result->result == 'error') {
+      drupal_set_message("The regitration process has been unsuccessful returning the following error message: <em>".$result->error_msg."</em>. Please contact the ".l("Neologism's user support", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error');  
+    }
+    
+    curl_close ($ch); 
+  } else {
+     drupal_set_message("Error registering the customer information. Please contact the ".l("Neologism's user support", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error'); 
+  }
+  
+  variable_set('neologism_profile_registration_form_submitted', TRUE);
 }
