@@ -1,14 +1,13 @@
 Neologism 0.5.1
 ---------------
-- Show in-domain-of and in-range-of in class information.
-- Added documentation about how to use Neologism with OpenID.
-- Fixed a bug that Literal can't have inverse.
-- Allow creation of property for class.
-- The icon logo for N3 output format was replace for a Turtle logo, the current output format.
-- Added the importation of title and description from Neologism hosted vocabularies.
-- Added a registration form in the installation process to collect customer's details.
-- The built-in vocabularies importation process has been move out from the installation 
-  process and included in a batch process that can be run after the installation process.   
+- Show in-domain-of and in-range-of in class information on overview page
+- Added documentation about how to use Neologism with OpenID to web site
+- Fixed a bug: Literals can't have inverse
+- Allow creation of property for class directly from the overview page
+- Replaced N3 icon with Turtle icon
+- Improved reliability of importing vocabulary titles/descriptions
+- Added a form in the installation process to ask for user details
+- Fixed a problem with installation time-outs by breaking up the import of built-in vocabularies into multiple steps
 
 Neologism 0.5
 -------------
