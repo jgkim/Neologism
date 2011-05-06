@@ -18,7 +18,7 @@ function neologism_import_form_callback() {
   // If the variable is FALSE then a message is shown. 
   if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
     drupal_set_message('This action is not available because the evoc module has not yet been initialized. '
-      .l('Visit the evoc module', 'evoc').' to complete the initialization.','warning');
+      .l('Visit the evoc module', 'evoc').' to complete the initialization.','error');
     return theme('status_messages');
   }
   

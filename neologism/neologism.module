@@ -272,7 +272,7 @@ function neologism_form(&$node, $form_state) {
     '#type' => 'textfield',
     '#title' => 'Vocabulary ID',
     '#field_prefix' => $root,
-    '#description' => 'Only letters, numbers, dashes, and underscores. Will be used as the namespace prefix. Should be short.',
+    '#description' => t('Will be used as the namespace prefix. Only lowercase letters, numbers, dashes. Max 10 characters.'),
     '#element_validate' => array('_neologism_validate_id'),
     '#default_value' => $node->prefix,
     '#required' => true,
@@ -444,7 +444,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'neo_vocabulary_node_form') {
     if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
       drupal_set_message('This action is not available because the evoc module has not yet been initialized. '
-        .l('Visit the evoc module', 'evoc').' to complete the initialization.','warning');
+        .l('Visit the evoc module', 'evoc').' to complete the initialization.','error');
       // hidding the form when the external built-in vocabularies are not imported yet.
       $form['#attributes'] = array('style' => 'display: none;');
     }
