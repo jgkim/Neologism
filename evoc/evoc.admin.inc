@@ -16,9 +16,8 @@
 function evoc_manage_vocabularies() {
   
   if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
-    drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
-      	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
-    return theme('status_messages');
+    module_load_include('inc', 'evoc', 'evoc.batch_import');
+    return drupal_get_form('evoc_import_builtin_vocabularies_form');
   }
   
   $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
@@ -70,8 +69,8 @@ function evoc_manage_vocabularies() {
 
 function evoc_add_vocabulary() {
   if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
-    drupal_set_message('The built-in vocabularies have not been imported yet and to use Neologism correctly you need to import them. 
-      	To install the built-in vocabularies click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.','warning');
+    drupal_set_message('This action is not available because the evoc module has not yet been initialized. '
+      .l('Visit the evoc module', 'evoc').' to complete the initialization.','warning');
     return theme('status_messages');
   }
   else return drupal_get_form('evoc_add_vocabulary_form');

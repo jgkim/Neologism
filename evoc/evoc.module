@@ -66,14 +66,6 @@ function evoc_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'evoc.admin.inc',
   );
-  $items['evoc/import_builtin_vocabs'] = array(
-    'title' => 'Import builtin RDF vocabularies',
-    'description' => 'Perform a batch import of the vocabularies used by Neologism.',
-    'page callback' => 'evoc_import_builtin_vocabularies',
-  	'page arguments' => array('evoc'),
-    'access arguments' => array('manage external vocabularies'),
-    'file' => 'evoc.batch_import.inc',
-  );
   return $items;
 }
 

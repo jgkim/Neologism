@@ -2,6 +2,25 @@
 /**
  * Provide a callback for batch importing the built-in vocabularies.
  */
+function evoc_import_builtin_vocabularies_form($form_state) {
+  $form = array();
+  
+  $form['help'] = array(
+      '#value' => t('To complete the initialization of this module, the built-in vocabularies have to be imported.<br/>')
+  );
+  
+  $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => 'Import built-in vocablaries',
+  );
+  return $form;
+}
+
+function evoc_import_builtin_vocabularies_form_submit($form, &$form_state) {
+  // the parameter value 'evoc' is the page path that drupal will redirect once the batch process has been finished. 
+  evoc_import_builtin_vocabularies('evoc'); 
+}
+
 function evoc_import_builtin_vocabularies($path = '') {
   $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
   if (!$evoc_array_builtin_vocabularies) {
@@ -64,7 +83,16 @@ function _evoc_batch_import_builtin_vocabularies($uri, $prefix, $filename, &$con
 function _evoc_import_batch_finished($success, $results, $operations) {
   if ($success) {
     variable_set('evoc_builtin_vocabularies_imported', TRUE);
-    $message = format_plural(count($results), t('The RDF vocabulary '.$result[0].' has been imported.'), t('The RDF vocabularies '.implode(', ', $results).' have been imported.'));
+    
+    $count = count($results);
+    if ($count > 1) {
+      $last_value = array_pop($results);
+      $message =  t('The RDF vocabularies '.implode(', ', $results).' and '.$last_value.' have been imported successfully.');
+    }
+    else {
+      $message = t('The RDF vocabulary '.$result[0].' has been imported.');  
+    }
+    
     drupal_set_message($message);
   }
   else {
