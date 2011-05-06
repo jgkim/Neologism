@@ -318,8 +318,8 @@ function neologism_profile_tasks(&$task, $url) {
   // step.
   if ($task == 'completing-installation') {
     variable_del('neologism_profile_registration_form_submitted');
-    drupal_set_message('Before you can use Neologism, you still need to import the built-in vocabularies. 
-    	To install them click on the link: '.l('Import built-in vocabularies', 'evoc/import_builtin_vocabs').'.');
+    drupal_set_message('One more step remains to complete the initialization of the site: '.l('Visit the evoc module', 'evoc').' 
+    	to import the built-in vocabularies.');
     
     $task = 'profile-finished';
   }
