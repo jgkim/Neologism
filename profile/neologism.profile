@@ -66,7 +66,7 @@ function neologism_profile_details() {
 function neologism_profile_task_list() {
 	return array(
 		'building-neologism-perspective' => st('Preparing Neologism'),
-		'neologism-registration' => st('Register Neologism'),
+		'neologism-registration' => st('Submit contact info'),
 	  'completing-installation' => st('Completing installation')
 	);
 }
@@ -305,7 +305,7 @@ function neologism_profile_tasks(&$task, $url) {
       // shown to the user. Since $task is still set to 'task1', this
       // code will be re-run on next page request, proceeding further
       // if possible.
-      drupal_set_title(st('Neologism Registration Form'));
+      drupal_set_title(st('Let us know about you'));
       return $output;
     }
     else {
@@ -336,7 +336,6 @@ function neologism_registration_form($form_state, $url) {
   
   $form['introduction'] = array(
     '#type' => 'item', 
-    '#title' => st('Let us know about you'), 
     '#value' => st('Whether you are evaluating Neologism or setting up a production site, the Neologism team would love to hear from you in order 
     	to better understand user requirements and prioritize new features.
     	<br/><br/>This is why we ask for some information about you. You can skip this step.<br/><br/>')
@@ -345,7 +344,6 @@ function neologism_registration_form($form_state, $url) {
   $form['name'] = array(
       '#type' => 'textfield', 
       '#title' => st('Your name'), 
-      //'#default_value' => $user->name, 
       '#size' => 60, 
       '#maxlength' => 128, 
   		'#required' => TRUE,
@@ -389,7 +387,6 @@ function neologism_registration_form($form_state, $url) {
     '#type' => 'textarea', 
     '#title' => st('What do you plan to use Neologism for?'),
   	'#description' => st('Add as much or as little detail as you like.'), 
-    //'#default_value' => $node->body, 
     '#required' => FALSE
   );
   
@@ -402,7 +399,6 @@ function neologism_registration_form($form_state, $url) {
   $form['submit'] = array(
     '#type' => 'submit', 
     '#value' => st('Submit'),
-  	//'#executes_submit_callback' => TRUE,
   );
   
   $form['skip_this_step'] = array(
@@ -411,8 +407,6 @@ function neologism_registration_form($form_state, $url) {
   	'#attributes' => array('onClick' => 'location.replace("'. $url . '&skip_step=yes"); return false;'),
   );
   
-  // force to use a default submit callback
-  //$form['#submit'][] = 'neologism_registration_form_submit';
   $form['#action'] = $url;
   $form['#redirect'] = FALSE;
   
