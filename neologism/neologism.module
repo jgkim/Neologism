@@ -1027,6 +1027,15 @@ function neologism_export_turtle($node) {
 }
 
 /**
+ * Escape '&' to '&amp;' for use with SimpleXML's addChild() method
+ *
+ * @see http://php.net/manual/en/simplexmlelement.addchild.php#103587
+ */
+function _neologism_escape_simplexml($s) {
+  return str_replace('&', '&amp;', $s);
+}
+
+/**
  * Output the XML version of the vocabulary specified as input
  * using simpleXML
  * seeAlso http://www.php.net/simplexml
@@ -1042,16 +1051,10 @@ function neologism_export_xml($node) {
   foreach ( $classes as $class ) {
     $classnode = $classes_node->addChild('Class');
     $classnode->addAttribute('id', $class['id']);
-    $classnode->addChild('label', $class['label']);
+    $classnode->addChild('label', _neologism_escape_simplexml($class['label']));
     
-    if( isset($class['comment']) )
-    {
-      // we are using check_plain() for comment to avoid the 
-      // warning: SimpleXMLElement::addChild() [simplexmlelement.addchild]: 
-      // unterminated entity reference bytes. Being abstract, physical parts of computer 
-      // memory that encode a file are excluded from the concept. 
-      // in ...\sites\all\modules\neologism\neologism.module on line 714.
-      $classnode->addChild('comment', check_plain($class['comment']));  
+    if (isset($class['comment'])) {
+      $classnode->addChild('comment', _neologism_escape_simplexml($class['comment']));
     }
     
     if( isset($class[SUPERCLASSES]) ) {
@@ -1069,7 +1072,7 @@ function neologism_export_xml($node) {
     }
     
     if( isset($class['description']) ) {
-      $classnode->addChild('description', $class['description']);  
+      $classnode->addChild('description', _neologism_escape_simplexml($class['description']));
     }
   }
 
@@ -1079,8 +1082,8 @@ function neologism_export_xml($node) {
   foreach ($properties as $property) {
     $propertynode = $properties_node->addChild('Property');
     $propertynode->addAttribute('id', $property['id']);
-    $propertynode->addChild('label', $property['label']);
-    $propertynode->addChild('comment', $property['comment']);
+    $propertynode->addChild('label', _neologism_escape_simplexml($property['label']));
+    $propertynode->addChild('comment', _neologism_escape_simplexml($property['comment']));
     if( isset($property[SUBPROPERTYOF]) ) {
       foreach( $property[SUBPROPERTYOF] as $value ) {
         $subpropertyof_node = $propertynode->addChild('subPropertyOf');
