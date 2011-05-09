@@ -65,9 +65,7 @@ function neologism_profile_details() {
  */
 function neologism_profile_task_list() {
 	return array(
-		'building-neologism-perspective' => st('Preparing Neologism'),
 		'neologism-registration' => st('Submit contact info'),
-	  'completing-installation' => st('Completing installation')
 	);
 }
 
@@ -154,10 +152,6 @@ function neologism_profile_tasks(&$task, $url) {
 	  // Update the menu router information.
 	  menu_rebuild();
 	  
-	  $task = 'building-neologism-perspective';
-  }
-  
-  if ($task == 'building-neologism-perspective') {
   	// set the default ExtJS library path to same place where is located the ext module
   	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
   	
@@ -310,20 +304,11 @@ function neologism_profile_tasks(&$task, $url) {
     }
     else {
       // The form was submitted, so now we advance to the next task.
-      $task = 'completing-installation';
+      variable_del('neologism_profile_registration_form_submitted');
+      drupal_set_message('Note: To make the site fully functional, you must '.l('visit the evoc module', 'evoc').' to import the built-in vocabularies.', 'error');
+      $task = 'profile-finished';
     }
   }  
-  
-  // Our second custom task shows a simple page, summarizing the previous
-  // step.
-  if ($task == 'completing-installation') {
-    variable_del('neologism_profile_registration_form_submitted');
-    drupal_set_message('One more step remains to complete the initialization of the site: '.l('Visit the evoc module', 'evoc').' 
-    	to import the built-in vocabularies.');
-    
-    $task = 'profile-finished';
-  }
-  
 }
 
 /**
@@ -440,25 +425,37 @@ function neologism_registration_form_submit($form, &$form_state) {
   $parameters .= '&website_uri='.urlencode($values['website']);
   $parameters .= '&plan='.urlencode($values['plan']);
   
+  variable_set('neologism_profile_registration_form_submitted', TRUE);
+
   // prepare the request to send to the neologism site to registre the new customer.
   $ch = curl_init();
-  if ($ch) {
-    curl_setopt($ch, CURLOPT_URL, "http://neologism.deri.ie/admin/registration.php");
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch, CURLOPT_HEADER, 0);
-    
-    $json_result = curl_exec($ch);
-    $result = json_decode($json_result);
-    if ($result->result == 'error') {
-      drupal_set_message("The regitration process has been unsuccessful returning the following error message: <em>".$result->error_msg."</em>. Please contact the ".l("Neologism's user support", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error');  
-    }
-    
-    curl_close ($ch); 
-  } else {
-     drupal_set_message("Error registering the customer information. Please contact the ".l("Neologism's user support", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error'); 
+  if (!$ch) {
+    drupal_set_message("<tt>curl_init</tt> failed! This shouldn't happen! Please ".l("contact the Neologism team", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error'); 
+    return;
   }
+
+  curl_setopt($ch, CURLOPT_URL, "http://neologism.deri.ie/admin/registration.php");
+  curl_setopt($ch, CURLOPT_POST, 1);
+  curl_setopt($ch, CURLOPT_POSTFIELDS, $parameters);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+  curl_setopt($ch, CURLOPT_HEADER, 0);
   
-  variable_set('neologism_profile_registration_form_submitted', TRUE);
+  $json_result = curl_exec($ch);
+  $result = false;
+  if ($json_result) {
+    $decoded = json_decode($json_result);
+    if ($decoded->result == 'success') {
+      $result = true;
+    } else {
+      $error = $decoded->error_msg;
+    }
+  } else {
+    $error = curl_error($ch);
+  }
+  curl_close($ch); 
+  if ($result) {
+    drupal_set_message("Thanks for submitting your contact information!");
+  } else {
+    drupal_set_message("Submission failed with the following error message: <em>" . $error . "</em>. Please ".l("contact the Neologism team", 'http://neologism.deri.ie/support-dev', array('attributes' => array('target' => '_blank')))." to report this issue.", 'error');  
+  }
 }
