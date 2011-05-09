@@ -70,7 +70,7 @@ function evoc_manage_vocabularies() {
 function evoc_add_vocabulary() {
   if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
     drupal_set_message('This action is not available because the evoc module has not yet been initialized. '
-      .l('Visit the evoc module', 'evoc').' to complete the initialization.','warning');
+      .l('Visit the evoc module', 'evoc').' to complete the initialization.','error');
     return theme('status_messages');
   }
   else return drupal_get_form('evoc_add_vocabulary_form');
