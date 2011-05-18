@@ -57,5 +57,5 @@ $(document).ready( function() {
     });
     
     Neologism.classesTreeViewPanel.render();
-	Neologism.classesTreeViewPanel.on('fullexpanded', Neologism.checkTreeViewsHeight);
+	Neologism.classesTreeViewPanel.on('fullexpanded', Drupal.neologism.checkTreeViewsHeight);
 });

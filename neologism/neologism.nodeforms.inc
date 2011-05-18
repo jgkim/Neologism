@@ -216,7 +216,7 @@ function _neologism_form_alter_property(&$form, &$form_state, $mode, &$related_t
     '#default_value' => 1,
     '#prefix' => '<div id="range-group-resourcetype">',
     '#suffix' => '</div>',
-    '#attributes' => array('onClick' => 'Neologism.checkResourceType()'),
+    '#attributes' => array('onClick' => 'Drupal.neologism.checkResourceType()'),
   );
   
   $form['range_group']['data_types'] = array(

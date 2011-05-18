@@ -27,7 +27,6 @@ define("IN_DOMAIN_OF", "in-domain-of");
  * Implementation of hook_init().
  */
 function neologism_init() {
-
   // Display an annoying warning if Clean URLs are disabled
   if (!variable_get('clean_url', 0)) {
     drupal_set_message(t('Neologism will not work correctly unless <a href="@clean">Clean URLs</a> are enabled.', array('@clean' => url('admin/settings/clean-urls'))), 'error', FALSE);
@@ -37,11 +36,29 @@ function neologism_init() {
   module_load_include('inc', 'neologism', 'neologism.conneg');
   _neologism_negotiated_cache_start();
 
+  // get neologism module path
+  $neologism_module_path = drupal_get_path('module', 'neologism');
+  
   // Drupal doesn't find the preprocessing functions for the theme_node if it's
   // not explicitly loaded here
   module_load_include('inc', 'neologism', 'neologism.theme');
 
-  drupal_add_css(drupal_get_path('module', 'neologism') .'/neologism.css');
+  // include the submodule validation and crete the global variable 'neologism_client_validation_enabled'
+  $jquery_plugin_module_enabled = module_exists('jquery_plugin');
+  $jquery_update_module_enabled = module_exists('jquery_update');
+  if ($jquery_plugin_module_enabled && $jquery_update_module_enabled) {
+    // include the validation submodule
+    module_load_include('inc', 'neologism', 'neologism.validation');
+    // enable the validate jQuery
+    jquery_plugin_add('validate');
+    variable_set('neologism_client_validation_enabled', TRUE);
+  }
+  else {
+    variable_del('neologism_client_validation_enabled');
+  }
+    
+  
+  drupal_add_css($neologism_module_path .'/neologism.css');
   $scripts = array(
    	'/js/neologism.init.js',
     '/js/neologism.termstreeview.js',
@@ -55,7 +72,7 @@ function neologism_init() {
   	'/js/neologism.js',
   );
   foreach ($scripts as $script) {
-    drupal_add_js(drupal_get_path('module', 'neologism') . $script);
+    drupal_add_js($neologism_module_path . $script);
   }
 }
 
@@ -277,10 +294,16 @@ function neologism_form(&$node, $form_state) {
     '#default_value' => $node->prefix,
     '#required' => true,
     '#maxlength' => 10,
+    
     '#size' => 10,
     // override stupid 'display: block; width: 95%' in node.css
     '#attributes' => array('style' => 'display: inline; width: auto'),
     '#weight' => -10,
+  
+    // neologism properties
+    '#validation_methods' => array('idValidator'),
+  	//'#validation_messages' => array(t('Please type a valid ID.')),
+  	//'#minlength' => 3, // Neologism validation rule property
   );
 
   // Add some radio buttons for choice of custom/default namespace
@@ -330,10 +353,11 @@ function neologism_form(&$node, $form_state) {
   }
   $form['authors'] = array(
     '#type' => 'select',
-    '#multiple' => 'true',
+    '#multiple' => TRUE,
     '#title' => t('Authors'),
     '#default_value' => $node->authors,
     '#options' => $all_users,
+  	'#required' => TRUE,
     '#size' => 6,
     '#attributes' => array('style' => 'min-width: 20em'),
     '#weight' => -3,
@@ -447,8 +471,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
         .l('Visit the evoc module', 'evoc').' to complete the initialization.','error');
       // hidding the form when the external built-in vocabularies are not imported yet.
       $form['#attributes'] = array('style' => 'display: none;');
+      return;
     }
-  
+    
     // Collapse the path fieldset unless the path is customized
     if ($form['#node']->prefix == $form['#node']->path) {
       $form['path']['#collapsed'] = true;
@@ -459,6 +484,14 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       '#value' => t("This override the vocabulary's default namespace and location."),
       '#suffix' => '</div>',
     );
+    
+    // hidde the preview button
+    $form['buttons']['preview']['#access'] = FALSE;
+    
+    if (variable_get('neologism_client_validation_enabled', FALSE)) {
+      // include the client validation submodule and add the after_build hook method
+      $form['#after_build'][] = 'neologism_form_after_build';
+    }
   }
   else if ($form_id == 'neo_property_node_form') {
     module_load_include('inc', 'neologism', 'neologism.nodeforms');
@@ -468,6 +501,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     module_load_include('inc', 'neologism', 'neologism.nodeforms');
     _neologism_form_alter_term($form, $form_state, 'class');
   }
+  
 }
 
 /**
