@@ -213,25 +213,18 @@ function neologism_gateway_get_full_classes_tree() {
 				$array_disjointwith[$qname] = $disjointwith;
       }
       
-      // extra information needed by the treeview
-      $parent_path = '/'.$node;
-      $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, $parent_path, $array_references);
-      $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;
-      $leaf = count($children) == 0;
-      $nodes[] = array(
-        'text' => $qname, 
-        'id' => $qname, 
-        'leaf' => $leaf, 
-        'iconCls' => 'class-samevoc', 
-        'children' => $children, 
-        'checked' => false,
-        'qtip' => $qtip,
-      	'disjointwith' => $disjointwith,
-      	//'inferred_disjointwith' => $inferred_disjointwith,
-      	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
-      );        
+      // create the node for the class 
+      _neologism_gateway_create_class_treenode(&$nodes, $node, $class, $disjointwith, $array_disjointwith, $array_references);
     }
-  
+    
+    // fetch all the external superclasses
+    $classes = db_query(db_rewrite_sql("SELECT DISTINCT superclass FROM {evoc_rdf_superclasses sc} WHERE 
+    	NOT EXISTS (SELECT * FROM {evoc_rdf_classes} c WHERE sc.superclass = CONCAT(c.prefix, ':', c.id))"));
+    
+    while ($class = db_fetch_object($classes)) {
+      _neologism_gateway_create_class_treenode($nodes, $node, $class, array(), $array_disjointwith, $array_references);
+    }
+    
     _neologism_filter_references($array_references);
     $nodes[0]['references'] = $array_references;
      
@@ -240,6 +233,55 @@ function neologism_gateway_get_full_classes_tree() {
   }
 
   drupal_json($nodes);
+}
+
+/**
+ * Create a treenode for a Treepanel based on ExtJS treenode structure.
+ * 
+ * @param $nodes
+ *   The reference where the complete tree structure is bing storing.
+ * @param $node
+ *   The tree root node.
+ * @param $class
+ *   The object containing the fetched class information.
+ * @param $disjointwith
+ *   The array containing all the classes disjoinwith this.
+ * @param $array_disjointwith
+ *   Reference to the array of disjointwith found.
+ * @param $array_references
+ *   Reference to an array of all classes that have more that one 
+ *   dependency (reference) in the tree.
+ * @return 
+ *   none
+ */
+function _neologism_gateway_create_class_treenode(&$nodes, $node, $class,  
+  array $disjointwith, &$array_disjointwith, &$array_references) {
+
+  // check if the data for the creation comes from the classes table
+  if (!isset($class->superclass)) {
+    $qname = $class->prefix.':'.$class->id; 
+    $qtip = '<b>'.$class->label.'</b><br/>'.$class->comment;  
+  } else {
+    $qname = $class->superclass;
+    $qtip = '<em>This class is external and a description has not been provided.</em>'; 
+  }
+  
+  $parent_path = '/'.$node;
+  $children = neologism_gateway_get_class_children($qname, NULL, TRUE, $array_disjointwith, $parent_path, $array_references);
+  
+  $leaf = count($children) == 0;
+  $nodes[] = array(
+    'text' => $qname, 
+    'id' => $qname, 
+    'leaf' => $leaf, 
+    'iconCls' => 'class-samevoc', 
+    'children' => $children, 
+    'checked' => false,
+    'qtip' => $qtip,
+  	'disjointwith' => $disjointwith,
+  	//'inferred_disjointwith' => $inferred_disjointwith,
+  	'nodeStatus' => 0	// send to the client this attribute that represent the  NORMAL status for a node
+  ); 
 }
 
 /**
@@ -487,28 +529,14 @@ function neologism_gateway_get_full_properties_tree() {
 				$array_inverses[$qname] = $inverses;
       }
       
-      // extra information needed by the treeview
-      $parent_path = '/'.$node;
-      $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $array_inverses, $parent_path, $array_references);
-      
-      $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;
-      $leaf = count($children) == 0;
-      $nodes[] = array(
-        'text' => $qname, 
-        'id' => $qname, 
-        'leaf' => $leaf, 
-        'iconCls' => 'property-samevoc', 
-        'children' => $children, 
-        'checked' => false,
-        'qtip' => $qtip,
-      	'domain' => $array_domain,
-      	'range' => $array_ranges,
-        'inverses' => $inverses
-      );   
-
-      if( $extra_information ) {
-        $nodes[count($nodes)-1]['realid'] = $qname; 
-      }
+      _neologism_gateway_create_property_treenode($nodes, $node, $property, $array_domain, $array_ranges, $inverses, $array_inverses, $array_references);
+    }
+    
+    $properties = db_query(db_rewrite_sql("SELECT DISTINCT superproperty FROM {evoc_rdf_superproperties sp} WHERE 
+    	NOT EXISTS (SELECT * FROM {evoc_rdf_properties} p WHERE sp.superproperty = CONCAT(p.prefix, ':', p.id))"));
+    
+    while ($row = db_fetch_object($properties)) {
+      _neologism_gateway_create_property_treenode($nodes, $node, $row, array(), array(), array(), $array_inverses, $array_references);
     }
     
     $nodes[0]['references'] = $array_references; 
@@ -518,6 +546,41 @@ function neologism_gateway_get_full_properties_tree() {
   }
   
   drupal_json($nodes);
+}
+
+function _neologism_gateway_create_property_treenode(&$nodes, $node, $property,  
+  array $array_domain, array $array_ranges, array $inverses, &$array_inverses, &$array_references) {
+
+  // check if the data for the creation comes from the classes table
+  if (!isset($property->superproperty)) {
+    $qname = $property->prefix.':'.$property->id; 
+    $qtip = '<b>'.$property->label.'</b><br/>'.$property->comment;  
+  } else {
+    $qname = $property->superproperty;
+    $qtip = '<em>This property is external and a description has not been provided.</em>'; 
+  }
+  
+  // extra information needed by the treeview
+  $parent_path = '/'.$node;
+  $children = neologism_gateway_get_property_children($qname, NULL, TRUE, $array_inverses, $parent_path, $array_references);
+  
+  $leaf = count($children) == 0;
+  $nodes[] = array(
+    'text' => $qname, 
+    'id' => $qname, 
+    'leaf' => $leaf, 
+    'iconCls' => 'property-samevoc', 
+    'children' => $children, 
+    'checked' => false,
+    'qtip' => $qtip,
+  	'domain' => $array_domain,
+    'range' => $array_ranges,
+    'inverses' => $inverses
+  );   
+
+  if( $extra_information ) {
+    $nodes[count($nodes)-1]['realid'] = $qname; 
+  }
 }
 
 function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkbox = FALSE, array &$array_inverses, $parent_path, &$references) {
