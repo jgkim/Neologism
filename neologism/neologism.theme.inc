@@ -124,8 +124,6 @@ function neologism_export_html($node) {
   list($properties, $array_superproperties, $array_inverse_properties, $array_class_usages) = _neologism_get_all_properties($node, TRUE, TRUE, TRUE);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
-  
-  
   $html = ''; $author_count = 0;
   foreach($node->authors as $uid) {
     $author_count++;
@@ -167,8 +165,22 @@ function neologism_export_html($node) {
   $class_url_str = str_replace('_', '-', NEOLOGISM_CT_CLASS);
   $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
   
-  //Vocabulary at glance
+  //this block has been used as initialization block
   if ($classes || $properties) {
+    // load ExtJS
+    ext_load_library();
+    
+    $neologism_module_path = drupal_get_path('module', 'neologism');
+    $scripts = array(
+      '/js/neologism.termstreeview.js',
+      '/js/neologism.termstree.js',
+    	'/js/neologism.js',
+    );
+    foreach ($scripts as $script) {
+      drupal_add_js($neologism_module_path . $script);
+    }
+    
+    //Vocabulary at glance
     $output .= '<h2 id="sec_glance" class="neologism">All terms at a glance</h2>';
     $output .= '<div id="atglance">';
   }
@@ -207,7 +219,7 @@ function neologism_export_html($node) {
     $output .= '</div>';
   }
   
-  //ext_load_library();
+
   drupal_add_js( array('neologism' => array('voc_id' => $node->nid, 'voc_title' => $node->prefix)), 'setting');
   
   $output .= '<div id="treeview-panel" class="clearfix">';

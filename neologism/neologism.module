@@ -57,19 +57,21 @@ function neologism_init() {
     variable_del('neologism_client_validation_enabled');
   }
     
-  
+  // The inclusion of these commented files have been moved out for the hook_init to the
+  // the specific place where they are needed to avoid the drag and drop jQuery conflict 
+  // with ExtJS in other pages.
   drupal_add_css($neologism_module_path .'/neologism.css');
   $scripts = array(
    	'/js/neologism.init.js',
-    '/js/neologism.termstreeview.js',
-    '/js/neologism.termstree.js',
-    '/js/evocfields/superclass.widgetbehaviour.js',
-    '/js/evocfields/disjointwith.widgetbehaviour.js',
-    '/js/evocfields/domain.widgetbehaviour.js',
-    '/js/evocfields/range.widgetbehaviour.js',
-    '/js/evocfields/superproperty.widgetbehaviour.js',
-    '/js/evocfields/inverse.widgetbehaviour.js',
-  	'/js/neologism.js',
+//    '/js/neologism.termstreeview.js',
+//    '/js/neologism.termstree.js',
+//    '/js/evocfields/superclass.widgetbehaviour.js',
+//    '/js/evocfields/disjointwith.widgetbehaviour.js',
+//    '/js/evocfields/domain.widgetbehaviour.js',
+//    '/js/evocfields/range.widgetbehaviour.js',
+//    '/js/evocfields/superproperty.widgetbehaviour.js',
+//    '/js/evocfields/inverse.widgetbehaviour.js',
+//  	'/js/neologism.js',
   );
   foreach ($scripts as $script) {
     drupal_add_js($neologism_module_path . $script);

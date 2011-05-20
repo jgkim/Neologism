@@ -67,8 +67,44 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
   $form['buttons']['delete']['#submit'][] = '_neologism_term_form_delete';
 
   if ($class_or_property == 'class') {
+    // load ExtJS
+    ext_load_library();
+    // this logic belogin to the evocwidget_dynamic has been moved to neologism until we have removed ExtJS
+    // from Neologism.
+    drupal_add_js(drupal_get_path('module', 'evocwidget_dynamic') . '/evocwidget_dynamic.js');
+    
+    $neologism_module_path = drupal_get_path('module', 'neologism');
+    $scripts = array(
+      '/js/neologism.termstreeview.js',
+      '/js/neologism.termstree.js',
+      '/js/evocfields/superclass.widgetbehaviour.js',
+      '/js/evocfields/disjointwith.widgetbehaviour.js',
+    	'/js/neologism.js',
+    );
+    foreach ($scripts as $script) {
+      drupal_add_js($neologism_module_path . $script);
+    }
+    
     _neologism_form_alter_class($form, $form_state, $mode, $related_term);
+    
   } else {
+    ext_load_library();
+    drupal_add_js(drupal_get_path('module', 'evocwidget_dynamic') . '/evocwidget_dynamic.js');
+    
+    $neologism_module_path = drupal_get_path('module', 'neologism');
+    $scripts = array(
+      '/js/neologism.termstreeview.js',
+      '/js/neologism.termstree.js',
+      '/js/evocfields/domain.widgetbehaviour.js',
+      '/js/evocfields/range.widgetbehaviour.js',
+      '/js/evocfields/superproperty.widgetbehaviour.js',
+      '/js/evocfields/inverse.widgetbehaviour.js',
+    	'/js/neologism.js',
+    );
+    foreach ($scripts as $script) {
+      drupal_add_js($neologism_module_path . $script);
+    }
+    
     _neologism_form_alter_property($form, $form_state, $mode, $related_term);
   }
 
