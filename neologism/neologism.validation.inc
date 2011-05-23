@@ -231,9 +231,10 @@ function neologism_regular($form_id, $element, &$js_rules) {
           _neologism_set_minmaxlength($el_name, $el_title, isset($element['#minlength']) ? $element['#minlength'] : '', $element['#maxlength'], $js_rules);
         }
         
-        if (!empty($element['#validation_methods'])) {
-          foreach ($element['#validation_methods'] as $method) {
-            _neologism_set_validation_method($el_name, $el_title, $method, '', $js_rules);  
+        if (!empty($element['#neologism_validation_methods'])) {
+          $message = (!empty($element['#neologism_validation_message'])) ? $element['#neologism_validation_message'] : '';
+          foreach ($element['#neologism_validation_methods'] as $method) {
+            _neologism_set_validation_method($el_name, $el_title, $method, $message, $js_rules);  
           }
         }
         

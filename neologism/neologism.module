@@ -75,6 +75,7 @@ function neologism_init() {
   );
   foreach ($scripts as $script) {
     drupal_add_js($neologism_module_path . $script);
+    //drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
   }
 }
 
@@ -303,8 +304,8 @@ function neologism_form(&$node, $form_state) {
     '#weight' => -10,
   
     // neologism properties
-    '#validation_methods' => array('idValidator'),
-  	//'#validation_messages' => array(t('Please type a valid ID.')),
+    '#neologism_validation_methods' => array('idValidator'),
+  	'#neologism_validation_message' =>t('Please enter a valid Vocabulary ID. It should start with letters or underscore. Only lowercase letters, numbers, dash and underscore. Max 10 characters.'),
   	//'#minlength' => 3, // Neologism validation rule property
   );
 
@@ -476,6 +477,11 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       return;
     }
     
+    // load ExtJS
+    ext_load_library();
+    // include the javascript code to handle the form
+    drupal_add_js(drupal_get_path('module', 'neologism') . '/js/neologism.js');
+    
     // Collapse the path fieldset unless the path is customized
     if ($form['#node']->prefix == $form['#node']->path) {
       $form['path']['#collapsed'] = true;
@@ -490,9 +496,14 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     // hidde the preview button
     $form['buttons']['preview']['#access'] = FALSE;
     
+    // include the client validation submodule
     if (variable_get('neologism_client_validation_enabled', FALSE)) {
-      // include the client validation submodule and add the after_build hook method
       $form['#after_build'][] = 'neologism_form_after_build';
+      
+      if (isset($form['#node']->nid)) { 
+        // make flexible to introduce also upercase letters the field 'prefix' in edition mode
+        $form['prefix']['#neologism_validation_methods'] = array('idFlexibleValidator');
+      }
     }
   }
   else if ($form_id == 'neo_property_node_form') {

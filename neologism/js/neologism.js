@@ -189,7 +189,11 @@ Drupal.neologism.prototype.bindRules = function(formid){
 Drupal.neologism.prototype.addExtraRules = function(){
   jQuery.validator.addMethod("idValidator", function(value, element) { 
     return this.optional(element) || /^[a-z_]+[a-z0-9._-]*$/.test(value);
-  }, jQuery.format('Please enter a valid identifier. It should start with letters. Only lowercase letters, numbers, dashes. Max 10 characters.'));
+  }, jQuery.format('Please enter a valid identifier. It should start with letters. Only lowercase letters, numbers, dash and underscore. Max 10 characters.'));
+  
+  jQuery.validator.addMethod("idFlexibleValidator", function(value, element) { 
+	return this.optional(element) || /^[a-zA-Z_]+[a-zA-Z0-9._-]*$/.test(value);
+  }, jQuery.format('Please enter a valid identifier. It should start with letters or underscore. Only letters, numbers, dash and underscore. Max 10 characters.'));
 }
 
 

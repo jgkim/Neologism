@@ -1,7 +1,7 @@
 $content['type']  = array (
   'name' => 'Class',
   'type' => 'neo_class',
-  'description' => 'Only letters, numbers, dashes, and underscores.',
+  'description' => 'Should start with an uppercase letter and use CamelCase capitalization.',
   'title_label' => 'URI',
   'body_label' => 'A full description of the class. Include as much detail as you like. Limited HTML is allowed.',
   'min_word_count' => '0',
@@ -95,7 +95,7 @@ $content['fields']  = array (
     'weight' => '-4',
     'rows' => '1',
     'size' => 60,
-    'description' => 'A human-readable name for the class.',
+    'description' => 'This should be a Title Case capitalized version of the Class URI field.',
     'default_value' => 
     array (
     ),
