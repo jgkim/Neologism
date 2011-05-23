@@ -121,14 +121,7 @@ function evoc_install() {
   }
 
   // Evoc built-in vocabularies (core vocabularies)
-  $evoc_array_builtin_vocabularies = array(
-    array('uri' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'prefix' => 'rdf', 'filename' => 'rdf.rdf'),
-    array('uri' => 'http://www.w3.org/2000/01/rdf-schema#', 'prefix' => 'rdfs', 'filename' => 'rdf-schema.rdf'),
-    array('uri' => 'http://purl.org/dc/elements/1.1/', 'prefix' => 'dc', 'filename' => 'dcelements.rdf'),
-    array('uri' => 'http://xmlns.com/foaf/0.1/', 'prefix' => 'foaf', 'filename' => 'foaf.rdf'),
-    array('uri' => 'http://www.w3.org/2002/07/owl#', 'prefix' => 'owl', 'filename' => 'owl.rdf')
-  );
-  variable_set('evoc_builtin_vocabularies', $evoc_array_builtin_vocabularies);
+  variable_set('evoc_builtin_vocabularies', _evoc_get_builtin_vocabularies_array());
   
 //  module_load_include('inc', 'evoc', 'evoc.batch_import');
 //  evoc_import_builtin_vocabularies();
@@ -323,4 +316,31 @@ function evoc_update_6102() {
   return $ret;
 }
 
+/*
+ * This update is required for Neologism version 0.5.2
+ */
+function evoc_update_6103() {
+  $ret = array('#finished' => 0);
+  
+  variable_set('evoc_builtin_vocabularies', _evoc_get_builtin_vocabularies_array());
+  
+  //TODO: Check for the integrity of the built-in vocabularies in the database 
+  
+  $ret['#finished'] = 1;
+  return $ret;
+}
+
+/*
+ * Return the array of built-in vocabularies
+ */
+function _evoc_get_builtin_vocabularies_array() {
+  // Evoc built-in vocabularies (core vocabularies)
+  return array(
+    array('uri' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'prefix' => 'rdf', 'filename' => 'rdf.rdf'),
+    array('uri' => 'http://www.w3.org/2000/01/rdf-schema#', 'prefix' => 'rdfs', 'filename' => 'rdf-schema.rdf'),
+    array('uri' => 'http://purl.org/dc/elements/1.1/', 'prefix' => 'dc', 'filename' => 'dcelements.rdf'),
+    array('uri' => 'http://xmlns.com/foaf/0.1/', 'prefix' => 'foaf', 'filename' => 'foaf.rdf'),
+    array('uri' => 'http://www.w3.org/2002/07/owl#', 'prefix' => 'owl', 'filename' => 'owl.rdf')
+  );
+}
 
