@@ -40,9 +40,14 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
   $form['title']['#field_prefix'] = $current_voc->namespace_uri;
   $form['title']['#element_validate'][] = '_neologism_validate_id';
   $form['title']['#attributes'] = array('style' => 'width: auto; display: inline');
+  // neologism client side validation properties
+  $form['title']['#neologism_validation_methods'] = array('idFlexibleValidator');
+  $form['title']['#neologism_validation_message'] = t('Please enter a valid '.ucwords($class_or_property).' URI. It should start with letters or underscore. Only letters, numbers, dash and underscore.');
+  	//'#minlength' => 3, // Neologism validation rule property
   
   // Customize the label field description
   $form['label']['#title'] = t('This should be a Title Case capitalized version of the '.ucwords($class_or_property). ' URI field.');
+  $form['label']['#size'] = 20;
 
   $form['body_field']['body']['#rows'] = 4;
   $form['body_field']['body']['#title'] = 'Details';
@@ -68,6 +73,11 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
   );
   $form['buttons']['submit']['#submit'][] = '_neologism_term_form_submit';
   $form['buttons']['delete']['#submit'][] = '_neologism_term_form_delete';
+  
+  // include the client validation submodule
+  if (variable_get('neologism_client_validation_enabled', FALSE)) {
+    $form['#after_build'][] = 'neologism_form_after_build';
+  }
 
   if ($class_or_property == 'class') {
     // load ExtJS

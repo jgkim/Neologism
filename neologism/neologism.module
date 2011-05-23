@@ -293,7 +293,7 @@ function neologism_form(&$node, $form_state) {
     '#title' => 'Vocabulary ID',
     '#field_prefix' => $root,
     '#description' => t('Will be used as the namespace prefix. Only lowercase letters, numbers, dashes. Max 10 characters.'),
-    '#element_validate' => array('_neologism_validate_id'),
+    '#element_validate' => array('_neologism_strict_validate_id'),
     '#default_value' => $node->prefix,
     '#required' => true,
     '#maxlength' => 10,
@@ -501,6 +501,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       $form['#after_build'][] = 'neologism_form_after_build';
       
       if (isset($form['#node']->nid)) { 
+        // add the server side flexible validation for prefix Id.
+        $form['prefix']['#element_validate'] = array('_neologism_validate_id');
+        
         // make flexible to introduce also upercase letters the field 'prefix' in edition mode
         $form['prefix']['#neologism_validation_methods'] = array('idFlexibleValidator');
       }
@@ -1607,9 +1610,27 @@ function _neologism_unset_aliases($node) {
 function _neologism_validate_id($element, &$form_state) {
   if (!empty($element['#value']) && !_neologism_is_valid_id($element['#value'])) {
     form_error($element,
-        t("%id is not a valid identifier. It should start with a letter, and should contain only letters, numbers, dashes, and underscores.",
+        t("%id is not a valid identifier. It should start with letter, and should contain only lowercase letters, numbers, dashes and underscores.",
             array('%id' => $element['#value'])));
-    return false;
+    return FALSE;
+  }
+}
+
+/**
+ * Custom form validation function for prefix IDs.
+ * @param 
+ *   $element
+ * @param 
+ *   $form_state
+ * @return 
+ *   FALSE in case the validation fails and TRUE if validation is passed.
+ */
+function _neologism_strict_validate_id($element, &$form_state) {
+  if (!empty($element['#value']) && !_neologism_is_valid_id($element['#value'], TRUE)) {
+    form_error($element,
+        t("%id is not a valid identifier. It should start with letter, and should contain only lowercase letters, numbers, dashes and underscores.",
+            array('%id' => $element['#value'])));
+    return FALSE;
   }
 }
 
@@ -1617,8 +1638,11 @@ function _neologism_validate_id($element, &$form_state) {
  * Verifies a string for use as an XML NCName, that is, it
  * can be used in a QName.
  */
-function _neologism_is_valid_id($string) {
-  return (preg_match("/^[a-zA-Z_]+[a-zA-Z0-9._-]*$/", $string));
+function _neologism_is_valid_id($string, $lowercase_strict = FALSE) {
+  if (!$lowercase_strict) {
+    return preg_match("/^[a-zA-Z_]+[a-zA-Z0-9._-]*$/", $string);
+  }
+  return (preg_match("/^[a-z_]+[a-z0-9._-]*$/", $string));
 }
 
 /**
