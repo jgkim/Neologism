@@ -32,8 +32,20 @@ function evoc_get_from_web($uri, $prefix) {
  */
 function evoc_get_from_file($filename, $uri, $prefix) {
   $content = _evoc_fetch_from_file($filename);
-  list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
-  return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);
+  $extension = _evoc_findexts($filename);
+  if ($extension == 'rdf') {
+    list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  else if ($extension == 'html') {
+    list($triples, $namespaces) = _evoc_parse_rdfa($uri, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  else if ($extension == 'ttl') {
+    list($triples, $namespaces) = _evoc_parse_turtle($uri, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  throw new Exception('Cannot select a parser...');
 }
 
 /**
@@ -165,6 +177,90 @@ function &_evoc_parse_rdfxml($base_uri, $rdf_content) {
     $namespaces[$prefix] = $uri;
   }
   return array($parser->getTriples(), $namespaces);
+}
+
+/**
+ * Parse html content an extract RDFa 
+ * @param String $base_uri
+ *   The basepath uri
+ * @param String $html_content
+ *   The turtle content/data 
+ * @return unknown_type
+ */
+function &_evoc_parse_rdfa($base_uri, $html_content) {
+  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  
+  $config = array('auto_extract' => 0);
+  $parser = ARC2::getSemHTMLParser($config);
+  $parser->parse($base_uri, $html_content);
+  $errors = $parser->getErrors();
+  if ($errors) {
+		$error_message = '';
+		if (is_array($errors)) {
+  		foreach ($errors as $error) {
+  			$error_message .= $error.'<br/>';
+  		}
+		}
+		else {
+		   $error_message = $errors; 
+		}
+		throw new Exception($error_message);
+	}
+	
+  $parser->extractRDF('rdfa');
+  $namespaces = _evoc_retrive_namespaces($parser);
+  return array($parser->getTriples(), $namespaces);
+}
+
+/**
+ * Parse turtle content
+ * @param String $base_uri
+ *   The basepath uri
+ * @param String $html_content
+ *   The turtle content/data 
+ * @return unknown_type
+ */
+function &_evoc_parse_turtle($base_uri, $html_content) {
+  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  
+  $parser = ARC2::getTurtleParser();
+	$parser->parse($base_uri, $html_content);
+	$errors = $parser->getErrors();
+	if ($errors) {
+		$error_message = '';
+		if (is_array($errors)) {
+  		foreach ($errors as $error) {
+  			$error_message .= $error.'<br/>';
+  		}
+		}
+		else {
+		   $error_message = $errors; 
+		}
+		throw new Exception($error_message);
+	}
+  
+	$namespaces = _evoc_retrive_namespaces($parser);
+  return array($parser->getTriples(), $namespaces);
+}
+
+/**
+ * Retrieve the namespaces from a parser result
+ * @param $parser_result
+ * @return 
+ *   namespaces array
+ */
+function _evoc_retrive_namespaces($parser) {
+  $namespaces = array();
+  if (!empty($parser->nsp)) {
+    foreach ($parser->nsp as $uri => $prefix) {
+      // to fix the warning for strpos() at modules/rdf/rdf.api.inc on line 358
+      if (empty($prefix)) {
+        $prefix = "?";  
+      }
+      $namespaces[$prefix] = $uri;
+    }  
+  }
+  return $namespaces;
 }
 
 function _evoc_load__error_handler($errno, $errstr) {
@@ -560,5 +656,19 @@ function _evoc_query_for_vocabulary_uri(&$model, $ns_uri = NULL) {
   }
   return NULL;
 }
+
+/**
+ * Find the extensions of a resource and return the last one found.
+ * @param unknown_type $uri
+ * @return unknown_type
+ */
+function _evoc_findexts($uri) { 
+  $uri = strtolower($uri) ; 
+  $exts = split("[/\\.]", $uri) ; 
+  $n = count($exts)-1; 
+  $exts = $exts[$n]; 
+  return $exts; 
+} 
+
 
 ?>

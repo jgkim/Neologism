@@ -121,8 +121,9 @@ function evoc_add_vocabulary_form_validate($form, &$form_state) {
       form_set_error('ns_uri', t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>'));
       return;
     }
+    
     if (substr($ns_uri, -1) != '#' && substr($ns_uri, -1) != '/') {
-      form_set_error('ns_uri', t('The namespace URI must end in “#” or “/”.'));
+      form_set_error('ns_uri', t('The namespace URI must end in "#" or "/".'));
       return;
     }
   }
@@ -210,5 +211,4 @@ function evoc_remove_confirm_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'evoc'; 
 }
-
 ?>
