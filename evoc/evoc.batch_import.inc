@@ -22,9 +22,18 @@ function evoc_import_builtin_vocabularies_form_submit($form, &$form_state) {
 }
 
 function evoc_import_builtin_vocabularies($path = '') {
-  $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
+  // check if the variable 'evoc_missing_builtin_vocabularies' is set due to an update process
+  // if it does then use it as the array of builtin vocabularies to install.
+  $evoc_array_builtin_vocabularies = variable_get('evoc_missing_builtin_vocabularies', NULL);
   if (!$evoc_array_builtin_vocabularies) {
-    return;
+    $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
+    if (!$evoc_array_builtin_vocabularies) {
+      return;
+    }
+  } 
+  else {
+    // remove the persisten variable after use it.
+    variable_del('evoc_missing_builtin_vocabularies'); 
   }
   
   $operations = array();

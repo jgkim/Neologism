@@ -24,6 +24,12 @@ define("EVOC_RELATIONSHIP_TYPE_INVERSE", 4);
 define("EVOC_RELATIONSHIP_TYPE_SUPERCLASS", 5);
 define("EVOC_RELATIONSHIP_TYPE_DISJOINTWITH", 6);
 
+// these constants describe the status of built-in vocabularies
+define("EVOC_BUILTIN_VOCABULARIES_OK", 1);
+define("EVOC_BUILTIN_VOCABULARIES_NOT_INSTALLED", 2);
+define("EVOC_BUILTIN_VOCABULARIES_INCONSISTENCY", 3);
+define("EVOC_BUILTIN_VOCABULARIES_UPDATE_NEEDED", 4);
+
 /**
  * Implementation of hook_perm().
  */
@@ -692,3 +698,90 @@ function evoc_evocarray_to_flatarray(&$evoc_array) {
   }  
   return $array_flat;
 }
+
+/**
+ * Return the number of classes and properties that matches the 
+ * prefix specified in the parameter $prefix.
+ * @param $prefix
+ *   The vocabulary prefix to lookup in the classes and properties
+ *   repository.
+ * @return array/NULL
+ *   NULL value if there are not classes or properties that match the prefix. 
+ *   If some result is found, the first element of the array is the number of 
+ *   class terms that match the prefix and the second element is the number 
+ *   of properties that match the prefix.
+ */
+function evoc_terms_count($prefix) {
+  if (empty($prefix)) {
+    return NULL;
+  }
+  
+  $class_count = db_result( db_query( db_rewrite_sql("SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix='%s'"), $prefix));
+  $property_count = db_result( db_query( db_rewrite_sql("SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix='%s'"), $prefix));
+  
+  if (!$class_count && !$property_count) {
+    return NULL;
+  }
+  
+  return array($class_count, $property_count);
+}
+
+/**
+ * Check for the current built-in vocabularies consistency.
+ * @return array containing three elements:
+ *   - status: the current state of the installation
+ *     - EVOC_BUILTIN_VOCABULARIES_UPDATE_NEEDED the current installation needs
+ *       create the persistent variables.
+ *     - EVOC_BUILTIN_VOCABULARIES_NOT_INSTALLED there is not a vocabulary 
+ *       installed.
+ *     - EVOC_BUILTIN_VOCABULARIES_INCONSISTENCY some built-in vocabulary is 
+ *       missing.
+ *   - missing_vocabularies: in case there is some missing built-in vocabulary, 
+ *   this array will hold it. 
+ *   - prefixes: an array that store the list of missing built-in vocabulary
+ *   prefixes.
+ */
+function evoc_check_builtin_vocabularies_consistency() {
+  $array_builtin_vocabularies = _evoc_get_builtin_vocabularies_array();
+    
+  $missing_builtin_vocabularies = array();
+  foreach ($array_builtin_vocabularies as $voc) {
+    // check if at least there is one terms that match the prefix
+    if (evoc_terms_count($voc['prefix']) == NULL) {
+      $missing_builtin_vocabularies[] = $voc;
+      $prefixes[] = $voc['prefix'];
+    }
+  } 
+  
+  if (empty($missing_builtin_vocabularies)) {
+    // just an update to create the persistent variables.
+    return array('status' => EVOC_BUILTIN_VOCABULARIES_UPDATE_NEEDED);  
+  }
+  else if ( count($missing_builtin_vocabularies) == count($array_builtin_vocabularies)) {
+    // the missing vocabularies is equal to the builtin vocabularies. A full installation is needed.
+    return array('status' => EVOC_BUILTIN_VOCABULARIES_NOT_INSTALLED);
+  }
+  else {  
+    // inconsistency, need update + installation of missing vocabluaries
+    return array(
+    	'status' => EVOC_BUILTIN_VOCABULARIES_INCONSISTENCY, 
+    	'missing_vocabularies' => $missing_builtin_vocabularies, 
+    	'prefixes' => $prefixes
+    );
+  }
+}
+
+/*
+ * Return the array of built-in vocabularies
+ */
+function _evoc_get_builtin_vocabularies_array() {
+  // Evoc built-in vocabularies (core vocabularies)
+  return array(
+    array('uri' => 'http://www.w3.org/1999/02/22-rdf-syntax-ns#', 'prefix' => 'rdf', 'filename' => 'rdf.rdf'),
+    array('uri' => 'http://www.w3.org/2000/01/rdf-schema#', 'prefix' => 'rdfs', 'filename' => 'rdf-schema.rdf'),
+    array('uri' => 'http://purl.org/dc/elements/1.1/', 'prefix' => 'dc', 'filename' => 'dcelements.rdf'),
+    array('uri' => 'http://xmlns.com/foaf/0.1/', 'prefix' => 'foaf', 'filename' => 'foaf.rdf'),
+    array('uri' => 'http://www.w3.org/2002/07/owl#', 'prefix' => 'owl', 'filename' => 'owl.rdf')
+  );
+}
+

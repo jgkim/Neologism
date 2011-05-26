@@ -16,8 +16,15 @@
 function evoc_manage_vocabularies() {
   
   if (!variable_get('evoc_builtin_vocabularies_imported', FALSE)) {
-    module_load_include('inc', 'evoc', 'evoc.batch_import');
-    return drupal_get_form('evoc_import_builtin_vocabularies_form');
+    $result = evoc_check_builtin_vocabularies_consistency();
+    if ($result['status'] == EVOC_BUILTIN_VOCABULARIES_NOT_INSTALLED) {
+      module_load_include('inc', 'evoc', 'evoc.batch_import');
+      return drupal_get_form('evoc_import_builtin_vocabularies_form');  
+    }
+    else if ($result['status'] == EVOC_BUILTIN_VOCABULARIES_UPDATE_NEEDED || $result['status'] == EVOC_BUILTIN_VOCABULARIES_INCONSISTENCY) {
+      drupal_set_message('To get the Evoc module working properly you must run the available update. Please '.l('execute the update.php script', 'update.php').' to update your current Evoc installation.','error');
+      return theme('status_messages');  
+    }
   }
   
   $evoc_array_builtin_vocabularies = variable_get('evoc_builtin_vocabularies', NULL);
@@ -25,7 +32,7 @@ function evoc_manage_vocabularies() {
     drupal_set_message('Error retrieving built-in vocabularies\' information from the database.', 'error');
     return theme('status_messages');
   }
-  
+
   // These are the namespaces imported during installation
   $builtins = array();
   foreach ($evoc_array_builtin_vocabularies as $vocab) {
