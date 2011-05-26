@@ -18,4 +18,5 @@ dependencies[] = evocwidget_dynamic
 dependencies[] = rules
 package = RDF
 core = 6.x
+version = 6.x-0.5.2
 php = 5.2
