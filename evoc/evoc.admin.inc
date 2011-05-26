@@ -129,7 +129,7 @@ function evoc_add_vocabulary_form_validate($form, &$form_state) {
   }
 
   if (!$ns_uri || !$ns_prefix) return;
-
+  
   // Load and parse the RDF file
   module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
@@ -138,11 +138,11 @@ function evoc_add_vocabulary_form_validate($form, &$form_state) {
     form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
     return;
   }
-
+  
   // Sanity checks over the extracted vocabulary
   if (!$vocabulary['classes'] && !$vocabulary['properties']) {
     if (!$vocabulary['ignored_ns']) {
-      form_set_error($source_field, t('No classes or properties found. The file does not appear to be an RDF Schema vocabulary or OWL ontology file.'));
+      form_set_error('ns_uri', t('No classes or properties found. The resource does not appear to be an RDF Schema vocabulary or OWL ontology source.'));
       return;
     }
     $msg = t('No classes or properties in the file matched your specified namespace URI. The following namespace URIs were found in the file, maybe you meant one of them?');
@@ -155,13 +155,14 @@ function evoc_add_vocabulary_form_validate($form, &$form_state) {
     form_set_error('ns_uri', $msg);
     return;
   }
+  
   $uris = array();
   foreach ($vocabulary['classes'] as $class) {
     $uris[] = $class['uri'];
   }
   foreach ($vocabulary['properties'] as $property) {
     if (in_array($property['uri'], $uris)) {
-      form_set_error($source_field, 'Unsupported modelling in vocabulary file: ' . $intersection[0] . ' is typed both as a class and as a property.');
+      form_set_error('ns_uri', 'Unsupported modelling in vocabulary file: ' . $intersection[0] . ' is typed both as a class and as a property.');
       return;
     }
   }
