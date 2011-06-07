@@ -312,7 +312,7 @@ function neologism_gateway_get_class_children($node, $voc = NULL, $add_checkbox 
  	  $children = db_query(db_rewrite_sql("select prefix, reference from {evoc_rdf_superclasses} where superclass = '%s'"), $classname);
 	   
 	  while ($child = db_fetch_object($children)) {
-	    $class = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_classes where prefix = '%s' and id = '%s'"), $child->prefix, $child->reference));
+	    $class = db_fetch_object(db_query(db_rewrite_sql("select * from {evoc_rdf_classes} where prefix = '%s' and id = '%s'"), $child->prefix, $child->reference));
 	    if ( $class ) {
 	    	$class->prefix = trim($class->prefix);
 	      $class->id = trim($class->id); 
@@ -588,7 +588,7 @@ function neologism_gateway_get_property_children($node, $voc = NULL, $add_checkb
   $children = db_query(db_rewrite_sql("select prefix, reference from {evoc_rdf_superproperties} where superproperty = '%s'"), $node);
     
   while ($child = db_fetch_object($children)) {
-    $property = db_fetch_object(db_query(db_rewrite_sql("select * from evoc_rdf_properties where prefix='%s' and id = '%s'"), $child->prefix, $child->reference));
+    $property = db_fetch_object(db_query(db_rewrite_sql("select * from {evoc_rdf_properties} where prefix='%s' and id = '%s'"), $child->prefix, $child->reference));
     if ( $property ) {
       $property->prefix = trim($property->prefix);
       $property->id = trim($property->id); 
@@ -740,7 +740,7 @@ function _neologism_get_element_property_terms($property, $prefix, $id) {
 
 function _neologism_get_class_disjoinwith_terms($prefix, $id) {
   $array_disjointwith = array();
-  $result = db_query(db_rewrite_sql("select disjointwith from evoc_rdf_disjointwith where prefix = '%s' and reference = '%s'"), $prefix, $id);
+  $result = db_query(db_rewrite_sql("select disjointwith from {evoc_rdf_disjointwith} where prefix = '%s' and reference = '%s'"), $prefix, $id);
 	while( $obj = db_fetch_object($result) ) {
 		$array_disjointwith[] = $obj->disjointwith;
 	}
