@@ -1,5 +1,12 @@
 <?php
 
+// evoc value and ARC2 parser name
+define("EVOC_NO_PARSER", 0);
+define("EVOC_RDFXML_PARSER", "RDFXML");
+define("EVOC_TURTLE_PARSER", "Turtle");
+define("EVOC_RDFA_PARSER", "SemHTML");
+define("EVOC_DETECT_PARSER", "detect");
+
 /**
  * Loads an RDF/XML file from an HTTP URI, parses it, and builds
  * an RDF schema representation (associative array) from it.
@@ -9,16 +16,36 @@
  * @return array
  * @throws Exception On network or parse error
  */
-function evoc_get_from_web($uri, $prefix) {
-  $schema_url = $uri;
+function evoc_get_from_web($url, $uri, $prefix) {
+  $schema_url = $url != NULL ? $url : $uri;
+  
+  if ($schema_url == NULL) {
+    throw new Exception('An URL where the resource is located must be provided.');
+  }
+  
+  $schema_url = trim($schema_url);
+  // check if it's an HTTP URI
+  if (!preg_match('!^http://!', $schema_url)) {
+    throw new Exception('Can only read from http:// URLs');
+  }
+  
   $i = strpos($schema_url, '#');
   if ($i !== false) {
     $schema_url = substr($schema_url, 0, $i);
   }
-  $content = _evoc_fetch_from_web($schema_url);
-  $parser = _evoc_parse_rdfxml($schema_url, $content);
-  list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
-  return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);
+  
+  $reader = _evoc_get_stream_reader();
+  if (!$reader) {
+    throw new Exception('Unable to get a Reader for request operation.');
+  }
+  
+  try {
+    $result = _evoc_activate_connection_and_parse_content($reader, $schema_url);
+  } catch (Exception $e) {
+    throw $e;  
+  }
+  
+  return _evoc_extract_schema($result->triples, $result->namespaces, $prefix, $uri);
 }
 
 /**
@@ -31,21 +58,52 @@ function evoc_get_from_web($uri, $prefix) {
  * @throws Exception On file or parse error
  */
 function evoc_get_from_file($filename, $uri, $prefix) {
-  $content = _evoc_fetch_from_file($filename);
-  $extension = _evoc_findexts($filename);
-  if ($extension == 'rdf') {
-    list($triples, $namespaces) = _evoc_parse_rdfxml($uri, $content);
-    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  throw new Exception("This feature is not implemented yet!");
+  
+  if (!is_file($filename)) {
+    throw new Exception("File not found: '$filename'");
   }
-  else if ($extension == 'html') {
-    list($triples, $namespaces) = _evoc_parse_rdfa($uri, $content);
-    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  
+  $reader = _evoc_get_stream_reader();
+  if (!$reader) {
+    throw new Exception('Unable to get a Reader for request operation.');
   }
-  else if ($extension == 'ttl') {
-    list($triples, $namespaces) = _evoc_parse_turtle($uri, $content);
-    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  
+  $reader->activate($filename);
+  $format = $reader->getFormat();
+  $headers = $reader->getResponseHeaders();
+  $content_type = $headers['content-type'];
+  
+//  dpr($format);
+//  dpr($headers);
+//  dpr($content_type);
+//  dpr($reader);
+//  die();
+  
+  try {
+    $result = _evoc_activate_connection_and_parse_content($reader, $filename);
+  } catch (Exception $e) {
+    throw $e;  
   }
-  throw new Exception('Cannot select a parser...');
+  
+  return _evoc_extract_schema($result->triples, $result->namespaces, $prefix, $uri);
+  
+//  $content = _evoc_fetch_from_file($filename);
+//  
+//  $extension = _evoc_findexts($filename);
+//  if ($extension == 'rdf') {
+//    list($triples, $namespaces) = _evoc_parse_rdfxml(NULL, $content);
+//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+//  }
+//  else if ($extension == 'html') {
+//    list($triples, $namespaces) = _evoc_parse_rdfa(NULL, $content);
+//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+//  }
+//  else if ($extension == 'ttl') {
+//    list($triples, $namespaces) = _evoc_parse_turtle(NULL, $content);
+//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+//  }
+//  throw new Exception('Cannot select a parser...');
 }
 
 /**
@@ -56,108 +114,237 @@ function evoc_get_from_file($filename, $uri, $prefix) {
  * @throws Exception
  */
 function _evoc_fetch_from_file($filename) {
-  if (!is_file($filename)) {
-    throw new Exception("File not found: '$filename'");
+//  if (!is_file($filename)) {
+//    throw new Exception("File not found: '$filename'");
+//  }
+  
+//  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+//  $reader = ARC2::getComponent('Reader');
+//  $reader->activate($filename);
+//  $format = $reader->getFormat();
+//  $headers = $reader->getResponseHeaders();
+//  $content_type = $headers['content-type'];
+//  
+//  dpr($reader);
+//  die();
+  
+  //return file_get_contents($filename);
+}
+
+function _evoc_get_stream_reader() {
+  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  $reader = ARC2::getComponent('Reader');
+  return $reader; 
+}
+
+function _evoc_activate_connection_and_parse_content($reader, $url) {
+  //_evoc_activate_connection_and_get_parser($reader);
+  $reader->activate($url);
+  if (($error = _evoc_arc2_component_get_errors($reader))) {
+    throw new Exception($error);  
   }
-  return file_get_contents($filename);
+  
+  $rdf_content = NULL;
+  $format = $reader->getFormat();
+  $headers = $reader->getResponseHeaders();
+  $content_type = $headers['content-type'];
+  if (isset($content_type)) {
+    $len = strcspn($content_type, '; ');
+    $media_type = substr($headers['content-type'], 0, $len);  
+  }
+  
+  $parser_type = EVOC_NO_PARSER;
+  switch ($media_type) {
+    case 'application/rdf+xml':
+    // rdf old mediatypes
+    case 'text/rdf':
+    case 'application/rdf':  
+      $parser_type = EVOC_RDFXML_PARSER;
+      break;
+      
+    case 'text/turtle':
+    //case 'text/plain':
+    case 'text/rdf+n3': // old Neologism n3
+      $parser_type = EVOC_TURTLE_PARSER;
+      break;
+      
+    case 'text/html':
+    case 'application/xhtml+xml':
+      $parser_type = EVOC_RDFA_PARSER;
+      break;
+      
+    // too generic 
+    case 'text/plain':
+    default:
+      if ($format == 'rdfxml') {
+        $parser_type = EVOC_RDFXML_PARSER;  
+      }
+      if ($format == 'turtle') {
+        $parser_type = EVOC_TURTLE_PARSER;  
+      }
+      if ($format == 'html') {
+        $parser_type = EVOC_RDFA_PARSER;  
+      }
+      break;
+  }
+  
+  $parser_conf = array($parser_type, $media_type, $format);
+  return _evoc_parse_content($parser_conf, $url, $rdf_content);  
+}
+
+function _evoc_parse_content(array $parser_conf, $url, $content = NULL) {
+  list($parser_type, $media_type, $format) = $parser_conf;
+  
+  if ($parser_type !== EVOC_NO_PARSER) {
+    if ($parser_type == EVOC_RDFXML_PARSER) {
+      list($triples, $namespaces) = _evoc_parse_rdfxml($url, $content);
+    }
+    else if ($parser_type == EVOC_TURTLE_PARSER) {
+      list($triples, $namespaces) = _evoc_parse_turtle($url, $content);
+    }
+    else if ($parser_type == EVOC_RDFA_PARSER) {
+      list($triples, $namespaces) = _evoc_parse_rdfa($url, $content);
+    }
+    else if ($parser_type == EVOC_DETECT_PARSER) { // EVOC_DETECT_PARSER. let's execute the generic ARC2 parser
+      list($triples, $namespaces) = _evoc_parse_arc2_generic($url, NULL);
+    }
+    else {
+      throw new Exception('Unknow parser...');  
+    }
+  }
+  else {
+    if ($format == 'ntriples' || $format == 'n3') {
+      throw new Exception("Cannot process $format format. Can only process RDF/XML, Turtle and RDFa formats."); 
+    }
+    
+    throw new Exception("Can only process RDF/XML, Turtle and RDFa formats; reported media type was '$media_type'.");   
+  }
+  
+  $result = new stdClass();
+  $result->triples = $triples;
+  $result->namespaces = $namespaces;
+  
+  return $result;  
 }
 
 /**
- * Loads an RDF/XML file from an HTTP URI. Handles content negotiation
- * and various errors. Inspects the server's Content-Type header
- * to make reasonably sure that it actually is an RDF/XML file.
- *
- * @param $uri
- * @return Model
- * @throws Exception On network error
+ * Loads an RDF content from an HTTP URL. Select a parser for the found content 
+ * and check for various errors. Inspects the server's Content-Type header to 
+ * make reasonably sure that it actually is an RDF content.
+ * @param $url
+ * @return Object type holding three properties:
+ *   - arc2_reader: The arc2 based reader
  */
-function _evoc_fetch_from_web($uri) {
-  // @todo should use drupal_http_request() instead of file_get_contents+stream?
-  $uri = trim($uri);
-  // check if it's an HTTP URI
-  if (!preg_match('!^http://!', $uri)) {
-    throw new Exception('Can only read from http:// URIs');
-  }
-  // create a custom context that sends an Accept header that asks for RDF/XML
-  $context = stream_context_create(array('http' => array(
-      'header' => 'Accept: application/rdf+xml, text/rdf+xml, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1',
-  )));
-  // read file contents
-  set_error_handler('_evoc_load__error_handler', E_WARNING);
-  try {
-    $content = file_get_contents($uri, FILE_BINARY, $context);
-  } catch (Exception $ex) {
-    $error = $ex->getMessage();
-    $offset = strrpos($error, ': ');
-    if ($offset) {
-      $error = substr($error, $offset + 2);
-    }
-  }
-  restore_error_handler();
-  if (empty($content)) {
-    // reading has failed.
-    if (empty($http_response_header)) {
-      // failure is NOT an HTTP error reported by the destination server,
-      // so we will use PHP's warning message
-      if ($error) {
-        throw new Exception('Failed to read from URI: ' . $error);
-      }
-      throw new Exception('Failed to read from URI');
-    }
-    // First http_response_header should be: 'HTTP/1.1 404 Not Found' or similar.
-    // Try to get only the '404 Not Found' part.
-    if (preg_match('/^[^ ]* (.*)/', $http_response_header[0], $match)) {
-      $http_error = $match[1];
-    } else {
-      $http_error = $http_response_header[0];
-    }
-    throw new Exception('Failed to read from URI: ' . $http_error);
-  }
+//function _evoc_fetch_from_web($url) {
+//  $result = new stdClass();
+//   
+//  // @todo should use drupal_http_request() instead of file_get_contents+stream?
+//  $url = trim($url);
+//  // check if it's an HTTP URI
+//  if (!preg_match('!^http://!', $url)) {
+//    throw new Exception('Can only read from http:// URLs');
+//  }
+//
+//  $schema_url = $url;
+//  
+//  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+//  $reader = ARC2::getComponent('Reader');
+//  //'application/rdf+xml, text/turtle;q=0.8, text/rdf+n3;q=0.7, text/rdf+xml;q=0.1, text/xml;q=0.1, application/xml;q=0.1, text/plain;q=0.1, application/xhtml+xml;q=0.1');
+//  //$reader->setCustomHeaders("Accept: x-turtle; q=0.98");
+//  $reader->activate($schema_url);
+//  if (($error = _evoc_parcer_get_errors($parser))) {
+//    throw new Exception($error);  
+//  }
+//  
+//  return $reader;
+//}
 
-  // find media type by looking for a Content-Type header; default to application/rdf+xml
-  $media_type = null;
-  foreach (@$http_response_header as $header) {
-    $header = trim(strtolower($header));
-    if (preg_match('!^HTTP\/!i', $header)) {
-      // In case of redirects, headers of subsequent redirects are simply appended to the array.
-      // We are only interested in the last one, so reset.
-      $media_type = null;
-    }
-    if (preg_match('/^content-type *: *([a-z0-9\/+-]+)/', $header, $match)) {
-      $media_type = $match[1];
-    }
-  }
-  $extension = null;
-  if (preg_match('/\.([a-zA-Z0-9])$/', $uri, $match)) {
-    $extension = strtolower($match[1]);
-  }
+//function _evoc_detect_parser($reader) {
+//  if (!$reader) {
+//    throw new Exception("Cannot detect parser with no Reader.");
+//  }
+//  $result = new stdClass();
+//  
+//  $format = $reader->getFormat();
+//  $headers = $reader->getResponseHeaders();
+//  $content_type = $headers['content-type'];
+//  if (isset($content_type)) {
+//    $len = strcspn($content_type, '; ');
+//    $media_type = substr($headers['content-type'], 0, $len);  
+//  }
+//  
+//  $parser_type = EVOC_NO_PARSER;
+//  switch ($media_type) {
+//    case 'application/rdf+xml':
+//    // rdf old mediatypes
+//    case 'text/rdf':
+//    case 'application/rdf':  
+//      $parser_type = EVOC_RDFXML_PARSER;
+//      break;
+//      
+//    case 'text/turtle':
+//    //case 'text/plain':
+//    case 'text/rdf+n3': // old Neologism n3
+//      $parser_type = EVOC_TURTLE_PARSER;
+//      break;
+//      
+//    case 'text/html':
+//    case 'application/xhtml+xml':
+//      $parser_type = EVOC_RDFA_PARSER;
+//      break;
+//      
+//    // too generic 
+//    case 'text/plain':
+//    default:
+//      if ($format == 'rdfxml') {
+//        $parser_type = EVOC_RDFXML_PARSER;  
+//      }
+//      if ($format == 'turtle') {
+//        $parser_type = EVOC_TURTLE_PARSER;  
+//      }
+//      if ($format == 'html') {
+//        $parser_type = EVOC_RDFA_PARSER;  
+//      }
+//      break;
+//  }
+//  
+//  if ($parser_type === EVOC_NO_PARSER) {
+//    if ($format == 'ntriples' || $format == 'n3') {
+//      throw new Exception("Cannot process $format format. Can only process RDF/XML, Turtle and RDFa formats."); 
+//    }
+//    else {
+//      throw new Exception("Can only process RDF/XML, Turtle and RDFa formats; reported media type was '$media_type'.");   
+//    }  
+//  }
+//  
+//  $result->arc2_reader = $reader;
+//  $result->media_type  = $media_type;
+//  $result->parser_type = $parser_type;
+//
+//  return $result; 
+//}
 
-  // Sanity checks: Did we actually load some RDF/XML?
-  if ($media_type == 'application/rdf+xml' || $media_type == 'text/rdf' || $media_type == 'application/rdf') {
-    // Media type says RDF/XML, so let's try it
-  } else if ($extension == 'rdf' || $extension == 'rdfx' || $extension == 'owl') {
-    // Extension looks like RDF/XML, so let's try it
-  } else if (preg_match('!<rdf:RDF|http://www\.w3\.org/1999/02/22-rdf-syntax-ns#!', substr($content, 1000))) {
-    // Content smells like RDF/XML, so let's try it
-  } else if ($media_type == 'text/html' || $media_type == 'application/xhtml+xml') {
-    // Bad! This is HTML, not RDF/XML
-    throw new Exception('Server returned an HTML media type, but we can only process RDF/XML');
-  } else if (preg_match('/n3|turtle|ttl/', $media_type)) {
-    // Bad! This is N3 or Turtle, not RDF/XML
-    throw new Exception('Server returned a Turtle media type, but we can only process RDF/XML');
-  } else if (preg_match('/^\s*@prefix/', $content)) {
-    // Bad! This starts like a Turtle or N3 file
-    throw new Exception('This appears to be a Turtle document, but we can only process RDF/XML');
-  } else if (preg_match('/^x?html?$/', $media_type)) {
-    // Bad! This looks like HTML, not RDF/XML
-    throw new Exception('This appears to be an HTML document, but we can only process RDF/XML');
-  } else if ($media_type == 'text/plain' || $media_type == 'application/octet-stream') {
-    // Generic/default media types, might be OK
-  } else if ($media_type) {
-    throw new Exception("Can only process RDF/XML; reported media type was $media_type");
+/**
+ * Check if there are erros in the parser. If it does a message is build with the errors.
+ * @param $parcer the ARC2 parser
+ * @return 
+ *   the built error message 
+ */
+function _evoc_arc2_component_get_errors($component) {
+  $error_message = NULL;
+  $errors = $component->getErrors();
+  if ($errors) {
+		$error_message = '';
+		if (is_array($errors)) {
+  		foreach ($errors as $error) {
+  			$error_message .= $error.'<br/>';
+  		}
+		}
+		else {
+		   $error_message = $errors; 
+		} 
   }
-
-  return $content;
+  return $error_message;
 }
 
 function &_evoc_parse_rdfxml($base_uri, $rdf_content) {
@@ -165,17 +352,37 @@ function &_evoc_parse_rdfxml($base_uri, $rdf_content) {
   if (strlen($rdf_content) >= 3 && ord($rdf_content[0]) == 0xEF && ord($rdf_content[1]) == 0xBB && ord($rdf_content[2]) == 0xBF) {
     $rdf_content = substr($rdf_content, 3);
   }
-  if (substr(ltrim($rdf_content), 0, 1) != '<') {
-    throw new Exception("Parse error: File does not start with '<'");
-  }
+//  if (substr(ltrim($rdf_content), 0, 1) != '<') {
+//    throw new Exception("Parse error: File does not start with '<'");
+//  }
 
   include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
   $parser = ARC2::getRDFXMLParser();
   $parser->parse($base_uri, $rdf_content);
-  $namespaces = array();
-  foreach ($parser->nsp as $uri => $prefix) {
-    $namespaces[$prefix] = $uri;
+  if (($error = _evoc_arc2_component_get_errors($parser))) {
+    throw new Exception($error);  
   }
+  $namespaces = _evoc_retrive_namespaces($parser);
+  return array($parser->getTriples(), $namespaces);
+}
+
+/**
+ * Parse html content an extract RDFa 
+ * @param String $base_uri
+ *   The basepath uri
+ * @param String $html_content
+ *   The turtle content/data 
+ * @return unknown_type
+ */
+function &_evoc_parse_arc2_generic($base_uri, $content) {
+  include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
+  
+  $parser = ARC2::getRDFParser();
+  $parser->parse($base_uri, $content);
+  if (($error = _evoc_arc2_component_get_errors($parser))) {
+    throw new Exception($error);  
+  }
+  $namespaces = _evoc_retrive_namespaces($parser);
   return array($parser->getTriples(), $namespaces);
 }
 
@@ -193,19 +400,9 @@ function &_evoc_parse_rdfa($base_uri, $html_content) {
   $config = array('auto_extract' => 0);
   $parser = ARC2::getSemHTMLParser($config);
   $parser->parse($base_uri, $html_content);
-  $errors = $parser->getErrors();
-  if ($errors) {
-		$error_message = '';
-		if (is_array($errors)) {
-  		foreach ($errors as $error) {
-  			$error_message .= $error.'<br/>';
-  		}
-		}
-		else {
-		   $error_message = $errors; 
-		}
-		throw new Exception($error_message);
-	}
+  if (($error = _evoc_arc2_component_get_errors($parser))) {
+    throw new Exception($error);  
+  }
 	
   $parser->extractRDF('rdfa');
   $namespaces = _evoc_retrive_namespaces($parser);
@@ -225,19 +422,9 @@ function &_evoc_parse_turtle($base_uri, $html_content) {
   
   $parser = ARC2::getTurtleParser();
 	$parser->parse($base_uri, $html_content);
-	$errors = $parser->getErrors();
-	if ($errors) {
-		$error_message = '';
-		if (is_array($errors)) {
-  		foreach ($errors as $error) {
-  			$error_message .= $error.'<br/>';
-  		}
-		}
-		else {
-		   $error_message = $errors; 
-		}
-		throw new Exception($error_message);
-	}
+  if (($error = _evoc_arc2_component_get_errors($parser))) {
+    throw new Exception($error);  
+  }
   
 	$namespaces = _evoc_retrive_namespaces($parser);
   return array($parser->getTriples(), $namespaces);
@@ -663,12 +850,113 @@ function _evoc_query_for_vocabulary_uri(&$model, $ns_uri = NULL) {
  * @return unknown_type
  */
 function _evoc_findexts($uri) { 
-  $uri = strtolower($uri) ; 
-  $exts = split("[/\\.]", $uri) ; 
+  $exts = explode(".", $uri);
   $n = count($exts)-1; 
   $exts = $exts[$n]; 
+  $exts = strtolower($exts) ; 
   return $exts; 
 } 
 
+/**
+ * Check for URI dependencies in the term's properties
+ * @param $array_term_values 
+ *   The term's properties
+ * @param $array_ns
+ *   Array of undefined namespaces
+ * @return 
+ *   Array of found dependencies in the form term_qname => [$qname, ns_uri]
+ */
+function _evoc_check_vocabulary_dependency(array $array_term_values, array $array_ns) {
+  $dependencies = array();
+  
+  $prefix       = $array_term_values['prefix'];
+  $id           = $array_term_values['id'];
+  $superclasses = $array_term_values['superclasses'];
+  $term_qname   = $prefix.':'.$id;
+
+  // check for superclasses dependencies
+  if (count($superclasses)) {
+    foreach ($superclasses as $qname) {
+      $term = explode(':', $qname);
+      if ($prefix != $term[0]) {
+        foreach ($array_ns as $ns_prefix => $ns_uri) {
+          if ($term[0] == $ns_prefix) {
+            $dependencies[$term_qname] = array($qname, $ns_uri);
+            break;   
+          }
+        }
+      }
+    } 
+  }
+  
+  if (count($array_term_values['superproperties'])) {
+    foreach ($array_term_values['superproperties'] as $qname) {
+      $term = explode(':', $qname);
+      if ($prefix != $term[0]) {
+        foreach ($array_ns as $ns_prefix => $ns_uri) {
+          if ($term[0] == $ns_prefix) {
+            $dependencies[$term_qname] = array($qname, $ns_uri);
+            break;   
+          }
+        }
+      }
+    } 
+  }
+  
+  return $dependencies;
+}
+
+/**
+ * Find the terms beloging to each undefined namespaces.
+ * @param array $array_undefined_ns
+ * @param unknown_type $vocabulary
+ * @return array of two elements holding the candidate namespace and the 
+ *   dependencies. e.g:  
+ *   ns_candidates = array(2) { 
+ *     ["http://purl.org/NET/scovo#"]=> int(8) 
+ *     ["http://purl.org/NET/c4dm/event.owl#"]=> int(1) 
+ *   } 
+ *   dependencies = array(1) { 
+ *     ["http://purl.org/NET/scovo#"]=> array(1) { 
+ *       [0]=> array(1) { 
+ *         [0]=> array(1) { 
+ *           ["g.2:local"]=> string(35) "http://purl.org/NET/c4dm/event.owl#" 
+ *         } 
+ *       } 
+ *     } 
+ *   }
+ */
+function evoc_get_terms_of_undefined_namespaces(array $array_undefined_ns, $vocabulary) {
+  $ns_candidates = array();
+  $dependencies  = array();
+  
+  foreach ($array_undefined_ns as $prefix => $uri) {
+    if (count($vocabulary['classes'])) {
+      foreach ($vocabulary['classes'] as $index => $term_values)  {
+        if ($term_values['prefix'] == $prefix) {
+          $ns_candidates[$uri]++;    
+          $d = _evoc_check_vocabulary_dependency($term_values, $vocabulary['undefined_ns']);
+          if (!empty($d)) {
+            $dependencies[$uri][] = $d; 
+          }
+        }
+      }
+    }
+    
+    if (count($vocabulary['properties'])) {
+      foreach ($vocabulary['properties'] as $index => $term_values)  {
+        if ($term_values['prefix'] == $prefix) {
+          $ns_candidates[$uri]++;  
+          $d = _evoc_check_vocabulary_dependency($term_values, $vocabulary['undefined_ns']);
+          if (!empty($d)) {
+            $dependencies[$uri][] = $d;
+          }  
+        }
+      }
+    }
+  }
+  
+  return array($ns_candidates, $dependencies);
+}
 
 ?>

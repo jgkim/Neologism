@@ -140,7 +140,7 @@ function evoc_add_vocabulary_form_validate($form, &$form_state) {
   // Load and parse the RDF file
   module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
-    $vocabulary = evoc_get_from_web($ns_uri, $ns_prefix);
+    $vocabulary = evoc_get_from_web(NULL, $ns_uri, $ns_prefix);
   } catch (Exception $e) {
     form_set_error('', 'Import failed: ' . $e->getMessage(), 'error');
     return;
