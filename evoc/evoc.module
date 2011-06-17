@@ -89,7 +89,7 @@ function evoc_import_vocabulary($uri, $prefix, $filename = NULL, $showdetails = 
   module_load_include('inc', 'evoc', 'evoc.load_vocab');
   try {
   	if ( is_null($filename) ) {
-    	$vocabulary = evoc_get_from_web($uri, $prefix);
+    	$vocabulary = evoc_get_from_web(NULL, $uri, $prefix);
   	}
   	else {
   		$vocabulary = evoc_get_from_file($filename, $uri, $prefix);	

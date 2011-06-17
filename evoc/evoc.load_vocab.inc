@@ -58,21 +58,21 @@ function evoc_get_from_web($url, $uri, $prefix) {
  * @throws Exception On file or parse error
  */
 function evoc_get_from_file($filename, $uri, $prefix) {
-  throw new Exception("This feature is not implemented yet!");
+  //throw new Exception("This feature is not implemented yet!");
   
   if (!is_file($filename)) {
     throw new Exception("File not found: '$filename'");
   }
   
-  $reader = _evoc_get_stream_reader();
-  if (!$reader) {
-    throw new Exception('Unable to get a Reader for request operation.');
-  }
-  
-  $reader->activate($filename);
-  $format = $reader->getFormat();
-  $headers = $reader->getResponseHeaders();
-  $content_type = $headers['content-type'];
+//  $reader = _evoc_get_stream_reader();
+//  if (!$reader) {
+//    throw new Exception('Unable to get a Reader for request operation.');
+//  }
+//  
+//  $reader->activate($filename);
+//  $format = $reader->getFormat();
+//  $headers = $reader->getResponseHeaders();
+//  $content_type = $headers['content-type'];
   
 //  dpr($format);
 //  dpr($headers);
@@ -80,30 +80,30 @@ function evoc_get_from_file($filename, $uri, $prefix) {
 //  dpr($reader);
 //  die();
   
-  try {
-    $result = _evoc_activate_connection_and_parse_content($reader, $filename);
-  } catch (Exception $e) {
-    throw $e;  
-  }
-  
-  return _evoc_extract_schema($result->triples, $result->namespaces, $prefix, $uri);
-  
-//  $content = _evoc_fetch_from_file($filename);
+//  try {
+//    $result = _evoc_activate_connection_and_parse_content($reader, $filename);
+//  } catch (Exception $e) {
+//    throw $e;  
+//  }
 //  
-//  $extension = _evoc_findexts($filename);
-//  if ($extension == 'rdf') {
-//    list($triples, $namespaces) = _evoc_parse_rdfxml(NULL, $content);
-//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
-//  }
-//  else if ($extension == 'html') {
-//    list($triples, $namespaces) = _evoc_parse_rdfa(NULL, $content);
-//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
-//  }
-//  else if ($extension == 'ttl') {
-//    list($triples, $namespaces) = _evoc_parse_turtle(NULL, $content);
-//    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
-//  }
-//  throw new Exception('Cannot select a parser...');
+//  return _evoc_extract_schema($result->triples, $result->namespaces, $prefix, $uri);
+  
+  $content = _evoc_fetch_from_file($filename);
+  
+  $extension = _evoc_findexts($filename);
+  if ($extension == 'rdf') {
+    list($triples, $namespaces) = _evoc_parse_rdfxml(NULL, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  else if ($extension == 'html') {
+    list($triples, $namespaces) = _evoc_parse_rdfa(NULL, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  else if ($extension == 'ttl') {
+    list($triples, $namespaces) = _evoc_parse_turtle(NULL, $content);
+    return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
+  }
+  throw new Exception('Cannot select a parser...');
 }
 
 /**
