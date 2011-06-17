@@ -121,6 +121,7 @@ function evoc_install() {
   }
 
   // Evoc built-in vocabularies (core vocabularies)
+  module_load_include('module', 'evoc');
   variable_set('evoc_builtin_vocabularies', _evoc_get_builtin_vocabularies_array());
   
 //  module_load_include('inc', 'evoc', 'evoc.batch_import');
