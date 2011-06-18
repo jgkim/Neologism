@@ -215,7 +215,10 @@ function evoc_save_vocabulary($vocabulary, $showdetails = false) {
   $ns = $vocabulary['uri'];
 
   // Namespace management.
-  db_query("INSERT INTO {rdf_namespaces} (prefix, uri) VALUES ('%s', '%s')", $prefix, $ns);
+  $result = db_query("INSERT INTO {rdf_namespaces} (prefix, uri) VALUES ('%s', '%s')", $prefix, $ns);
+  if (!$result) {
+    throw new Exception(t('Error executing query to insert namespace %prefix:%ns.', array('%prefix' => $prefix, '%ns' => $ns)));
+  }
 
   // RDF terms management.
   foreach ($vocabulary['classes'] as $class) {
