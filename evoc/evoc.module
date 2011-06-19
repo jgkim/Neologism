@@ -222,10 +222,16 @@ function evoc_save_vocabulary($vocabulary, $showdetails = false) {
 
   // RDF terms management.
   foreach ($vocabulary['classes'] as $class) {
-    evoc_write_class($class, $showdetails);
+    $result = evoc_write_class($class, $showdetails);
+    if (!$result) {
+      throw new Exception(t('Error inserting the class "%class" into the database.', array('%class' => $class)));
+    }
   }
   foreach ($vocabulary['properties'] as $property) {
-    evoc_write_property($property, $showdetails);
+    $result = evoc_write_property($property, $showdetails);
+    if (!$result) {
+      throw new Exception(t('Error inserting the property "%property" into the database.', array('%property' => $property)));
+    }
   }
 }
 
@@ -282,6 +288,7 @@ function _evoc_insert_relationship_terms($relationship_type, array &$array_terms
  * @return 
  */
 function evoc_write_class($class, $showdetails = false) {
+  $result = FALSE;
   // Check whether this class is already in the system.
   $count = db_result(db_query(db_rewrite_sql("SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix='%s' AND id='%s'"), $class['prefix'], $class['id'])) > 0;
   if ($count) {
@@ -291,8 +298,9 @@ function evoc_write_class($class, $showdetails = false) {
     $count_superclasses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERCLASS, $class[EVOC_SUPERCLASSES], $class['prefix'], $class['id']);
   	$count_disjointwith = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_DISJOINTWITH, $class[EVOC_DISJOINTS], $class['prefix'], $class['id']);
   	
-    if( db_query(db_rewrite_sql("insert into {evoc_rdf_classes} (prefix, id, label, comment, superclasses, ndisjointwith) 
-      values ('%s', '%s', '%s', '%s', '%d', '%d')"), $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith ) ) {
+  	$result = db_query(db_rewrite_sql("insert into {evoc_rdf_classes} (prefix, id, label, comment, superclasses, ndisjointwith)
+      values ('%s', '%s', '%s', '%s', '%d', '%d')"), $class['prefix'], $class['id'], $class['label'], $class['comment'], $count_superclasses, $count_disjointwith );
+  	if ($result) {
       if( $showdetails ) {
         drupal_set_message('Importing Class. Class <b>'.$class['prefix']." : ".$class['id']."</b> successfully imported.");
       }
@@ -301,6 +309,7 @@ function evoc_write_class($class, $showdetails = false) {
       drupal_set_message('Importing Class. Class <b>'.$class['prefix'].' : '.$class['id'].'</b> could not be saved.', 'warning');
     }
   }
+  return $result;
 }
 
 /**
@@ -470,9 +479,11 @@ function evoc_remove_class($class) {
  *         $term['inverse'] = string/qname
  * 				 $term['inverses'] = array() of qname
  * 
- * @return none 
+ * @return 
+ *   FALSE is case of failure and the resulting query result in case of success 
  */
 function evoc_write_property($property, $showdetails = false) {
+  $result = FALSE;
   $count = db_result(db_query(db_rewrite_sql("SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix='%s' AND id = '%s'"), $property['prefix'], $property['id'])) > 0;
   if ($count) {
     drupal_set_message('Importing Property. Property '.$property['prefix']." : ".$property['id']." already exists in the system.", 'status', FALSE);
@@ -483,9 +494,10 @@ function evoc_write_property($property, $showdetails = false) {
     $count_superproperties = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY, $property[EVOC_SUPERPROPERTIES], $property['prefix'], $property['id']);
     $count_inverses = _evoc_insert_relationship_terms(EVOC_RELATIONSHIP_TYPE_INVERSE, $property[EVOC_INVERSES], $property['prefix'], $property['id']);
     
-    if( db_query(db_rewrite_sql("INSERT INTO {evoc_rdf_properties} (prefix, id, label, comment, superproperties, domains, ranges, inverses) 
+    $result = db_query(db_rewrite_sql("INSERT INTO {evoc_rdf_properties} (prefix, id, label, comment, superproperties, domains, ranges, inverses) 
       VALUES ('%s', '%s', '%s', '%s', %d, %d, %d, %d)"), 
-      $property['prefix'], $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges, $count_inverses) ) {
+      $property['prefix'], $property['id'], $property['label'], $property['comment'], $count_superproperties, $count_domains, $count_ranges, $count_inverses);
+    if ($result) {
       if( $showdetails ) {
         drupal_set_message('Importing Property. Property <b>'.$property['prefix'].' : '.$property['id'].'</b> successfully imported.');
       }
@@ -494,6 +506,7 @@ function evoc_write_property($property, $showdetails = false) {
       drupal_set_message('Importing Property. Property <b>'.$property['prefix'].' : '.$property['id'].'</b> could not be saved.', 'warning');
     }
   }
+  return $result;
 }
 
 /**
