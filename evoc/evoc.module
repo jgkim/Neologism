@@ -245,32 +245,32 @@ function evoc_save_vocabulary($vocabulary, $showdetails = false) {
  */
 function _evoc_insert_relationship_terms($relationship_type, array &$array_terms, $prefix, $id) {
   $count = 0;
-  if( is_array($array_terms) ) {
+  if (is_array($array_terms)) {
     $table_name = '';
     $column_name = '';
     
-  if($relationship_type == EVOC_RELATIONSHIP_TYPE_DOMAIN) { 
+    if ($relationship_type == EVOC_RELATIONSHIP_TYPE_DOMAIN) { 
       $table_name = 'evoc_rdf_propertiesdomains';
       $column_name = 'rdf_domain';   
-    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_RANGE) {
+    } else if ($relationship_type == EVOC_RELATIONSHIP_TYPE_RANGE) {
       $table_name = 'evoc_rdf_propertiesranges';
       $column_name = 'rdf_range';   
-    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY) {
+    } else if ($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERPROPERTY) {
       $table_name = 'evoc_rdf_superproperties';
       $column_name = 'superproperty';  
-    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_INVERSE) {
+    } else if ($relationship_type == EVOC_RELATIONSHIP_TYPE_INVERSE) {
       $table_name = 'evoc_rdf_inversesproperties';
       $column_name = 'inverseof';
-    }else if($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERCLASS) { 
+    }else if ($relationship_type == EVOC_RELATIONSHIP_TYPE_SUPERCLASS) { 
       $table_name = 'evoc_rdf_superclasses';
       $column_name = 'superclass';   
-    } else if($relationship_type == EVOC_RELATIONSHIP_TYPE_DISJOINTWITH) {
+    } else if ($relationship_type == EVOC_RELATIONSHIP_TYPE_DISJOINTWITH) {
       $table_name = 'evoc_rdf_disjointwith';
       $column_name = 'disjointwith';   
     } 
     
     $count = count($array_terms);
-    foreach ( $array_terms as $term ) {
+    foreach ($array_terms as $term) {
         $sql = "insert into {".$table_name."} (prefix, reference, ".$column_name.") values ('%s', '%s', '%s')";
         db_query(db_rewrite_sql($sql), $prefix, $id, $term);
     }

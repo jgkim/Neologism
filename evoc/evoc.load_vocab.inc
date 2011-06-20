@@ -88,7 +88,11 @@ function evoc_get_from_file($filename, $uri, $prefix) {
 //  
 //  return _evoc_extract_schema($result->triples, $result->namespaces, $prefix, $uri);
   
-  $content = _evoc_fetch_from_file($filename);
+  $content = file_get_contents($filename);
+  if (!$content) {
+    throw new Exception("Error reading the file content from file: '$filename'");
+  }
+  //$content = _evoc_fetch_from_file($filename);
   
   $extension = _evoc_findexts($filename);
   if ($extension == 'rdf') {
@@ -103,7 +107,7 @@ function evoc_get_from_file($filename, $uri, $prefix) {
     list($triples, $namespaces) = _evoc_parse_turtle(NULL, $content);
     return _evoc_extract_schema($triples, $namespaces, $prefix, $uri);  
   }
-  throw new Exception('Cannot select a parser...');
+  throw new Exception("Cannot select a parser for this file extension: '$filename'");
 }
 
 /**
@@ -128,7 +132,7 @@ function _evoc_fetch_from_file($filename) {
 //  dpr($reader);
 //  die();
   
-  //return file_get_contents($filename);
+  return file_get_contents($filename);
 }
 
 function _evoc_get_stream_reader() {
