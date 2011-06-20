@@ -156,11 +156,14 @@ function neologism_profile_tasks(&$task, $url) {
   	variable_set('ext_path', drupal_get_path('module', 'ext') .'/ext');
   	
   	// disabled the user login block
-  	db_query('update {blocks} set status = 0 where bid = 1');
+  	//db_query("update {blocks} set status = %d where bid = %d", 0, 1);
+  	db_query("UPDATE {blocks} SET status = %d WHERE module='%s' AND delta=%d", 0, 'user', 0);
   	// disabled the powered by drupal block
-  	db_query('update {blocks} set status = 0 where bid = 3');
+  	//db_query("update {blocks} set status = %d where bid = %d", 0, 3);
+  	db_query("UPDATE {blocks} SET status = %d WHERE module='%s' AND delta=%d", 0, 'user', 1);
   	// move the navegation block to right region
-  	db_query('update {blocks} set region = "right" where bid = 2');
+  	//db_query("update {blocks} set region = '%s' where bid = %d", 'right', 2);
+  	db_query("UPDATE {blocks} SET region = '%s' WHERE module='%s' AND delta=%d", 'right', 'system', 0);
 
   	require_once 'modules/block/block.admin.inc';
   	require_once 'modules/block/block.module';
@@ -183,9 +186,9 @@ function neologism_profile_tasks(&$task, $url) {
   	drupal_execute($form_id, $form_state);
   	
   	// enable the custom block
-  	db_query(
-  		'insert into {blocks} (module, delta, theme, status, weight, region, cache) 
-  		values ("%s", %d, "%s", %d, %d, "%s", %d)',
+  	$result = db_query(
+  		"insert into {blocks} (module, delta, theme, status, weight, region, cache) 
+  		values ('%s', %d, '%s', %d, %d, '%s', %d)",
   		'block', '1', 'garland', 1, -6, 'footer', BLOCK_NO_CACHE  		
   	);
   	
@@ -213,7 +216,7 @@ function neologism_profile_tasks(&$task, $url) {
   	drupal_execute($form_id, $form_state);
   	
   	// Give all permissions relevant to vocabulary editing to all authenticated users
-  	$res = db_fetch_object(db_query('select rid from {role} where name = "authenticated user"'));
+  	$res = db_fetch_object(db_query("select rid from {role} where name = '%s'", 'authenticated user'));
     $permissions = join(', ', array_merge(
       array('access content'),
       array('create neo_vocabulary content', 'delete any neo_vocabulary content', 'delete own neo_vocabulary content', 'edit any neo_vocabulary content', 'edit own neo_vocabulary content'),
@@ -222,7 +225,7 @@ function neologism_profile_tasks(&$task, $url) {
       array('create vocabulary_documentation content', 'delete any vocabulary_documentation content', 'delete own vocabulary_documentation content', 'edit any vocabulary_documentation content', 'edit own vocabulary_documentation content'),
       module_invoke('neologism','perm'),
       module_invoke('evoc', 'perm')));
-    db_query('insert into {permission} (rid, perm) values (%d, "%s")', $res->rid, $permissions);
+    db_query("insert into {permission} (rid, perm) values (%d, '%s')", $res->rid, $permissions);
   	
 	  // Add a triggered rules
   	require_once 'sites/all/modules/rules/rules_admin/rules_admin.export.inc';
