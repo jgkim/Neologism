@@ -158,12 +158,14 @@ function neologism_profile_tasks(&$task, $url) {
   	// disabled the user login block
   	//db_query("update {blocks} set status = %d where bid = %d", 0, 1);
   	db_query("UPDATE {blocks} SET status = %d WHERE module='%s' AND delta=%d", 0, 'user', 0);
+  	
   	// disabled the powered by drupal block
   	//db_query("update {blocks} set status = %d where bid = %d", 0, 3);
-  	db_query("UPDATE {blocks} SET status = %d WHERE module='%s' AND delta=%d", 0, 'user', 1);
+  	db_query("UPDATE {blocks} SET status = %d WHERE module='%s' AND delta=%d", 0, 'system', 0);
+  	
   	// move the navegation block to right region
   	//db_query("update {blocks} set region = '%s' where bid = %d", 'right', 2);
-  	db_query("UPDATE {blocks} SET region = '%s' WHERE module='%s' AND delta=%d", 'right', 'system', 0);
+  	db_query("UPDATE {blocks} SET region = '%s' WHERE module='%s' AND delta=%d", 'right', 'user', 1);
 
   	require_once 'modules/block/block.admin.inc';
   	require_once 'modules/block/block.module';
