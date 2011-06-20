@@ -188,10 +188,10 @@ function neologism_profile_tasks(&$task, $url) {
   	drupal_execute($form_id, $form_state);
   	
   	// enable the custom block
-  	$result = db_query(
+  	db_query(
   		"insert into {blocks} (module, delta, theme, status, weight, region, cache) 
   		values ('%s', %d, '%s', %d, %d, '%s', %d)",
-  		'block', '1', 'garland', 1, -6, 'footer', BLOCK_NO_CACHE  		
+  		'block', 1, 'garland', 1, -10, 'footer', BLOCK_NO_CACHE  		
   	);
   	
   	// change the User Registration settings to 
