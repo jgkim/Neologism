@@ -411,21 +411,37 @@ function neologism_form(&$node, $form_state) {
 function neologism_validate($node, &$form) {
   // Validate namespace prefix
   // 1. Check if there is already a Neologism vocabulary with this prefix
-  $count = db_result(db_query('SELECT count(*) FROM {node} WHERE nid!=%d AND title="%s" AND type = "%s"', $node->nid, $node->prefix, NEOLOGISM_CT_VOCABULARY));
+  $count = db_result(db_query("SELECT count(*) FROM {node} WHERE nid!=%d AND title='%s' AND type = '%s'", $node->nid, $node->prefix, NEOLOGISM_CT_VOCABULARY));
   if ($count > 0) {
-    form_set_error('title', t('The prefix %prefix is already in use. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    form_set_error('prefix', t('The prefix %prefix is already in use. Please choose a different prefix.', array('%prefix' => $node->prefix)));
     return FALSE;
   }
   // 2. Check if some module has registered this path
-  $count = db_result(db_query('SELECT COUNT(*) FROM {menu_router} WHERE path="%s"', $node->prefix));
+  $count = db_result(db_query("SELECT COUNT(*) FROM {menu_router} WHERE path='%s'", $node->prefix));
   if ($count > 0) {
-    form_set_error('title', t('The path %prefix is reserved by the system. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    form_set_error('prefix', t('The path %prefix is reserved by the system. Please choose a different prefix.', array('%prefix' => $node->prefix)));
     return FALSE;
   }
   // 3. Check if some alias has registered this path
-  $src = db_result(db_query('SELECT src FROM {url_alias} WHERE dst="%s" LIMIT 1', $node->prefix));
+  $src = db_result(db_query("SELECT src FROM {url_alias} WHERE dst='%s' LIMIT 1", $node->prefix));
   if ($src && $src != 'node/' . $form['#node']->nid) {
-    form_set_error('title', t('The path %prefix is taken by other site content. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    form_set_error('prefix', t('The path %prefix is taken by other site content. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;
+  }
+  // 4. Check if there is already an external vocabulary with this prefix in the system
+  $ns = neologism_rdf_namespaces();
+  if (isset($ns[$node->prefix])) {
+    form_set_error('prefix', t('There is already an external vocabulary using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;  
+  }
+  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix = "%s"', $node->prefix));
+  if ($count > 0) {
+    form_set_error('prefix', t('There is already classes that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+    return FALSE;
+  }
+  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix = "%s"', $node->prefix));
+  if ($count > 0) {
+    form_set_error('prefix', t('There is already properties that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
     return FALSE;
   }
   
