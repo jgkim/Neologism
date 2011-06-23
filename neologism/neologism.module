@@ -445,7 +445,6 @@ function neologism_validate($node, &$form) {
     }
   }
   
-  
   // validate the additional custom RDF
   if (!empty($node->custom_rdf)) {
   	include_once(drupal_get_path('module', 'rdf') . '/vendor/arc/ARC2.php');
@@ -1226,8 +1225,9 @@ function neologism_generate_layout($node) {
  * Write the layout of a vocabulary
  */
 function neologism_write_layout($node, $layout) {
-  db_query("update {neologism_vocabulary} set diagram = '%s' where nid = %d", $layout, $node->nid);
+  $result = db_query("update {neologism_vocabulary} set diagram = '%s' where nid = %d", $layout, $node->nid);
   content_clear_type_cache();
+  return $result;
 }
 
 //---------------------------------------------------------------------------------------------------
