@@ -131,6 +131,10 @@ Drupal.neologism.checkTreeViewsHeight = function(object) {
   
   if (typeof Neologism.ctpHeight !== 'undefined' && typeof Neologism.ptpHeight !== 'undefined') {
 	  var maxHeight = (Neologism.ctpHeight > Neologism.ptpHeight) ? Neologism.ctpHeight : Neologism.ptpHeight; 
+	  if (maxHeight > 500) {
+		  // max height for both treeviews
+		  maxHeight = 473;
+	  }
 	  $('#class-tree .x-panel-body').css({height:maxHeight});
 	  $('#object-property-tree .x-panel-body').css({height:maxHeight});
   }

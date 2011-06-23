@@ -34,15 +34,16 @@ $(document).ready( function() {
 			    var treePanel = node.getOwnerTree();
 				Neologism.TermsTree.traverse(node, function(currentNode, path) {
 					var pathToExpand = path.slice();
+					if (pathToExpand.length > treePanel.maxPathDepth+1) {
+						return;
+					}
   					pathToExpand.pop();
 					var path = pathToExpand.join('/');
-					
 					if( !Neologism.util.in_array(path, pathsToExpand)) {
 						pathsToExpand.push(path);
 					}
 					lastNodeName = currentNode.text; 
 				}, true);
-				
     		}
     	}
     });
@@ -53,7 +54,7 @@ $(document).ready( function() {
         el               : "class-tree",
         loader           : treeLoader,
         root             : rootNode,
-        rootVisible      : false
+        rootVisible      : false,
     });
     
     Neologism.classesTreeViewPanel.render();

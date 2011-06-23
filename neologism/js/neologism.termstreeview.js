@@ -1,7 +1,8 @@
 Neologism.TermsTreeView = Ext.extend(Ext.tree.TreePanel, {
-      height           : 400,
+      height           : 500,
       autoHeight       : true,
       rootVisible      : false,
+      maxPathDepth	   : 3,
 
 	  initComponent: function() {
 	    // Called during component initialization
