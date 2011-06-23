@@ -303,7 +303,7 @@ function neologism_form(&$node, $form_state) {
     '#attributes' => array('style' => 'display: inline; width: auto'),
     '#weight' => -10,
   
-    // neologism properties
+    // neologism properties for client validation
     '#neologism_validation_methods' => array('idValidator'),
   	'#neologism_validation_message' =>t('Please enter a valid Vocabulary ID. It should start with letters or underscore. Only lowercase letters, numbers, dash and underscore. Max 10 characters.'),
   	//'#minlength' => 3, // Neologism validation rule property
@@ -409,6 +409,16 @@ function neologism_form(&$node, $form_state) {
  * Implementation of hook_validate().
  */
 function neologism_validate($node, &$form) {
+  // as cooment #24 at http://drupal.org/node/216064#pift-results-216064 says
+  // Fixes need to be done first on the version in development (currently, D7), 
+  // then only after that is complete, possibly backported to an already 
+  // released version (e.g., D6).
+  // the solution took for the validate callback execute when the Delete button
+  // in clicked is just an if condition.
+  if (isset($form['nid']['#post']['op']) && $form['nid']['#post']['op'] == t('Delete')) {
+    return;
+  }
+  
   // Validate namespace prefix
   // 1. Check if there is already a Neologism vocabulary with this prefix
   $count = db_result(db_query("SELECT count(*) FROM {node} WHERE nid!=%d AND title='%s' AND type = '%s'", $node->nid, $node->prefix, NEOLOGISM_CT_VOCABULARY));
@@ -511,18 +521,25 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
     // hidde the preview button
     $form['buttons']['preview']['#access'] = FALSE;
     
+    // get the persistent variable to check if the modules to handle client validation are enabled.
+    $client_validation_enabled = variable_get('neologism_client_validation_enabled', FALSE);
     // include the client validation submodule
-    if (variable_get('neologism_client_validation_enabled', FALSE)) {
+    if ($client_validation_enabled) {
       $form['#after_build'][] = 'neologism_form_after_build';
-      
-      if (isset($form['#node']->nid)) { 
-        // add the server side flexible validation for prefix Id.
-        $form['prefix']['#element_validate'] = array('_neologism_validate_id');
+    }
+    
+    // make validations flexible if some old Neologism Id is found
+    if (isset($form['#node']->nid)) {
+      if (!_neologism_is_valid_id($form['#node']->prefix, TRUE)) {
+        $form['prefix']['#element_validate'] = array('_neologism_validate_id'); 
         
-        // make flexible to introduce also upercase letters the field 'prefix' in edition mode
-        $form['prefix']['#neologism_validation_methods'] = array('idFlexibleValidator');
+        if ($client_validation_enabled) {
+          $form['prefix']['#neologism_validation_methods'] = array('idFlexibleValidator'); 
+        }
       }
     }
+    
+    
   }
   else if ($form_id == 'neo_property_node_form') {
     module_load_include('inc', 'neologism', 'neologism.nodeforms');
