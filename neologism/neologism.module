@@ -107,7 +107,7 @@ function neologism_access($op, $node, $account) {
   // Currently, 'edit vocabularies' means you can do absolutely anything to any vocabulary.
   if ($op == 'create' || $op == 'update' || $op == 'delete') {
     return user_access('edit vocabularies', $account);
-  }
+	}
 } 
 
 /**
@@ -790,7 +790,7 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
   if ($node->type != NEOLOGISM_CT_CLASS && $node->type != NEOLOGISM_CT_PROPERTY) {
     return;
   }
-
+	
   switch ($op) {
     case 'load':
       // Load the vocabulary of the class/property.
@@ -822,16 +822,28 @@ function neologism_nodeapi(&$node, $op, $teaser, $page) {
         drupal_set_breadcrumb(_neologism_build_breadcrumb($node->vocabulary->path, $node->vocabulary->title));
       }
       break;
-
+			
     case 'update':
       // Update the term in the evoc repository
       $term = _neologism_make_evoc_term_array($node);
       
       if ($node->type == NEOLOGISM_CT_CLASS) {
         evoc_update_class($term);  
+				if ($node->original_id != $node->title) {
+					// if some class change its Id, properties should be checked for possible update on its
+					// domains or ranges.  	
+					$previous_qname = $node->qname;
+					$new_qname 			= $node->vocabulary->prefix . ':' . $node->title;
+					_neologism_update_classes_and_properties_on_class_id_changed($previous_qname, $new_qname);
+				}
       }
       else if ($node->type == NEOLOGISM_CT_PROPERTY) {
         evoc_update_property($term);
+				if ($node->original_id != $node->title) {
+					$previous_qname = $node->qname;
+					$new_qname 			= $node->vocabulary->prefix . ':' . $node->title;
+					_neologism_update_properties_on_property_id_changed($previous_qname, $new_qname);
+				}
       }
 
       // update revision date of the vocabulary
@@ -1877,4 +1889,65 @@ function _neologism_vocabulary_save(&$vocabulary) {
 
   // Clear the page and block caches.
   //cache_clear_all();
+}
+
+/**
+ * Update evoc fields for a specific class/property node that is related to the 
+ * $previous_qname value and then the fields are updated with the new qname
+ * value.
+ * 
+ * @param $field string
+ *   A string to indentify the evoc field
+ * @param $previous_qname 
+ *   A string with the previous qname to find the relation
+ * @param $new_qname 
+ *   A string with the new qname value for the relation
+ * @return none
+ */
+function _neologism_update_evoc_field_references($field, $previous_qname, $new_qname) {
+  $sql = 'SELECT nid FROM {content_' . $field . '} WHERE ' . $field . "_evoc_term='%s'";
+  $result = db_query(db_rewrite_sql($sql), $previous_qname);
+  while ($o = db_fetch_object($result)) {
+    $node = node_load($o->nid, NULL, TRUE);
+		foreach ($node->$field as &$x) {
+	    if ($x['evoc_term'] == $previous_qname) {
+	      $x['evoc_term'] = $new_qname;
+	    }
+  	}	
+    node_save($node);
+  }
+}
+
+/**
+ * Invoke the update evoc field references.
+ * 
+ * This function is used to update the evoc fields that contain dependencies
+ * related to a class that has changed its qname value.
+ * 
+ * @param $previous_qname
+ *   A string with the previous class/property qname value
+ * @param $new_qname
+ *   A string with the new class/property qname value
+ */
+function _neologism_update_classes_and_properties_on_class_id_changed($previous_qname, $new_qname) {
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_SUPERCLASSES, $previous_qname, $new_qname);
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_DISJOINTWITH, $previous_qname, $new_qname);
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_DOMAINS, $previous_qname, $new_qname);
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_RANGES, $previous_qname, $new_qname);
+}
+
+/**
+ * Invoke the update evoc field references.
+ * 
+ * This function is used to update the evoc fields that contain dependencies
+ * related to a property that has changed its qname value.
+ * 
+ * @param $previous_qname
+ *   A string with the previous class/property qname value
+ * @param $new_qname
+ *   A string with the new class/property qname value
+ */
+function _neologism_update_properties_on_property_id_changed($previous_qname, $new_qname) {
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_SUPERPROPERTIES, $previous_qname, $new_qname);
+	_neologism_update_evoc_field_references(EVOC_FIELDNAME_INVERSES, $previous_qname, $new_qname);
 }
