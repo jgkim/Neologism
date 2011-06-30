@@ -68,8 +68,9 @@ function neologism_import_form($form_state) {
       '#type' => 'textfield',
       '#title' => t('Namespace prefix'),
       '#required' => TRUE,
-      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
+      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use. Max 10 characters.'),
       '#size' => 10,
+      '#maxlength' => 10,
       '#default_value' => $form_state['values']['ns_prefix']
     );
     
@@ -127,8 +128,9 @@ function neologism_import_form($form_state) {
       '#type' => 'textfield',
       '#title' => t('Namespace prefix'),
       '#required' => TRUE,
-      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use.'),
+      '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. This will be used as both the ID and the namespace prefix for the imported vocabulary. It must be a prefix that is not yet in use. Max 10 characters.'),
       '#size' => 10,
+      '#maxlength' => 10,
       '#default_value' => $form_state['values']['ns_prefix']
     );
     $form['from_web'] = array(
@@ -273,7 +275,7 @@ function neologism_import_form_validate($form, &$form_state) {
       foreach ($vocabulary['ignored_ns'] as $uri => $term_count) {
         $msg .= "<li>$uri</li>";	
       }
-      $msg .= t('In orden to get a well detailed vocabulary, install all dependencies as external vocabularies in the '.l('External vocabularies', 'evoc').' section.');
+      $msg .= t('In orden to get a well detailed vocabulary, install all dependencies as external vocabularies in the '.l('External vocabularies/Add new', 'evoc/add').' section.');
       form_set_error('', $msg);
       return;
     }
