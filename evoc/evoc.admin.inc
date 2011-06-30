@@ -93,8 +93,9 @@ function evoc_add_vocabulary_form($form_state) {
     '#type' => 'textfield',
     '#title' => t('Namespace prefix'),
     '#required' => TRUE,
-    '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. It must be a prefix that is not yet in use.'),
+    '#description' => t('Examples: <i>foaf</i>, <i>dc</i>, <i>skos</i>. It must be a prefix that is not yet in use. Max 10 characters.'),
     '#size' => 10,
+    '#maxlength' => 10,
   );
   $form['ns_uri'] = array(
     '#type' => 'textfield',
