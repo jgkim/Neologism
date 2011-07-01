@@ -232,8 +232,8 @@ function neologism_regular($form_id, $element, &$js_rules) {
         }
         
         if (!empty($element['#neologism_validation_methods'])) {
-          $message = (!empty($element['#neologism_validation_message'])) ? $element['#neologism_validation_message'] : '';
-          foreach ($element['#neologism_validation_methods'] as $method) {
+          foreach ($element['#neologism_validation_methods'] as $index => $method) {
+          	$message = (isset($element['#neologism_validation_messages'][$index])) ? $element['#neologism_validation_messages'][$index] : '';
             _neologism_set_validation_method($el_name, $el_title, $method, $message, $js_rules);  
           }
         }

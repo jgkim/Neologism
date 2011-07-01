@@ -198,6 +198,11 @@ Drupal.neologism.prototype.addExtraRules = function(){
   jQuery.validator.addMethod("idFlexibleValidator", function(value, element) { 
 	return this.optional(element) || /^[a-zA-Z_]+[a-zA-Z0-9._-]*$/.test(value);
   }, jQuery.format('Please enter a valid identifier. It should start with letters or underscore. Only letters, numbers, dash and underscore. Max 10 characters.'));
+  
+  
+  jQuery.validator.addMethod("uri_ending", function(value, element) {
+  return this.optional(element) || /(\/$|#$)/.test(value);
+  }, jQuery.format("The custom namespace URI must end in \"#\"or \"/\""));
 }
 
 

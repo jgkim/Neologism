@@ -322,14 +322,18 @@ function neologism_form(&$node, $form_state) {
     '#default_value' => $node->custom_namespace ? '1' : '0',
   );
   // custom_namespace will be placed next to the Custom radio button
-  // using javascript. We just hide its title here.
+  // using javascript. We just hid^e its title here.
   $form['custom_namespace'] = array(
     '#type' => 'textfield',
     '#default_value' => $node->custom_namespace,
     '#maxlength' => 255,
+    '#required' => FALSE,
     // override stupid 'display: block; width: 95%' in node.css
     '#attributes' => array('style' => 'display: inline; width: auto'),
     '#weight' => -7,
+     // neologism properties for client validation
+    '#neologism_validation_methods' => array('url', 'uri_ending'),
+  	'#neologism_validation_messages' => array(t('Invalid namespace URI. A valid example is <i>http://xmlns.com/foaf/0.1/</i>')),
   );
 
   $form['title'] = array(
@@ -439,22 +443,23 @@ function neologism_validate($node, &$form) {
     return FALSE;
   }
   // 4. Check if there is already an external vocabulary with this prefix in the system
-  $ns = neologism_rdf_namespaces();
-  if (isset($ns[$node->prefix])) {
-    form_set_error('prefix', t('There is already an external vocabulary using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
-    return FALSE;  
-  }
-  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix = "%s"', $node->prefix));
-  if ($count > 0) {
-    form_set_error('prefix', t('There is already classes that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
-    return FALSE;
-  }
-  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix = "%s"', $node->prefix));
-  if ($count > 0) {
-    form_set_error('prefix', t('There is already properties that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
-    return FALSE;
-  }
-  
+	if (!isset($node->nid) || ($node->prefix != $node->original_prefix)) {
+	  $ns = neologism_rdf_namespaces();
+	  if (isset($ns[$node->prefix])) {
+	    form_set_error('prefix', t('There is already an external vocabulary using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+	    return FALSE;  
+	  }
+	  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_classes} WHERE prefix = "%s"', $node->prefix));
+	  if ($count > 0) {
+	    form_set_error('prefix', t('There is already classes that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+	    return FALSE;
+	  }
+	  $count = db_result(db_query('SELECT count(*) FROM {evoc_rdf_properties} WHERE prefix = "%s"', $node->prefix));
+	  if ($count > 0) {
+	    form_set_error('prefix', t('There is already properties that are using the prefix %prefix. Please choose a different prefix.', array('%prefix' => $node->prefix)));
+	    return FALSE;
+	  }
+	}
   // Validate custom namespace, if provided
   if ($node->namespace == 1) {
     if (!$node->custom_namespace) {
