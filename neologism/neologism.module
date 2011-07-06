@@ -106,7 +106,7 @@ function neologism_perm() {
 function neologism_access($op, $node, $account) {
   // Currently, 'edit vocabularies' means you can do absolutely anything to any vocabulary.
   if ($op == 'create' || $op == 'update' || $op == 'delete') {
-    return user_access('edit vocabularies', $account);
+    return (user_access('edit vocabularies', $account) && neologism_has_user_access($node, $account));
 	}
 } 
 
@@ -734,8 +734,7 @@ function neologism_link($type, $node = NULL, $teaser = FALSE) {
   $class_url_str = str_replace('_', '-', NEOLOGISM_CT_CLASS);
   $property_url_str = str_replace('_', '-', NEOLOGISM_CT_PROPERTY);
 
-  //if( $type == 'node' )
-  if ( user_access('edit vocabularies') ) {
+  if (user_access('edit vocabularies') && neologism_has_user_access($node)) {
     $qname = $vocabulary_title.':'.$node->title;
     
     if ($node->type == NEOLOGISM_CT_CLASS) {
@@ -1955,4 +1954,49 @@ function _neologism_update_classes_and_properties_on_class_id_changed($previous_
 function _neologism_update_properties_on_property_id_changed($previous_qname, $new_qname) {
 	_neologism_update_evoc_field_references(EVOC_FIELDNAME_SUPERPROPERTIES, $previous_qname, $new_qname);
 	_neologism_update_evoc_field_references(EVOC_FIELDNAME_INVERSES, $previous_qname, $new_qname);
+}
+
+/**
+ * Determine whether the user has a given privilege to a vocabulary, class or
+ * property.
+ *
+ * @param $node
+ *   The node to check for access.
+ * 
+ * @param $account
+ *   (optional) The account to check, if not given use currently logged in user.
+ * 
+ * @param $permissions 
+ *   Array of permissions, such as "administer nodes", being checked for.
+ *
+ * @return
+ *   Boolean TRUE if the current user has the requested permission.
+ *
+ */
+function neologism_has_user_access($node, $account = NULL, $permissions = NULL) {
+  global $user;
+  
+  $voc_nid = NULL;
+  if ($node->type == NEOLOGISM_CT_CLASS || $node->type == NEOLOGISM_CT_PROPERTY) {
+    $voc_nid = $node->field_vocabulary[0]['nid'] ;  
+  }
+  else if ($node->type == NEOLOGISM_CT_VOCABULARY) {
+    $voc_nid = $node->nid;  
+  }
+
+  if (!$voc_nid) {
+    return FALSE;
+  }
+  
+  if (!$account) {
+    $account = $user;    
+  }
+  
+  $result = db_query(db_rewrite_sql("SELECT * FROM {neologism_perm} WHERE nid=%d AND uid=%d"), $voc_nid, $account->uid);
+  while ($o = db_fetch_object($result)) {
+    return TRUE;
+    // do more stuff here with the field delta
+  } 
+  
+  return FALSE;
 }

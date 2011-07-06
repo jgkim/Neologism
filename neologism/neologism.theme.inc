@@ -94,7 +94,8 @@ function theme_neologism_qname($qname) {
  * Output the HTML version of the vocabulary specified as input.
  */
 function neologism_export_html($node) {
-
+  global $user;
+  
   // @D7: Replace with drupal_add_html_head_link()
   drupal_add_link(array(
     'rel' => 'alternate',
@@ -257,7 +258,7 @@ function neologism_export_html($node) {
     $base = base_path();
     $swf = $base . drupal_get_path('module','neologism').'/includes/Diagram.swf';
     $img_legend = $base . drupal_get_path('module','neologism').'/includes/legend.png';
-    $edit_mode = user_access('edit vocabularies');
+    $edit_mode = (neologism_has_user_access($node, $user, NULL) && user_access('edit vocabularies'));
     $vocabulary = $base.$node->path;
     $token = drupal_get_token();
     $width = '100%';
