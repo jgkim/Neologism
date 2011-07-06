@@ -142,57 +142,66 @@ function neologism_menu_alter(&$items) {
 function neologism_menu() {
   $items = array();
   $items['node/%neologism_vocabulary/add-class'] = array(
-      'title' => 'Add new class',
-      'page callback' => 'neologism_add_term',
-      'page arguments' => array(NEOLOGISM_CT_CLASS, 1),
-      'access callback' => 'node_access',
-      'access arguments' => array('update', 1),
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 10,
+    'title' => 'Add new class',
+    'page callback' => 'neologism_add_term',
+    'page arguments' => array(NEOLOGISM_CT_CLASS, 1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 10,
   );
   $items['node/%neologism_vocabulary/add-property'] = array(
-      'title' => 'Add new property',
-      'page callback' => 'neologism_add_term',
-      'page arguments' => array(NEOLOGISM_CT_PROPERTY, 1),
-      'access callback' => 'node_access',
-      'access arguments' => array('update', 1),
-      'type' => MENU_LOCAL_TASK,
-      'weight' => 11,
+    'title' => 'Add new property',
+    'page callback' => 'neologism_add_term',
+    'page arguments' => array(NEOLOGISM_CT_PROPERTY, 1),
+    'access callback' => 'node_access',
+    'access arguments' => array('update', 1),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 11,
+  );
+  $items['node/%neologism_vocabulary/diagram'] = array(
+    'title' => 'Overview Diagram',
+    'page callback' => 'neologism_overview_diagram',
+    'page arguments' => array(1),
+    'access arguments' => array('update', 1),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'neologism.admin.inc',
+    'weight' => 12,
   );
   $items['node/%neologism_vocabulary/html'] = array(
-      'page callback' => 'neologism_export_html',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'neologism_export_html',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/rdf'] = array(
-      'page callback' => 'neologism_export_rdfxml',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'neologism_export_rdfxml',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/ttl'] = array(
-      'page callback' => 'neologism_export_turtle',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'neologism_export_turtle',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/xml'] = array(
-      'page callback' => 'neologism_export_xml',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'neologism_export_xml',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_CALLBACK,
   );
   $items['node/%neologism_vocabulary/layout'] = array(
-      'page callback' => 'neologism_diagram_layout',
-      'page arguments' => array(1),
-      'access callback' => 'node_access',
-      'access arguments' => array('view', 1),
-      'type' => MENU_CALLBACK,
+    'page callback' => 'neologism_diagram_layout',
+    'page arguments' => array(1),
+    'access callback' => 'node_access',
+    'access arguments' => array('view', 1),
+    'type' => MENU_CALLBACK,
   );
   $items['neologism/import'] = array(
     'title' => 'Import vocabulary',
@@ -394,6 +403,20 @@ function neologism_form(&$node, $form_state) {
     '#type' => 'textarea',
     '#default_value' => $node->custom_rdf,
   );
+  
+  $form['overview_diagram'] = array(
+    '#type' => 'fieldset', 
+    '#title' => t('Overview diagram'), 
+    '#collapsible' => TRUE, 
+    '#collapsed' => TRUE,
+    '#description' => t(''),
+    '#weight' => 4,
+  );
+  $form['overview_diagram']['enabled_diagram'] = array(
+    '#type' => 'checkbox', 
+    '#title' => t('Show overview diagram'),
+    '#default_value' => $node->enabled_diagram,
+  );
 
   // Pass some original values to the update/insert handler
   // so we can compare against them later
@@ -563,7 +586,8 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 function neologism_insert($node) {
 
   // Insert extra fields for vocabulary nodes into DB
-  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, diagram, custom_rdf) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->diagram, $node->custom_rdf);
+  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s')", 
+    $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram);
 
   // If no author, force current user as author
   global $user;
@@ -615,7 +639,8 @@ function neologism_update($node) {
   }
 
   // Save vocabulary fields to DB
-  db_query("UPDATE {neologism_vocabulary} SET prefix='%s', custom_namespace='%s', abstract='%s', diagram='%s', custom_rdf='%s' WHERE nid=%d", $node->prefix, $node->custom_namespace, $node->abstract, $node->diagram, $node->custom_rdf, $node->nid);
+  db_query("UPDATE {neologism_vocabulary} SET prefix='%s', custom_namespace='%s', abstract='%s', custom_rdf='%s', enabled_diagram='%s' WHERE nid=%d", 
+    $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->nid);
 
   // If no author, force current user as author
   global $user;

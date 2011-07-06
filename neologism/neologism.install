@@ -60,6 +60,7 @@ function neologism_schema() {
         'abstract' => array('type' => 'text', 'not null' => TRUE),
         'diagram' => array('type' => 'text', 'not null' => TRUE),
         'custom_rdf' => array('type' => 'text', 'not null' => TRUE),
+        'enabled_diagram' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1)
       ),
       'indexes' => array('neologism_vocabulary_prefix' => array('prefix')),
       'primary key' => array('nid'),
@@ -133,6 +134,17 @@ function neologism_update_6201() {
 
   content_clear_type_cache();
 
+  return $result;
+}
+
+/**
+ * Update to Neologism 0.5.3
+ * @return 
+ */
+function neologism_update_6202() {
+  $result = array();
+  $schema = neologism_schema();
+  db_add_field($result, 'neologism_vocabulary', 'enabled_diagram', $schema['neologism_vocabulary']['fields']['enabled_diagram']);
   return $result;
 }
 
