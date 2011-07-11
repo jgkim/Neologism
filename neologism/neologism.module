@@ -586,7 +586,7 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
 function neologism_insert($node) {
 
   // Insert extra fields for vocabulary nodes into DB
-  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram) VALUES (%d, '%s', '%s', '%s', '%s', '%s', '%s')", 
+  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", 
     $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram);
 
   // If no author, force current user as author
