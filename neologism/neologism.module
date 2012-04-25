@@ -1051,7 +1051,8 @@ function &neologism_get_rdf_model($node) {
   $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
   $rdf->triple_literal($doc, "dc:title", $node->title);
   $rdf->triple_literal($doc, "dc:description", $node->abstract);
-  $rdf->triple_literal($doc, "dc:modified", date('Y-m-d'), 'xsd:date');
+  
+  $rdf->triple_literal($doc, "dc:modified", date('Y-m-d', $node->changed), 'xsd:date');
   $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
   $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->prefix);
   $rdf->triple_uri($doc, "foaf:page", $doc . '.html');
