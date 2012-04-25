@@ -35,7 +35,14 @@ function _neologism_form_alter_term(&$form, &$form_state, $class_or_property) {
 
   // Customize prefix field
   $form['title']['#title'] = t(ucwords($class_or_property) . ' URI');
-  $form['title']['#description'] = t('Should start with an uppercase letter and use CamelCase capitalization.');
+  switch ($class_or_property) {
+    case 'class' :
+      $form['title']['#description'] = t('Should start with an uppercase letter and use CamelCase capitalization.');
+      break;
+    case 'property' :
+      $form['title']['#description'] = t('Should start with an lowercase letter and use CamelCase capitalization.');
+      break;
+  }
   $form['title']['#size'] = 20;
   $form['title']['#field_prefix'] = $current_voc->namespace_uri;
   $form['title']['#element_validate'][] = '_neologism_validate_id';
