@@ -21,6 +21,12 @@ function neologism_install() {
   _neologism_install_profile_field('Organisation homepage', 'affiliation_homepage', 'textfield', 4,
       'Your organisation\'s homepage. Must be a full URI (i.e., starting with <i>http://</i>).');
 
+  db_create_table($result, 'neologism_licenses', $schema['neologism_licenses']);
+  $licenses = _neologism_get_default_licenses();
+  foreach ($licenses as $license) {
+    update_sql("INSERT INTO {neologism_licenses} (title, description, uri) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."')");
+  }
+
   drupal_set_message(t('Neologism successfully installed.'));
 }
 
@@ -60,7 +66,8 @@ function neologism_schema() {
         'abstract' => array('type' => 'text', 'not null' => TRUE),
         'diagram' => array('type' => 'text', 'not null' => TRUE),
         'custom_rdf' => array('type' => 'text', 'not null' => TRUE),
-        'enabled_diagram' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1)
+        'enabled_diagram' => array('type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1),
+        'licenseid' => array('type' => 'int', 'not null' => FALSE)
       ),
       'indexes' => array('neologism_vocabulary_prefix' => array('prefix')),
       'primary key' => array('nid'),
@@ -74,6 +81,16 @@ function neologism_schema() {
       ),
       'primary key' => array('nid', 'uid'),
     ),
+    'neologism_licenses' => array(
+      'description' => 'List of licenses supported by Neologism.',
+      'fields' => array(
+        'lid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
+        'title' => array('type' => 'text', 'length' => '50', 'not null' => TRUE),
+        'description' => array('type' => 'text', 'length' => '255', 'not null' => FALSE),
+        'uri' => array('type' => 'varchar', 'length' => '2083', 'not null' => TRUE)
+      ),
+      'primary key' => array('lid'),
+    )
   );
 }
 
@@ -145,6 +162,15 @@ function neologism_update_6202() {
   $result = array();
   $schema = neologism_schema();
   db_add_field($result, 'neologism_vocabulary', 'enabled_diagram', $schema['neologism_vocabulary']['fields']['enabled_diagram']);
+  db_add_field($result, 'neologism_vocabulary', 'licenseid', $schema['neologism_vocabulary']['fields']['licenseid']);
+
+  // covering the Issue 185:  Licensing for vocabularies
+  db_create_table($result, 'neologism_licenses', $schema['neologism_licenses']);
+  $licenses = _neologism_get_default_licenses();
+  foreach ($licenses as $license) {
+    update_sql("INSERT INTO {neologism_licenses} (title, description, uri) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."')");
+  }
+
   return $result;
 }
 
@@ -204,4 +230,24 @@ function _neologism_uninstall_profile_field($name) {
   $form = array();
   $form['values']['confirm'] = 1;
   drupal_execute('profile_field_delete', $form, $fid);
+}
+
+function _neologism_get_default_licenses() {
+  return array(
+    array(
+      'title' => 'Creative Commons Attribution (CC BY)',
+      'description' => '',
+      'uri' => 'http://creativecommons.org/licenses/by/3.0/'
+    ),
+    array(
+      'title' => 'Creative Commons Attribution-ShareAlike (CC BY-SA)',
+      'description' => '',
+      'uri' => 'http://creativecommons.org/licenses/by-sa/3.0/'
+    ),
+    array(
+      'title' => 'Creative Commons public domain waiver (CC0)',
+      'description' => '',
+      'uri' => 'http://creativecommons.org/publicdomain/zero/1.0/'
+    ),
+  );
 }

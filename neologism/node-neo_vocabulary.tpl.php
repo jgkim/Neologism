@@ -48,6 +48,7 @@
       No classes or properties defined yet.
     <?php } ?>
   </div>
+  
 </div>
 
 <div class="clear-block neologism_terms_links">

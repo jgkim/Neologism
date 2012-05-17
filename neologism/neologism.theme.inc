@@ -340,6 +340,14 @@ function neologism_export_html($node) {
   }
   $output .= '</div>';
  
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+    $output .= '
+      <div class="license">
+        <p>&quot;This vocabulary documentation is published under the '.l($license->title, $license->uri, array('attributes' => array('target' => '_blank'))).' license.&quot;</p>
+      </div>';
+  }
+ 
   $output .= '</div>';
   
   return $output;

@@ -919,3 +919,8 @@ html[xmlns] .clearfix {
 * html .clearfix {
 	height: 1%;
 }
+
+.license {
+	padding-top: 20px;
+	text-align: center;
+}

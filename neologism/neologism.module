@@ -378,6 +378,15 @@ function neologism_form(&$node, $form_state) {
     '#attributes' => array('style' => 'min-width: 20em'),
     '#weight' => -3,
   );
+  
+  $form['license'] = array(
+    '#type' => 'select',
+    '#multiple' => FALSE,
+    '#title' => t('License'),
+    '#default_value' => $node->licenseid,
+    '#options' => _neologism_licenses_get_options(),
+    '#weight' => -2,
+  );
 
   $form['abstract'] = array(
     '#title' => t('Abstract'),
@@ -567,7 +576,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
       }
     }
     
-    
   }
   else if ($form_id == 'neo_property_node_form') {
     module_load_include('inc', 'neologism', 'neologism.nodeforms');
@@ -585,9 +593,10 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
  */
 function neologism_insert($node) {
 
+  dpr($node);
   // Insert extra fields for vocabulary nodes into DB
-  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", 
-    $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram);
+  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram, licenseid) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", 
+    $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->licenseid);
 
   // If no author, force current user as author
   global $user;
@@ -639,8 +648,8 @@ function neologism_update($node) {
   }
 
   // Save vocabulary fields to DB
-  db_query("UPDATE {neologism_vocabulary} SET prefix='%s', custom_namespace='%s', abstract='%s', custom_rdf='%s', enabled_diagram='%s' WHERE nid=%d", 
-    $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->nid);
+  db_query("UPDATE {neologism_vocabulary} SET prefix='%s', custom_namespace='%s', abstract='%s', custom_rdf='%s', enabled_diagram='%s', licenseid=%d WHERE nid=%d", 
+    $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->license, $node->nid);
 
   // If no author, force current user as author
   global $user;
@@ -1051,6 +1060,11 @@ function &neologism_get_rdf_model($node) {
   $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
   $rdf->triple_literal($doc, "dc:title", $node->title);
   $rdf->triple_literal($doc, "dc:description", $node->abstract);
+  
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+    $rdf->triple_literal($doc, "dc:license", $license->uri);
+  }
   
   $rdf->triple_literal($doc, "dc:modified", date('Y-m-d', $node->changed), 'xsd:date');
   $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
@@ -2025,4 +2039,38 @@ function neologism_has_user_access($node, $account = NULL, $permissions = NULL) 
   } 
   
   return FALSE;
+}
+
+/**
+ * Load all licenses in the neologism_licenses table.
+ *
+ * @return
+ *   An array containing the association id => title.
+ */
+function _neologism_licenses_get_options() {
+  $options = array();
+
+  $result = db_query('SELECT * FROM {neologism_licenses}');
+  if (!$result) {
+    return FALSE;
+  }
+    
+  $options[NULL] = 'None';
+  while ($license = db_fetch_object($result)) {
+    $options[$license->lid] = $license->title; 
+  }
+  
+  return $options;
+}
+
+/**
+ * Load the license by lid.
+ *
+ * @param $lid
+ *   The identifying license id.
+ * @return
+ *   The license object.
+ */
+function neologism_license_load($lid) {
+  return db_fetch_object(db_query('SELECT * FROM {neologism_licenses} WHERE lid = %d', $lid));
 }
