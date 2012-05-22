@@ -920,6 +920,20 @@ html[xmlns] .clearfix {
 	height: 1%;
 }
 
+.heading-label {
+  margin: 10px 0px 10px 0px;
+}
+
+.heading-label .heading-value {
+	margin: 0px 0px 0px 20px; 
+}
+
+.heading-label .heading-value img {
+	border: none;
+	vertical-align: baseline;
+	margin: 0px 5px 0px 0px; 
+}
+
 .license {
 	padding-top: 20px;
 	text-align: center;

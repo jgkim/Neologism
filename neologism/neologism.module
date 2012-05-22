@@ -1063,7 +1063,7 @@ function &neologism_get_rdf_model($node) {
   
   if ($node->licenseid) {
     $license = neologism_license_load($node->licenseid);
-    $rdf->triple_literal($doc, "dc:license", $license->uri);
+    $rdf->triple_uri($doc, "dc:license", $license->uri);
   }
   
   $rdf->triple_literal($doc, "dc:modified", date('Y-m-d', $node->changed), 'xsd:date');
@@ -2055,7 +2055,7 @@ function _neologism_licenses_get_options() {
     return FALSE;
   }
     
-  $options[NULL] = 'None';
+  $options[NULL] = 'Not specified';
   while ($license = db_fetch_object($result)) {
     $options[$license->lid] = $license->title; 
   }

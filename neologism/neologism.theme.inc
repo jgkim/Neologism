@@ -113,9 +113,9 @@ function neologism_export_html($node) {
 
   $output = '<div class="vocabulary-view">';
   
-  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/rdf_w3c_icon.48.gif', t('RDF/XML version of this vocabulary.'), t('RDF/XML version of this vocabulary.'));
+  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/rdf-xml-40.png', t('RDF/XML version of this vocabulary.'), t('RDF/XML version of this vocabulary.'));
   $link = l($image, $node->path.'.rdf', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
-  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/turtle_icon_32x35.jpg', t('Turtle version of this vocabulary.'), t('Turtle version of this vocabulary.'));
+  $image = theme('image', drupal_get_path('module', 'neologism') .'/images/icons/turtle-40.png', t('Turtle version of this vocabulary.'), t('Turtle version of this vocabulary.'));
   $link2 = l($image, $node->path.'.ttl', array('html' => TRUE, 'attributes' => Array('class' => 'icon')));
   $output .= '<div id="icons">'.$link.'&nbsp;'.$link2.'</div>';
   
@@ -125,6 +125,7 @@ function neologism_export_html($node) {
   list($properties, $array_superproperties, $array_inverse_properties, $array_class_usages) = _neologism_get_all_properties($node, TRUE, TRUE, TRUE);
   usort($properties, '_neologism_cmp_2array_alphabetically');
   
+  // Authors
   $html = ''; $author_count = 0;
   foreach($node->authors as $uid) {
     $author_count++;
@@ -152,9 +153,30 @@ function neologism_export_html($node) {
     $output .= '<div id="authors" ><h3>'.($author_count == 1 ? t('Author') : t('Authors')).':</h3>' . $html . '</div>';
   }
 
+  // Last update
   $output .= '<div id="last-update" ><h3>Last update:</h3><div id="last-update-value">'.format_date($node->changed, 'custom', 'd F Y').'</div></div>';
   
+  // Namespace URI
   $output .= '<div id="namespace"><h3>Namespace URI:</h3> <div id="namespace-value">'.$node->namespace_uri.'</div></div>';
+
+  // License
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+    $logo = theme('image', drupal_get_path('module', 'neologism') .'/images/licenses/'.$license->filename, t(''), t(''), array('width'=>'88', 'height' => '31'), FALSE);
+    
+    $output .= '
+      <div class="heading-label">
+        <h3>'.t('License').':</h3>
+        <div class="heading-value">'
+          .$logo.
+          '<span>'.l($license->title, $license->uri, 
+            array('attributes' => 
+              array('target' => '_blank', 'title' => t('Follow this link for a human-readable summary of the License Deed.')))).
+          '</span>
+        </div>
+      </div>';
+  }
+
 
   // Abstract
   if ($node->abstract) {
@@ -338,18 +360,8 @@ function neologism_export_html($node) {
       $output .= node_view($loaded_node, TRUE, FALSE, TRUE);
     }
   }
-  $output .= '</div>';
+  $output .= '</div></div>';
  
-  if ($node->licenseid) {
-    $license = neologism_license_load($node->licenseid);
-    $output .= '
-      <div class="license">
-        <p>&quot;This vocabulary documentation is published under the '.l($license->title, $license->uri, array('attributes' => array('target' => '_blank'))).' license.&quot;</p>
-      </div>';
-  }
- 
-  $output .= '</div>';
-  
   return $output;
 }
 

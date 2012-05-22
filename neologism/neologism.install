@@ -87,7 +87,8 @@ function neologism_schema() {
         'lid' => array('type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE),
         'title' => array('type' => 'text', 'length' => '50', 'not null' => TRUE),
         'description' => array('type' => 'text', 'length' => '255', 'not null' => FALSE),
-        'uri' => array('type' => 'varchar', 'length' => '2083', 'not null' => TRUE)
+        'uri' => array('type' => 'varchar', 'length' => '2083', 'not null' => TRUE),
+        'filename' => array('type' => 'varchar', 'length' => '255', 'not null' => TRUE)
       ),
       'primary key' => array('lid'),
     )
@@ -168,7 +169,7 @@ function neologism_update_6202() {
   db_create_table($result, 'neologism_licenses', $schema['neologism_licenses']);
   $licenses = _neologism_get_default_licenses();
   foreach ($licenses as $license) {
-    update_sql("INSERT INTO {neologism_licenses} (title, description, uri) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."')");
+    update_sql("INSERT INTO {neologism_licenses} (title, description, uri, filename) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."', '".$license['filename']."')");
   }
 
   return $result;
@@ -237,17 +238,20 @@ function _neologism_get_default_licenses() {
     array(
       'title' => 'Creative Commons Attribution (CC BY)',
       'description' => '',
-      'uri' => 'http://creativecommons.org/licenses/by/3.0/'
+      'uri' => 'http://creativecommons.org/licenses/by/3.0/',
+      'filename' => 'by.png'
     ),
     array(
       'title' => 'Creative Commons Attribution-ShareAlike (CC BY-SA)',
       'description' => '',
-      'uri' => 'http://creativecommons.org/licenses/by-sa/3.0/'
+      'uri' => 'http://creativecommons.org/licenses/by-sa/3.0/',
+      'filename' => 'by-sa.png'
     ),
     array(
       'title' => 'Creative Commons public domain waiver (CC0)',
       'description' => '',
-      'uri' => 'http://creativecommons.org/publicdomain/zero/1.0/'
+      'uri' => 'http://creativecommons.org/publicdomain/zero/1.0/',
+      'filename' => 'cc-zero.png'
     ),
   );
 }
