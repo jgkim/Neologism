@@ -167,9 +167,11 @@ function neologism_update_6202() {
 
   // covering the Issue 185:  Licensing for vocabularies
   db_create_table($result, 'neologism_licenses', $schema['neologism_licenses']);
-  $licenses = _neologism_get_default_licenses();
-  foreach ($licenses as $license) {
-    update_sql("INSERT INTO {neologism_licenses} (title, description, uri, filename) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."', '".$license['filename']."')");
+  if ($result['success']) {
+    $licenses = _neologism_get_default_licenses();
+    foreach ($licenses as $license) {
+      update_sql("INSERT INTO {neologism_licenses} (title, description, uri, filename) VALUES ('".$license['title']."', '".$license['description']."', '".$license['uri']."', '".$license['filename']."')");
+    }
   }
 
   return $result;
