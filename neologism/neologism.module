@@ -163,6 +163,7 @@ function neologism_menu() {
     'title' => 'Overview Diagram',
     'page callback' => 'neologism_overview_diagram',
     'page arguments' => array(1),
+    'access callback' => 'node_access',
     'access arguments' => array('update', 1),
     'type' => MENU_LOCAL_TASK,
     'file' => 'neologism.admin.inc',
