@@ -594,7 +594,6 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
  */
 function neologism_insert($node) {
 
-  dpr($node);
   // Insert extra fields for vocabulary nodes into DB
   db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram, licenseid) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", 
     $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->licenseid);
@@ -1149,6 +1148,23 @@ function &neologism_get_rdf_model($node) {
   return $rdf;
 }
 
+
+/**
+ * Output the RDF/XML version of the vocabulary specified as input
+ */
+function neologism_export_rdfxml($node) {
+    $rdf = neologism_get_rdf_model($node);
+    $rdf->write_rdfxml();
+}
+
+/**
+ * Output the Turtle version of the vocabulary specified as input
+ */
+function neologism_export_turtle($node) {
+    $rdf = neologism_get_rdf_model($node);
+    $rdf->write_turtle();
+}
+
 /**
  * Output the RDF/XML version of the vocabulary specified as input
  */
@@ -1327,7 +1343,7 @@ function neologism_write_layout($node, $layout) {
  * Get all properties in a vocabulary
  */
 function _neologism_get_all_properties($node, $retrive_superproperties = FALSE, $retrive_inverses = FALSE, 
-    $retrive_objectproperty_scope_in_class = FALSE, array &$detect_namespaces = NULL) {
+  $retrive_objectproperty_scope_in_class = FALSE, array &$detect_namespaces = NULL) {
         
   $properties_resource = db_query(db_rewrite_sql("select n.nid from {content_field_vocabulary} c inner join {node} n on c.nid = n.nid where c.field_vocabulary_nid = %d and n.type = '%s'"), $node->nid, NEOLOGISM_CT_PROPERTY);
   $properties = array(); 
