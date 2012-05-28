@@ -1148,23 +1148,6 @@ function &neologism_get_rdf_model($node) {
   return $rdf;
 }
 
-
-/**
- * Output the RDF/XML version of the vocabulary specified as input
- */
-function neologism_export_rdfxml($node) {
-    $rdf = neologism_get_rdf_model($node);
-    $rdf->write_rdfxml();
-}
-
-/**
- * Output the Turtle version of the vocabulary specified as input
- */
-function neologism_export_turtle($node) {
-    $rdf = neologism_get_rdf_model($node);
-    $rdf->write_turtle();
-}
-
 /**
  * Output the RDF/XML version of the vocabulary specified as input
  */
