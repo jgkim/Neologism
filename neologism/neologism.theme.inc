@@ -317,7 +317,6 @@ function neologism_export_html($node) {
   // insert the vocabulary's dscription
   $output .= '<div id="description">'.$node->body.'</div>';
 
-
   //Display complete reference
   $output .= '<div class="reference">';
   if ($classes) {

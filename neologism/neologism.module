@@ -245,6 +245,12 @@ function neologism_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'neologism.gateway.php'
   );
+  $items['neologism/adms'] = array(
+    'title' => 'Export neologism vocabularies index',
+    'description' => 'Export neologism vocabularies in RDF using the ADMS vocabulary.',
+    'page callback' => 'neologism_export_index_in_ADMS',
+    'access arguments' => array('access content')
+  );
   return $items;
 }
 
@@ -1149,19 +1155,195 @@ function &neologism_get_rdf_model($node) {
 }
 
 /**
+ * This function return the ADMS model of the current node vocabulary
+ */
+function &neologism_get_rdf_model_in_ADMS($node) {
+  $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann',
+    'adms', 'rad', 'dcterms', 'vcard'
+  );
+  
+  // Set up model with all necessary namespaces
+  $namespaces = rdf_get_namespaces();
+  module_load_include('inc', 'neologism', 'neologism.rdfwriter');
+  $rdf = new NeologismRDFWriter();
+  foreach ($required_namespaces as $prefix) {
+    $ns = $namespaces[$prefix];
+    if (is_array($ns)) {
+      $ns = $ns[0];
+    }
+    $rdf->register_namespace($prefix, $ns);
+  }
+    
+  // export the ontology
+  _neologism_append_rdf_vocab_description_in_ADMS($rdf, $node);
+
+  list($classes) = _neologism_get_all_classes($node, FALSE, FALSE, $required_namespaces);
+  list($properties) = _neologism_get_all_properties($node, FALSE, FALSE, FALSE, $required_namespaces);
+
+  // classes
+  foreach ($classes as $class) {
+    $class_uri = $node->namespace_uri . $class["id"];
+    $rdf->triple_qname($class_uri, "rdf:type", 'rdfs:Class');
+    $rdf->triple_qname($class_uri, "rdf:type", 'owl:Class');
+    $rdf->triple_uri($class_uri, "rdfs:isDefinedBy", $doc);
+    $rdf->triple_literal($class_uri, "rdfs:label", $class["label"]);
+    $rdf->triple_literal($class_uri, "rdfs:comment", $class["comment"]);
+    $rdf->triples_qname($class_uri, "rdfs:subClassOf", $class[SUPERCLASSES]);
+    $rdf->triples_qname($class_uri, "owl:disjointWith", $class[DISJOINTS_WITH]);
+  }
+ 
+  $literal_types = array();
+  foreach (neologism_get_literal_datatype_list() as $types) {
+    $literal_types = array_merge($literal_types, $types);
+  }
+  // export all properties
+  foreach ($properties as $property) {
+    $property_uri = $node->namespace_uri . $property["id"];
+    $rdf->triple_qname($property_uri, "rdf:type", 'rdf:Property');
+    // Try to determine wether it's an Object- or DatatypeProperty
+    // @todo To determine owl:ObjectProperty, we have to make sure that none of the ranges are subclasses of rdf:Datatype or rdfs:Class or owl:Class
+    if ($property[RANGES] && !array_diff($property[RANGES], $literal_types)) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:DatatypeProperty');
+    }
+    $rdf->triple_uri($property_uri, "rdfs:isDefinedBy", $doc);
+    $rdf->triple_literal($property_uri, "rdfs:label", $property["label"]);
+    $rdf->triple_literal($property_uri, "rdfs:comment", $property["comment"]);
+    $rdf->triples_qname($property_uri, 'rdfs:domain', $property[DOMAINS]);
+    $rdf->triples_qname($property_uri, 'rdfs:range', $property[RANGES]);
+    $rdf->triples_qname($property_uri, 'rdfs:subPropertyOf', $property[SUBPROPERTYOF]);
+    if (!empty($property['isInverseFunctional'])) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:InverseFunctionalProperty');
+    }
+    if (!empty($property["isFunctional"])) {
+      $rdf->triple_qname($property_uri, 'rdf:type', 'owl:FunctionalProperty');
+    }
+    if (!empty($property[INVERSE])) {
+      $rdf->triple_qname($property_uri, 'owl:inverseOf', $property['inverse']);
+    }
+  }
+  
+  if (!empty($node->custom_rdf)) {
+    // TODO If the vocabulary's Turtle or RDF/XML is viewed, and the custom RDF field is not empty, then the 
+    // content of that field will be parsed with a Turtle parser and loaded into the model that is used to 
+    // generate the Turtle or RDF/XML output. So the additional triples will show up when the model is 
+    // rendered.
+    $rdf->merge_turtle($node->custom_rdf, url($node->path, array('absolute' => TRUE)));
+  }
+  
+  return $rdf;
+}
+
+function _neologism_append_rdf_vocab_description_in_ADMS(&$rdf, $node, $includeAuthors = TRUE) {
+  // export the ontology
+  $doc = url($node->path, array('absolute' => true));
+  $rdf->triple_qname($doc, "rdf:type", 'owl:Ontology');
+  $rdf->triple_qname($doc, "rdf:type", 'adms:SemanticAsset');
+  $rdf->triple_literal($doc, "dcterms:title", $node->title);
+  $rdf->triple_literal($doc, "dcterms:description", $node->abstract);
+
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+	$rdf->triple_literal($doc, "dc:license", $license->uri);
+  }
+
+  $rdf->triple_literal($doc, "dcterms:modified", date('Y-m-d', $node->changed), 'xsd:date');
+  $rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
+  $rdf->triple_literal($doc, "vann:preferredNamespacePrefix", $node->prefix);
+  $rdf->triple_uri($doc, "foaf:homepage", $doc . '.html');
+
+  // new triples added to the output
+  //$rdf->triple_literal($doc, "vann:preferredNamespaceUri", $node->namespace_uri);
+  $rdf->triple_literal($doc, "dcterms:created", date('Y-m-d', $node->created), 'xsd:date'); 
+
+  // retrive the first author data
+  $author = user_load(array('uid' => $node->authors[0]));
+  if ($author->profile_neologism_affiliation) {
+      $org = $doc . '#' . rawurlencode($author->profile_neologism_affiliation);
+      $rdf->triple_literal($doc, "dcterms:publisher", $org);
+  }
+
+  global $base_url;
+  $rdf->triple_uri($doc, "dcterms:partOf", $base_url);
+  $rdf->triple_uri($doc, "dcterms:type", "http://purl.org/adms/assettype/Ontology");
+  $rdf->triple_uri($doc, "dcterms:status", "http://purl.org/adms/status/UnderDevelopment");
+
+  // Distribution  http://vocab.deri.ie/scsv.rdf
+  $turtle_distrib = $doc."#ttl";
+  $rdfxml_distrib = $doc."#rdf";
+  $rdf->triple_uri($doc, "rad:distribution", $turtle_distrib);
+  $rdf->triple_uri($doc, "rad:distribution", $rdfxml_distrib);
+
+  // Distribution for ttl
+  $rdf->triple_qname($turtle_distrib, "rdf:type", "adms:SemanticDistribution");
+  $rdf->triple_uri($turtle_distrib, "dcterms:FileFormat", "");
+  $rdf->triple_literal($turtle_distrib, "adms:accessURL" , $doc.'.ttl');
+  $rdf->triple_uri($turtle_distrib, "adms:status", "http://purl.org/adms/status/Completed");
+
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+    $rdf->triple_url($turtle_distrib, "dcterms:license", $license->uri);
+  }
+
+  // Distribution for rdf
+  $rdf->triple_qname($rdfxml_distrib, "rdf:type", "adms:SemanticDistribution");
+  $rdf->triple_uri($rdfxml_distrib, "dcterms:FileFormat", "");
+  $rdf->triple_literal($rdfxml_distrib, "adms:accessURL" , $doc.'.rdf');
+  $rdf->triple_uri($rdfxml_distrib, "adms:status", "http://purl.org/adms/status/Completed");
+
+  if ($node->licenseid) {
+    $license = neologism_license_load($node->licenseid);
+    $rdf->triple_url($rdfxml_distrib, "dcterms:license", $license->uri);
+  }
+
+  // authors and affiliations
+  if ($includeAuthors) {
+    foreach ($node->authors as $uid) {
+      $author = user_load(array('uid' => $uid));
+      $person = $doc . '#' . rawurlencode($author->name);
+      $rdf->triple_uri($doc, "dc:creator", $person);
+      $rdf->triple_qname($person, "rdf:type", 'foaf:Person');
+      if ($author->profile_neologism_fullname) {
+        $rdf->triple_literal($person, "foaf:name", $author->profile_neologism_fullname);
+      } else {
+        $rdf->triple_literal($person, "foaf:nick", $author->name);
+      }
+      $rdf->triple_uri($person, "foaf:homepage", $author->profile_neologism_homepage);
+      if ($author->profile_neologism_show_email) {
+        $rdf->triple_uri($person, "foaf:mbox", "mailto:" . $author->mail);
+      }
+      if ($author->profile_neologism_affiliation) {
+        $org = $doc . '#' . rawurlencode($author->profile_neologism_affiliation);
+        //$rdf->triple_qname($org, 'rdf:type', 'foaf:Organization');
+        $rdf->triple_qname($org, 'rdf:type', 'dcterms:Agent');
+
+        $rdf->triple_uri($org, 'foaf:member', $person);
+        $rdf->triple_literal($org, 'foaf:name', $author->profile_neologism_affiliation);
+        $rdf->triple_uri($org, 'foaf:homepage', $author->profile_neologism_affiliation_homepage);
+      }
+    }
+  }
+}
+
+
+/**
  * Output the RDF/XML version of the vocabulary specified as input
  */
 function neologism_export_rdfxml($node) {
-    $rdf = neologism_get_rdf_model($node);
-    $rdf->write_rdfxml();
+  // The next line has been commented because Neologism has been
+  // changed from dc vocabulary to represent vocabularies to 
+  // adms that is more general vocabulary to represent vocabularies.
+  //$rdf = neologism_get_rdf_model($node);
+  $rdf = neologism_get_rdf_model_in_ADMS($node);
+  $rdf->write_rdfxml();
 }
 
 /**
  * Output the Turtle version of the vocabulary specified as input
  */
 function neologism_export_turtle($node) {
-    $rdf = neologism_get_rdf_model($node);
-    $rdf->write_turtle();
+  //$rdf = neologism_get_rdf_model($node);
+  $rdf = neologism_get_rdf_model_in_ADMS($node);
+  $rdf->write_turtle();
 }
 
 /**
@@ -2073,4 +2255,57 @@ function _neologism_licenses_get_options() {
  */
 function neologism_license_load($lid) {
   return db_fetch_object(db_query('SELECT * FROM {neologism_licenses} WHERE lid = %d', $lid));
+}
+
+/**
+ * Export the index of vocabularies in the current Neologism instance in
+ * 'application/rdf+xml' content type from a RDF model using the ADMS vocabulary.
+ *
+ * @param none
+ * @return none
+ */
+function neologism_export_index_in_ADMS() {
+  global $conf, $base_url;
+
+  $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann',
+    'adms', 'rad', 'dcterms', 'vcard'
+  );
+
+  // Set up model with all necessary namespaces
+  $namespaces = rdf_get_namespaces();
+  module_load_include('inc', 'neologism', 'neologism.rdfwriter');
+  $rdf = new NeologismRDFWriter();
+  foreach ($required_namespaces as $prefix) {
+    $ns = $namespaces[$prefix];
+    if (is_array($ns)) {
+      $ns = $ns[0];
+    }
+    $rdf->register_namespace($prefix, $ns);
+  }
+
+  $doc = url($base_url);
+  $rdf->triple_qname($doc, "rdfs:type", "adms:SemanticAssetRepository");
+  $rdf->triple_literal($doc, "dcterms:title", variable_get("site_name"));
+  $rdf->triple_literal($doc, "dcterms:description", variable_get("site_mission"));
+  $creation_date = date('Y-m-d', variable_get("install_time"));
+  $rdf->triple_literal($doc, "dcterms:created", $creation_date, 'xsd:date');
+  $rdf->triple_literal($doc, "dcterms:modified", $creation_date, 'xsd:date');
+  // this might be a new feature for Neologism, when in the admin panel
+  // users could add a url of the current instance publisher.
+  // $rdf->triple_uri($doc, "dcterms:publisher", );
+  $rdf->triple_literal($doc, "adms:accessURL", $base_url);
+  $rdf->triple_literal($doc, "adms:supportedSchema", "ADMS v1.0");
+ 	
+  // Load vocabulary fields from DB
+  $result = db_query('SELECT * FROM {neologism_vocabulary} LIMIT 5');
+  // var_dump($result);
+  while ($vocab = db_fetch_object($result)) {
+	$vocab_node = node_load($vocab->nid);
+	$rdf->triple_literal($doc, "dcterms:hasPart", url($vocab_node->path, array('absolute' => true)));
+	// append the vocabulary description without authors and afilliation 
+	_neologism_append_rdf_vocab_description_in_ADMS($rdf, $vocab_node, FALSE);
+  }
+
+  drupal_set_header('Content-Type: application/rdf+xml');
+  echo $rdf->write_rdfxml();
 }
