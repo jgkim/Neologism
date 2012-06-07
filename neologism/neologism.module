@@ -2265,7 +2265,7 @@ function neologism_license_load($lid) {
  * @return none
  */
 function neologism_export_index_in_ADMS() {
-  global $conf, $base_url;
+  global $base_url;
 
   $required_namespaces = array($node->prefix, 'rdf', 'rdfs', 'dc', 'owl', 'foaf', 'xsd', 'vann',
     'adms', 'rad', 'dcterms', 'vcard'
@@ -2297,11 +2297,11 @@ function neologism_export_index_in_ADMS() {
   $rdf->triple_literal($doc, "adms:supportedSchema", "ADMS v1.0");
  	
   // Load vocabulary fields from DB
-  $result = db_query('SELECT * FROM {neologism_vocabulary} LIMIT 5');
+  $result = db_query('SELECT * FROM {neologism_vocabulary}');
   // var_dump($result);
   while ($vocab = db_fetch_object($result)) {
 	$vocab_node = node_load($vocab->nid);
-	$rdf->triple_literal($doc, "dcterms:hasPart", url($vocab_node->path, array('absolute' => true)));
+	$rdf->triple_uri($doc, "dcterms:hasPart", url($vocab_node->path, array('absolute' => true)));
 	// append the vocabulary description without authors and afilliation 
 	_neologism_append_rdf_vocab_description_in_ADMS($rdf, $vocab_node, FALSE);
   }
