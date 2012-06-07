@@ -2285,9 +2285,9 @@ function neologism_export_index_in_ADMS() {
 
   $doc = url($base_url);
   $rdf->triple_qname($doc, "rdfs:type", "adms:SemanticAssetRepository");
-  $rdf->triple_literal($doc, "dcterms:title", variable_get("site_name"));
-  $rdf->triple_literal($doc, "dcterms:description", variable_get("site_mission"));
-  $creation_date = date('Y-m-d', variable_get("install_time"));
+  $rdf->triple_literal($doc, "dcterms:title", variable_get("site_name",""));
+  $rdf->triple_literal($doc, "dcterms:description", variable_get("site_mission", ""));
+  $creation_date = date('Y-m-d', variable_get("install_time", 0));
   $rdf->triple_literal($doc, "dcterms:created", $creation_date, 'xsd:date');
   $rdf->triple_literal($doc, "dcterms:modified", $creation_date, 'xsd:date');
   // this might be a new feature for Neologism, when in the admin panel
