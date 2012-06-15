@@ -1280,7 +1280,7 @@ function _neologism_append_rdf_vocab_description_in_ADMS(&$rdf, $node, $includeA
 
   if ($node->licenseid) {
     $license = neologism_license_load($node->licenseid);
-    $rdf->triple_url($turtle_distrib, "dcterms:license", $license->uri);
+    $rdf->triple_uri($turtle_distrib, "dcterms:license", $license->uri);
   }
 
   // Distribution for rdf
@@ -1291,7 +1291,7 @@ function _neologism_append_rdf_vocab_description_in_ADMS(&$rdf, $node, $includeA
 
   if ($node->licenseid) {
     $license = neologism_license_load($node->licenseid);
-    $rdf->triple_url($rdfxml_distrib, "dcterms:license", $license->uri);
+    $rdf->triple_uri($rdfxml_distrib, "dcterms:license", $license->uri);
   }
 
   // authors and affiliations
