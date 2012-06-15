@@ -599,10 +599,9 @@ function neologism_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_insert().
  */
 function neologism_insert($node) {
-
   // Insert extra fields for vocabulary nodes into DB
-  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram, licenseid) VALUES (%d, '%s', '%s', '%s', '%s', '%s')", 
-    $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->licenseid);
+  db_query("INSERT INTO {neologism_vocabulary} (nid, prefix, custom_namespace, abstract, custom_rdf, enabled_diagram, licenseid) VALUES (%d, '%s', '%s', '%s', '%s', '%s', %d)", 
+    $node->nid, $node->prefix, $node->custom_namespace, $node->abstract, $node->custom_rdf, $node->enabled_diagram, $node->license);
 
   // If no author, force current user as author
   global $user;
