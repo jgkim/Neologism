@@ -2283,7 +2283,7 @@ function neologism_export_index_in_ADMS() {
   }
 
   $doc = url($base_url);
-  $rdf->triple_qname($doc, "rdfs:type", "adms:SemanticAssetRepository");
+  $rdf->triple_qname($doc, "rdf:type", "adms:SemanticAssetRepository");
   $rdf->triple_literal($doc, "dcterms:title", variable_get("site_name",""));
   $rdf->triple_literal($doc, "dcterms:description", variable_get("site_mission", ""));
   $creation_date = date('Y-m-d', variable_get("install_time", 0));
