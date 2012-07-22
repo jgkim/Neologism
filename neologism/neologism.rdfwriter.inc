@@ -96,7 +96,7 @@ class NeologismRDFWriter {
   }
 
   function _triple($s, $p, $o, $o_type, $datatype = null) {
-    if (is_null($s) || is_null($p) || is_null($o)) return;
+    if (empty($s) || empty($p) || empty($o)) return;
     $p = ($p == 'a') ? 'http://www.w3.org/1999/02/22-rdf-syntax-ns#type' : $this->_expand_qname($p);
     if (!$p) return;
     $this->_triples[] = array('s' => $s, 's_type' => 'uri', 'p' => $p, 'o' => $o, 'o_type' => $o_type, 'o_datatype' => $datatype);

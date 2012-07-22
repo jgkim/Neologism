@@ -1068,7 +1068,7 @@ function &neologism_get_rdf_model($node) {
   
   if ($node->licenseid) {
     $license = neologism_license_load($node->licenseid);
-    $rdf->triple_uri($doc, "dc:license", $license->uri);
+    $rdf->triple_uri($doc, "dcterms:license", $license->uri);
   }
   
   $rdf->triple_literal($doc, "dc:modified", date('Y-m-d', $node->changed), 'xsd:date');
@@ -1242,7 +1242,7 @@ function _neologism_append_rdf_vocab_description_in_ADMS(&$rdf, $node, $includeA
 
   if ($node->licenseid) {
     $license = neologism_license_load($node->licenseid);
-	$rdf->triple_literal($doc, "dc:license", $license->uri);
+	$rdf->triple_uri($doc, "dcterms:license", $license->uri);
   }
 
   $rdf->triple_literal($doc, "dcterms:modified", date('Y-m-d', $node->changed), 'xsd:date');
@@ -1258,7 +1258,7 @@ function _neologism_append_rdf_vocab_description_in_ADMS(&$rdf, $node, $includeA
   $author = user_load(array('uid' => $node->authors[0]));
   if ($author->profile_neologism_affiliation) {
       $org = $doc . '#' . rawurlencode($author->profile_neologism_affiliation);
-      $rdf->triple_literal($doc, "dcterms:publisher", $org);
+      $rdf->triple_uri($doc, "dcterms:publisher", $org);
   }
 
   global $base_url;
